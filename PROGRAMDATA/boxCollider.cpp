@@ -6,8 +6,7 @@
 //*****************************************************************************
 #include "boxCollider.h"
 #include "manager.h"
-#include "system.h"
-#include "mode.h"
+#include "renderer.h"
 
 //*****************************************************************************
 //     マクロ定義
@@ -136,9 +135,10 @@ void CBoxCollider::Draw(void)
 
 			// 透視投影変換行列をカメラから作成する
 			D3DXVECTOR3 VecScreenPos;
-			D3DXMATRIX mtxView = CManager::GetBaseMode()->GetCameraManager()->GetCamera()->GetMtxView();
-			D3DXMATRIX mtxProj = CManager::GetBaseMode()->GetCameraManager()->GetCamera()->GetMtxProjection();
 			D3DXMATRIX mtxViewPort;
+			pDevice->GetTransform(D3DTS_VIEW, &mtxView);
+			pDevice->GetTransform(D3DTS_PROJECTION, &mtxProj);
+			D3DXMatrixIdentity(&mtxViewPort);
 			D3DXMatrixIdentity(&mtxViewPort);
 			mtxViewPort._11 = SCREEN_WIDTH / 2;
 			mtxViewPort._22 = -SCREEN_HEIGHT / 2;
