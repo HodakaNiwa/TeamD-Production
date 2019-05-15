@@ -135,6 +135,8 @@ void CBoxCollider::Draw(void)
 
 			// “§Ž‹“Š‰e•ÏŠ·s—ñ‚ðƒJƒƒ‰‚©‚çì¬‚·‚é
 			D3DXVECTOR3 VecScreenPos;
+			D3DXMATRIX mtxView;
+			D3DXMATRIX mtxProj;
 			D3DXMATRIX mtxViewPort;
 			pDevice->GetTransform(D3DTS_VIEW, &mtxView);
 			pDevice->GetTransform(D3DTS_PROJECTION, &mtxProj);
