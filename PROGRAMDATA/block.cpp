@@ -31,6 +31,7 @@ CBlock::CBlock(int nPriority, OBJTYPE objType) : CObject3D(nPriority, objType)
 	m_VtxMax = INITIALIZE_D3DXVECTOR3;   // 最大の頂点座標
 	m_VtxMin = INITIALIZE_D3DXVECTOR3;   // 最小の頂点座標
 	m_fAlpha = 0.0f;                     // モデルの透明度
+	m_bBreak = false;                    // 壊せるかどうか
 }
 
 //=============================================================================
@@ -44,7 +45,7 @@ CBlock::~CBlock()
 //=============================================================================
 //    生成処理
 //=============================================================================
-CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, int nPriority)
+CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, bool bBreak, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth, int nPriority)
 {
 	CBlock *pBlock = NULL;      // ブロッククラス型のポインタ
 	if (pBlock == NULL)
@@ -55,7 +56,12 @@ CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3D
 		    // 各種値の設定
 			pBlock->SetPos(pos);                                     // 座標
 			pBlock->SetRot(rot);                                     // 向き
+			pBlock->SetBreak(bBreak);                                // 壊せるかどうか
+			pBlock->SetAlpha(1.0f);                                  // モデルの透明度
 			pBlock->BindModel(pMesh, pBuffMat, nNumMat, pTexture);   // モデル情報割り当て
+
+			// 当たり判定用箱モデルを作成
+			pBlock->CreateBoxCollider(fBoxWidth, fBoxHeight, fBoxDepth);
 
 			if (FAILED(pBlock->Init()))
 			{// 初期化に失敗した
@@ -80,13 +86,6 @@ CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3D
 //=============================================================================
 HRESULT CBlock::Init(void)
 {
-	// 透明度を1.0fに設定
-	m_fAlpha = 1.0f;
-
-	// 当たり判定用箱モデルを作成
-	CBoxCollider *pBoxCollider = CBoxCollider::Create(GetPos(), 50.0f, 50.0f, 50.0f, true);
-	SetBoxCollider(pBoxCollider);
-
 	return S_OK;
 }
 
@@ -173,6 +172,23 @@ void CBlock::Draw(void)
 }
 
 //=============================================================================
+//    オブジェクトに当たったときの処理
+//=============================================================================
+void CBlock::Hit(CScene *pScene)
+{
+
+}
+
+//=============================================================================
+//    当たり判定用箱モデルを作成する処理
+//=============================================================================
+void CBlock::CreateBoxCollider(float fBoxWidth, float fBoxHeight, float fBoxDepth)
+{
+	CBoxCollider *pBoxCollider = CBoxCollider::Create(GetPos(), fBoxWidth, fBoxHeight, fBoxDepth, true);
+	SetBoxCollider(pBoxCollider);
+}
+
+//=============================================================================
 //    モデル情報設定処理
 //=============================================================================
 void CBlock::BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, D3DXVECTOR3 VtxMax, D3DXVECTOR3 VtxMin)
@@ -242,6 +258,14 @@ void CBlock::SetAlpha(const float fAlpha)
 }
 
 //=============================================================================
+//    壊せるかどうか設定処理
+//=============================================================================
+void CBlock::SetBreak(const bool bBreak)
+{
+	m_bBreak = bBreak;
+}
+
+//=============================================================================
 //    メッシュへのポインタ取得処理
 //=============================================================================
 LPD3DXMESH CBlock::GetMesh(void)
@@ -295,4 +319,12 @@ D3DXVECTOR3 CBlock::GetVtxMin(void)
 float CBlock::GetAlpha(void)
 {
 	return m_fAlpha;
+}
+
+//=============================================================================
+//    壊せるかどうか取得処理
+//=============================================================================
+bool CBlock::GetBreak(void)
+{
+	return m_bBreak;
 }
