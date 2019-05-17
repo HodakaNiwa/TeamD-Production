@@ -19,7 +19,7 @@
 class CScene2D : public CScene
 {
 public:     // 誰でもアクセス可能
-	CScene2D(int nPriority = 3, OBJTYPE objType = OBJTYPE_2DPOLYGON);
+	CScene2D(int nPriority = 3, OBJTYPE objType = OBJTYPE_SCENE2D);
 	~CScene2D();
 
 	static CScene2D *Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float fHeight, float fRot = 0.0f, int nPriority = 3);
@@ -77,7 +77,7 @@ public:     // 誰でもアクセス可能
 		STATE_MAX,
 	}STATE;
 
-	CScene2DFlash(int nPriority = 3, OBJTYPE objType = OBJTYPE_2DPOLYGON);
+	CScene2DFlash(int nPriority = 3, OBJTYPE objType = OBJTYPE_SCENE2D);
 	~CScene2DFlash();
 
 	static CScene2DFlash *Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float fHeight, float fRot = 0.0f, STATE State = STATE_NONE,
@@ -127,7 +127,7 @@ public:     // 誰でもアクセス可能
 		STATE_MAX,
 	}STATE;
 
-	CScene2DPress(int nPriority = 3, OBJTYPE objType = OBJTYPE_2DPOLYGON);
+	CScene2DPress(int nPriority = 3, OBJTYPE objType = OBJTYPE_SCENE2D);
 	~CScene2DPress();
 
 	static CScene2DPress *Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float fHeight, float fRot = 0.0f,
@@ -175,7 +175,7 @@ public:     // 誰でもアクセス可能
 		STATE_MAX
 	}STATE;
 
-	CNumber(int nPriority = 3, OBJTYPE objType = OBJTYPE_2DPOLYGON);
+	CNumber(int nPriority = 3, OBJTYPE objType = OBJTYPE_SCENE2D);
 	~CNumber();
 
 	static CNumber *Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float fHeight, float fRot = 0.0f, STATE State = STATE_NONE,

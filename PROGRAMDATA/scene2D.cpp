@@ -52,28 +52,20 @@ CScene2D::~CScene2D()
 CScene2D *CScene2D::Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float fHeight, float fRot, int nPriority)
 {
 	CScene2D *pScene2D = NULL;             // 2Dポリゴンクラス型のポインタ
-	int nIdxScene = CScene::GetNumAll();   // シーンクラスの生成した数を取得
-	if (nIdxScene < MAX_SCENE)
-	{// まだ生成できる
-		if (pScene2D == NULL)
-		{// メモリが空になっている
-			pScene2D = new CScene2D(nPriority);
-			if (pScene2D != NULL)
-			{// インスタンスを生成できた
-			 // 各種値の設定
-				pScene2D->SetPos(pos);         // ポリゴンの座標
-				pScene2D->SetRot(fRot);        // ポリゴンの向き
-				pScene2D->SetCol(col);         // ポリゴンの色
-				pScene2D->SetWidth(fWidth);    // ポリゴンの幅
-				pScene2D->SetHeight(fHeight);  // ポリゴンの高さ
+	if (pScene2D == NULL)
+	{// メモリが空になっている
+		pScene2D = new CScene2D(nPriority);
+		if (pScene2D != NULL)
+		{// インスタンスを生成できた
+		 // 各種値の設定
+			pScene2D->SetPos(pos);         // ポリゴンの座標
+			pScene2D->SetRot(fRot);        // ポリゴンの向き
+			pScene2D->SetCol(col);         // ポリゴンの色
+			pScene2D->SetWidth(fWidth);    // ポリゴンの幅
+			pScene2D->SetHeight(fHeight);  // ポリゴンの高さ
 
-				if (FAILED(pScene2D->Init()))
-				{// 初期化に失敗した
-					return NULL;
-				}
-			}
-			else
-			{// インスタンスを生成できなかった
+			if (FAILED(pScene2D->Init()))
+			{// 初期化に失敗した
 				return NULL;
 			}
 		}
@@ -83,7 +75,7 @@ CScene2D *CScene2D::Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float f
 		}
 	}
 	else
-	{// これ以上シーンを作成できない
+	{// インスタンスを生成できなかった
 		return NULL;
 	}
 
@@ -614,21 +606,13 @@ CScene2DFlash *CScene2DFlash::Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidt
 	STATE State, D3DXCOLOR ColMax, D3DXCOLOR ColMin, float fColChange, int nPushTiming, int nPriority)
 {
 	CScene2DFlash *pScene2DFlash = NULL;   // 2Dポリゴン点滅クラス型のポインタ
-	int nIdxScene = CScene::GetNumAll();   // シーンクラスの生成した数を取得
-	if (nIdxScene < MAX_SCENE)
-	{// まだ生成できる
-		if (pScene2DFlash == NULL)
-		{// メモリが空になっている
-			pScene2DFlash = new CScene2DFlash(nPriority);
-			if (pScene2DFlash != NULL)
-			{// インスタンスを生成できた
-				if (FAILED(pScene2DFlash->Init(pos, col, fWidth, fHeight, fRot, State, ColMax, ColMin, fColChange, nPushTiming)))
-				{// 初期化に失敗した
-					return NULL;
-				}
-			}
-			else
-			{// インスタンスを生成できなかった
+	if (pScene2DFlash == NULL)
+	{// メモリが空になっている
+		pScene2DFlash = new CScene2DFlash(nPriority);
+		if (pScene2DFlash != NULL)
+		{// インスタンスを生成できた
+			if (FAILED(pScene2DFlash->Init(pos, col, fWidth, fHeight, fRot, State, ColMax, ColMin, fColChange, nPushTiming)))
+			{// 初期化に失敗した
 				return NULL;
 			}
 		}
@@ -638,7 +622,7 @@ CScene2DFlash *CScene2DFlash::Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidt
 		}
 	}
 	else
-	{// これ以上シーンを作成できない
+	{// インスタンスを生成できなかった
 		return NULL;
 	}
 
@@ -837,21 +821,13 @@ CScene2DPress *CScene2DPress::Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidt
 	int nStopTiming, int nAppearTiming, int nPushTiming, int nPriority)
 {
 	CScene2DPress *pScene2DPress = NULL;   // 2Dポリゴンプレスクラス型のポインタ
-	int nIdxScene = CScene::GetNumAll();   // シーンクラスの生成した数を取得
-	if (nIdxScene < MAX_SCENE)
-	{// まだ生成できる
-		if (pScene2DPress == NULL)
-		{// メモリが空になっている
-			pScene2DPress = new CScene2DPress(nPriority);
-			if (pScene2DPress != NULL)
-			{// インスタンスを生成できた
-				if (FAILED(pScene2DPress->Init(pos, col, fWidth, fHeight, fRot, nStopTiming, nAppearTiming, nPushTiming)))
-				{// 初期化に失敗した
-					return NULL;
-				}
-			}
-			else
-			{// インスタンスを生成できなかった
+	if (pScene2DPress == NULL)
+	{// メモリが空になっている
+		pScene2DPress = new CScene2DPress(nPriority);
+		if (pScene2DPress != NULL)
+		{// インスタンスを生成できた
+			if (FAILED(pScene2DPress->Init(pos, col, fWidth, fHeight, fRot, nStopTiming, nAppearTiming, nPushTiming)))
+			{// 初期化に失敗した
 				return NULL;
 			}
 		}
@@ -861,7 +837,7 @@ CScene2DPress *CScene2DPress::Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidt
 		}
 	}
 	else
-	{// これ以上シーンを作成できない
+	{// インスタンスを生成できなかった
 		return NULL;
 	}
 
