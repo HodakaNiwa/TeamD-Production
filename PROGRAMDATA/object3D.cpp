@@ -107,40 +107,6 @@ void CObject3D::Update(void)
 //=============================================================================
 void CObject3D::Draw(void)
 {
-	//レンダリングの取得
-	CRenderer *pRenderer;
-	pRenderer = CManager::GetRenderer();
-
-	//デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice;
-	pDevice = pRenderer->GetDevice();
-
-	D3DXMATRIX mtxRot, mtxTrans;					//計算用マトリックス
-	D3DMATERIAL9 matDef;							//現在のマテリアル保存用
-
-	// ワールドマトリックスの初期化
-	D3DXMatrixIdentity(&m_mtxWorld);
-
-	// 回転を反映
-	D3DXMatrixRotationYawPitchRoll(&mtxRot,
-		m_rot.y, m_rot.x, m_rot.z);
-
-	D3DXMatrixMultiply(&m_mtxWorld, &m_mtxWorld, &mtxRot);
-
-	// 移動を反映
-	D3DXMatrixTranslation(&mtxTrans, m_pos.x, m_pos.y, m_pos.z);
-
-	D3DXMatrixMultiply(&m_mtxWorld, &m_mtxWorld, &mtxTrans);
-
-	// ワールドマトリックスの設定
-	pDevice->SetTransform(D3DTS_WORLD, &m_mtxWorld);
-
-	// 現在のマテリアルを取得
-	pDevice->GetMaterial(&matDef);
-
-	// マテリアルをデフォルトに戻す
-	pDevice->SetMaterial(&matDef);
-
 	//当たり判定箱の描画処理
 	if (m_pBoxCollider != NULL)
 	{
@@ -170,6 +136,31 @@ void CObject3D::SetRot(D3DXVECTOR3 rot)
 void CObject3D::SetBoxCollider(CBoxCollider *pBoxCollider)
 {
 	m_pBoxCollider = pBoxCollider;
+}
+
+//=============================================================================
+// ワールドマトリックの設置処理
+//=============================================================================
+void CObject3D::SetMtxWorld(LPDIRECT3DDEVICE9 pDevice)
+{
+	D3DXMATRIX mtxRot, mtxTrans;					//計算用マトリックス
+
+	// ワールドマトリックスの初期化
+	D3DXMatrixIdentity(&m_mtxWorld);
+
+	// 回転を反映
+	D3DXMatrixRotationYawPitchRoll(&mtxRot,
+		m_rot.y, m_rot.x, m_rot.z);
+
+	D3DXMatrixMultiply(&m_mtxWorld, &m_mtxWorld, &mtxRot);
+
+	// 移動を反映
+	D3DXMatrixTranslation(&mtxTrans, m_pos.x, m_pos.y, m_pos.z);
+
+	D3DXMatrixMultiply(&m_mtxWorld, &m_mtxWorld, &mtxTrans);
+
+	// ワールドマトリックスの設定
+	pDevice->SetTransform(D3DTS_WORLD, &m_mtxWorld);
 }
 
 //=============================================================================

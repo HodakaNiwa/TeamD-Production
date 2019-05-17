@@ -41,6 +41,7 @@ public:	//誰からもアクセス可能
 	void SetPos(D3DXVECTOR3 pos);
 	void SetRot(D3DXVECTOR3 rot);
 	void SetBoxCollider(CBoxCollider *pBoxCollider);
+	void SetMtxWorld(LPDIRECT3DDEVICE9 pDevice);
 
 	D3DXVECTOR3 GetPos(void);
 	D3DXVECTOR3 GetRot(void);
