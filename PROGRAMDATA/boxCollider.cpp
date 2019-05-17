@@ -6,7 +6,7 @@
 //*****************************************************************************
 #include "boxCollider.h"
 #include "manager.h"
-#include "renderer.h"
+#include "system.h"
 
 //*****************************************************************************
 //     マクロ定義
@@ -93,6 +93,54 @@ HRESULT CBoxCollider::Init(void)
 		{// デバイスが取得できた
 			// 線描画用インスタンスを生成
 			D3DXCreateLine(pDevice, &m_pLine);
+
+			// 頂点座標を登録
+			m_VecPos[0] = D3DXVECTOR3(-m_fWidth / 2, m_fHeight, m_fDepth / 2);
+			m_VecPos[1] = D3DXVECTOR3(m_fWidth / 2, m_fHeight, m_fDepth / 2);
+			m_VecPos[2] = D3DXVECTOR3(-m_fWidth / 2, m_fHeight, -m_fDepth / 2);
+			m_VecPos[3] = D3DXVECTOR3(m_fWidth / 2, m_fHeight, -m_fDepth / 2);
+			m_VecPos[4] = D3DXVECTOR3(-m_fWidth / 2, 0.0f, m_fDepth / 2);
+			m_VecPos[5] = D3DXVECTOR3(m_fWidth / 2, 0.0f, m_fDepth / 2);
+			m_VecPos[6] = D3DXVECTOR3(-m_fWidth / 2, 0.0f, -m_fDepth / 2);
+			m_VecPos[7] = D3DXVECTOR3(m_fWidth / 2, 0.0f, -m_fDepth / 2);
+
+			// 頂点インデックス情報を登録
+			// １本目
+			m_Index[0] = 0;
+			m_Index[1] = 2;
+			// ２本目
+			m_Index[2] = 0;
+			m_Index[3] = 1;
+			// ３本目
+			m_Index[4] = 1;
+			m_Index[5] = 3;
+			// ４本目
+			m_Index[6] = 3;
+			m_Index[7] = 2;
+			// ５本目
+			m_Index[8] = 4;
+			m_Index[9] = 6;
+			// ６本目
+			m_Index[10] = 4;
+			m_Index[11] = 5;
+			// ７本目
+			m_Index[12] = 5;
+			m_Index[13] = 7;
+			// ８本目
+			m_Index[14] = 7;
+			m_Index[15] = 6;
+			// ９本目
+			m_Index[16] = 0;
+			m_Index[17] = 4;
+			// １０本目
+			m_Index[18] = 1;
+			m_Index[19] = 5;
+			// １１本目
+			m_Index[20] = 2;
+			m_Index[21] = 6;
+			// １２本目
+			m_Index[22] = 3;
+			m_Index[23] = 7;
 		}
 	}
 
@@ -104,7 +152,7 @@ HRESULT CBoxCollider::Init(void)
 //=============================================================================
 void CBoxCollider::Uninit(void)
 {
-
+	DIRECT_RELEASE(m_pLine);
 }
 
 //=============================================================================
@@ -134,82 +182,23 @@ void CBoxCollider::Draw(void)
 			SetMtxWorld(pDevice);
 
 			// 透視投影変換行列をカメラから作成する
-			D3DXVECTOR3 VecScreenPos;
 			D3DXMATRIX mtxView;
 			D3DXMATRIX mtxProj;
-			D3DXMATRIX mtxViewPort;
 			pDevice->GetTransform(D3DTS_VIEW, &mtxView);
 			pDevice->GetTransform(D3DTS_PROJECTION, &mtxProj);
-			D3DXMatrixIdentity(&mtxViewPort);
-			D3DXMatrixIdentity(&mtxViewPort);
-			mtxViewPort._11 = SCREEN_WIDTH / 2;
-			mtxViewPort._22 = -SCREEN_HEIGHT / 2;
-			mtxViewPort._41 = SCREEN_WIDTH / 2;
-			mtxViewPort._42 = SCREEN_HEIGHT / 2;
-			mtxViewPort._33 = 1.0f;
-			mtxViewPort._44 = 1.0f;
-
-			// 各ラインの頂点座標を設定
-			D3DXVECTOR3 VecPos[24] =
-			{
-				// １本目
-				D3DXVECTOR3(-(m_fWidth / 2), m_fHeight,  (m_fDepth / 2)),
-				D3DXVECTOR3(-(m_fWidth / 2), m_fHeight,  -(m_fDepth / 2)),
-				// ２本目
-				D3DXVECTOR3(-(m_fWidth / 2), m_fHeight,  (m_fDepth / 2)),
-				D3DXVECTOR3((m_fWidth / 2), m_fHeight,  (m_fDepth / 2)),
-				// ３本目
-				D3DXVECTOR3((m_fWidth / 2), m_fHeight,  (m_fDepth / 2)),
-				D3DXVECTOR3((m_fWidth / 2), m_fHeight,  -(m_fDepth / 2)),
-				// ４本目
-				D3DXVECTOR3((m_fWidth / 2), m_fHeight,  -(m_fDepth / 2)),
-				D3DXVECTOR3(-(m_fWidth / 2), m_fHeight,  -(m_fDepth / 2)),
-				// ５本目
-				D3DXVECTOR3(-(m_fWidth / 2), 0.0f,  (m_fDepth / 2)),
-				D3DXVECTOR3(-(m_fWidth / 2), 0.0f,  -(m_fDepth / 2)),
-				// ６本目
-				D3DXVECTOR3(-(m_fWidth / 2), 0.0f,  (m_fDepth / 2)),
-				D3DXVECTOR3((m_fWidth / 2), 0.0f,  (m_fDepth / 2)),
-				// ７本目
-				D3DXVECTOR3((m_fWidth / 2), 0.0f,  (m_fDepth / 2)),
-				D3DXVECTOR3((m_fWidth / 2), 0.0f,  -(m_fDepth / 2)),
-				// ８本目
-				D3DXVECTOR3((m_fWidth / 2), 0.0f,  -(m_fDepth / 2)),
-				D3DXVECTOR3(-(m_fWidth / 2), 0.0f,  -(m_fDepth / 2)),
-				// ９本目
-				D3DXVECTOR3(-(m_fWidth / 2), m_fHeight,  -(m_fDepth / 2)),
-				D3DXVECTOR3(-(m_fWidth / 2), 0.0f,  -(m_fDepth / 2)),
-				// １０本目
-				D3DXVECTOR3((m_fWidth / 2), m_fHeight,  -(m_fDepth / 2)),
-				D3DXVECTOR3((m_fWidth / 2), 0.0f,  -(m_fDepth / 2)),
-				// １１本目
-				D3DXVECTOR3(-(m_fWidth / 2), m_fHeight,  (m_fDepth / 2)),
-				D3DXVECTOR3(-(m_fWidth / 2), 0.0f,  (m_fDepth / 2)),
-				// １２本目
-				D3DXVECTOR3((m_fWidth / 2), m_fHeight,  (m_fDepth / 2)),
-				D3DXVECTOR3((m_fWidth / 2), 0.0f,  (m_fDepth / 2)),
-			};
-
-			// 各頂点をワールド座標からスクリーン座標へ変換する
-			for (int nCnt = 0; nCnt < 24; nCnt++)
-			{
-				D3DXVec3TransformCoord(&VecScreenPos, &VecPos[nCnt], &m_MtxWorld);
-				D3DXVec3TransformCoord(&VecScreenPos, &VecScreenPos, &mtxView);
-				D3DXVec3TransformCoord(&VecScreenPos, &VecScreenPos, &mtxProj);
-				D3DXVec3TransformCoord(&VecScreenPos, &VecScreenPos, &mtxViewPort);
-				m_VecPos[nCnt] = D3DXVECTOR2(VecScreenPos.x, VecScreenPos.y);
-			}
+			D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxView);
+			D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxProj);
 
 			// 線を描画
-			D3DXVECTOR2 Vec[2];
+			D3DXVECTOR3 Vec[2];
 			m_pLine->SetAntialias(TRUE);
 			m_pLine->SetWidth(BOX_COLLIDER_LINEWIDTH);
 			m_pLine->Begin();
 			for (int nCnt = 0; nCnt < 12; nCnt++)
 			{
-				Vec[0] = m_VecPos[(nCnt * 2)];
-				Vec[1] = m_VecPos[(nCnt * 2) + 1];
-				m_pLine->Draw(Vec, 2, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+				Vec[0] = m_VecPos[m_Index[(nCnt * 2)]];
+				Vec[1] = m_VecPos[m_Index[(nCnt * 2) + 1]];
+				m_pLine->DrawTransform(Vec, 2, &m_MtxWorld, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
 			}
 			m_pLine->End();
 		}
