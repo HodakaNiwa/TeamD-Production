@@ -54,8 +54,8 @@ public:	//誰からもアクセス可能
 private:	//自分だけがアクセス可能
 	//メンバ変数
 	D3DXVECTOR3					m_pos;								// 位置
-	D3DXVECTOR3					m_rot;
-																	// 向き
+	D3DXVECTOR3					m_rot;								// 向き
+
 	D3DXMATRIX					m_mtxWorld;							// マトリックス
 	CBoxCollider				*m_pBoxCollider;					// 当たり判定箱へのポインタ
 };
