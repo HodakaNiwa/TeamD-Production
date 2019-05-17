@@ -4,9 +4,10 @@
 //     Auther:Hodaka Niwa
 //
 //*****************************************************************************
-#include "2DPolygon.h"
+#include "scene2D.h"
 #include "manager.h"
 #include "system.h"
+// #include "renderer.h"
 #include "functionlib.h"
 
 //*****************************************************************************
