@@ -1,0 +1,35 @@
+﻿  sound.cpp
+  sceneX.cpp
+  scene3D.cpp
+  scene2D.cpp
+  scene.cpp
+  renderer.cpp
+  objectplayer.cpp
+  object.cpp
+  modelcreate.cpp
+  model.cpp
+  meshfield.cpp
+  map.cpp
+  manager.cpp
+  main.cpp
+  loadfilefunction.cpp
+  light.cpp
+  input.cpp
+  imgui_widgets.cpp
+  imgui_jukiya.cpp
+  imgui_impl_win32.cpp
+  コードを生成中...
+  コンパイル中...
+  imgui_impl_dx9.cpp
+  imgui_draw.cpp
+  imgui_demo.cpp
+  imgui.cpp
+  fade.cpp
+  editor.cpp
+  debugproc.cpp
+  camera.cpp
+  bullet.cpp
+  billboard.cpp
+  コードを生成中...
+  チーム用ツール.vcxproj -> c:\users\game129\documents\visual studio 2015\Projects\チーム用ツール\チーム用ツール.exe
+  チーム用ツール.vcxproj -> c:\users\game129\documents\visual studio 2015\Projects\チーム用ツール\チーム用ツール.pdb (Full PDB)
