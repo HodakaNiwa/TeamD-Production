@@ -1,0 +1,39 @@
+#==============================================================================
+#
+# 『マップ』ファイル [map.txt]
+# Author : Jukiya Hayakawa
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# モデル数
+#------------------------------------------------------------------------------
+NUM_MODEL = 13
+
+#------------------------------------------------------------------------------
+# モデルファイル名
+#------------------------------------------------------------------------------
+MODEL_FILENAME = data/MODEL/OBJECT/stone002.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/cake.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/box000.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/wood.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/pillar.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/wallM.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/wallL.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/wallslanting.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/pillarwall.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/pillar2.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/wallsideL.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/wallsideM.x				# [0]岩(小)
+MODEL_FILENAME = data/MODEL/OBJECT/test.x				# [0]岩(小)
+
+#==============================================================================
+# マップ情報
+#==============================================================================
+MAPSET
+	FILENAME_FIELD = data/TEXT/MAP/FIELD/field.txt		#フィールドの情報テキスト
+	FILENAME_OBJECT = data/TEXT/MAP/OBJECT/object.txt	#配置物の情報テキスト
+END_MAPSET
+
+END_SCRIPT		# この行は絶対消さないこと！
