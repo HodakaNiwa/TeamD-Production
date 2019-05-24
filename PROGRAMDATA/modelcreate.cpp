@@ -375,3 +375,11 @@ int CModelCreate::GetNumModel(void)
 {
 	return m_nNumModel;
 }
+
+//=============================================================================
+// モデルのテクスチャ情報取得
+//=============================================================================
+LPDIRECT3DTEXTURE9 *CModelCreate::GetTexture(int nIdx)
+{
+	return m_pTexture[nIdx];
+}

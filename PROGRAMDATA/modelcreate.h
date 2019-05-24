@@ -36,6 +36,7 @@ public:    //誰からもアクセス可能
 	D3DXVECTOR3 GetVtxMax(int nIdx);
 	D3DXVECTOR3 GetVtxMin(int nIdx);
 	int			GetNumModel(void);
+	LPDIRECT3DTEXTURE9	*GetTexture(int nIdx);
 	//静的メンバ変数
 	static CModelCreate *Create(int nNumModel);
 
