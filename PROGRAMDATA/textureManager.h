@@ -25,12 +25,14 @@ public:	//誰からもアクセス可能
 	void Init(void);
 	void Uninit(void);
 
+	void SetTexture(LPDIRECT3DTEXTURE9 pTexture, int nIdx);
 	void SetNumTexture(int nNumTexture);
 	void SetFileName(char *pFileName, int nIdx);
 
+	LPDIRECT3DTEXTURE9 GetTexture(int nIdx);
 	int GetNumTexture(void);
 	char *GetFileName(int nIdx);
-	void BindTexture(LPDIRECT3DTEXTURE9 pTexture, int nIdx);
+
 	//静的メンバ関数
 	static CTextureManager *Create(int nNumTexture);
 

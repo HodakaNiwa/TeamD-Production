@@ -22,7 +22,7 @@
 CTextureManager::CTextureManager()
 {
 	m_pTexture = NULL;			//テクスチャのポインタ
-	m_pFileName[256]= NULL;		//ファイル名のポインタ
+	m_pFileName = NULL;	    	//ファイル名のポインタ
 	m_nNumTexture = 0;			//テクスチャの総数
 }
 //=============================================================================
@@ -82,9 +82,10 @@ void CTextureManager::Uninit(void)
 	//テクスチャの破棄
 	if (m_pTexture != NULL)
 	{
-		for (int nCntTexture = 0; nCntTexture < m_nNumTexture; nCntTexture)
+		for (int nCntTexture = 0; nCntTexture < m_nNumTexture; nCntTexture++)
 		{
 			m_pTexture[nCntTexture]->Release();
+			m_pTexture[nCntTexture] = NULL;
 		}
 		delete[] m_pTexture;
 		m_pTexture = NULL;
@@ -104,6 +105,14 @@ void CTextureManager::Uninit(void)
 }
 
 //=============================================================================
+// テクスチャの設置処理
+//=============================================================================
+void CTextureManager::SetTexture(LPDIRECT3DTEXTURE9 pTexture, int nIdx)
+{
+	m_pTexture[nIdx] = pTexture;
+}
+
+//=============================================================================
 // テクスチャの総数設置処理
 //=============================================================================
 void CTextureManager::SetNumTexture(int nNumTexture)
@@ -120,6 +129,14 @@ void CTextureManager::SetFileName(char *pFileName,int nIdx)
 }
 
 //=============================================================================
+// ファイル名の取得処理
+//=============================================================================
+char *CTextureManager::GetFileName(int nIdx)
+{
+	return m_pFileName[nIdx];
+}
+
+//=============================================================================
 // テクスチャの総数取得処理
 //=============================================================================
 int CTextureManager::GetNumTexture(void)
@@ -128,9 +145,9 @@ int CTextureManager::GetNumTexture(void)
 }
 
 //=============================================================================
-// テクスチャの設置処理
+// テクスチャの取得処理
 //=============================================================================
-void CTextureManager::BindTexture(LPDIRECT3DTEXTURE9 pTexture, int nIdx)
+LPDIRECT3DTEXTURE9 CTextureManager::GetTexture(int nIdx)
 {
-	m_pTexture[nIdx] = pTexture;
+	return m_pTexture[nIdx];
 }
