@@ -31,7 +31,7 @@ public:    // 誰でもアクセス可能
 	HRESULT Init(int nNumCamera = 1);
 	void Uninit(void);
 	void Update(void);
-	void SetCamera(int nIdxCamera = 0);
+	void BindCamera(int nIdxCamera = 0);
 
 	void SetNumCamera(const int nNumCamera);
 	void SetCamera(CCamera *pCamera, const int nIdxCamera = 0);

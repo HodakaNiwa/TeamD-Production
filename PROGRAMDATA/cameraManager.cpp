@@ -123,7 +123,7 @@ void CCameraManager::Update(void)
 //=============================================================================
 //    ƒJƒƒ‰‚Ìİ’è
 //=============================================================================
-void CCameraManager::SetCamera(int nIdxCamera)
+void CCameraManager::BindCamera(int nIdxCamera)
 {
 	if (m_apCamera != NULL)
 	{// ƒƒ‚ƒŠ‚ªŠm•Û‚³‚ê‚Ä‚¢‚é
