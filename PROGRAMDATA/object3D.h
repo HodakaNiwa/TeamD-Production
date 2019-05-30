@@ -42,10 +42,14 @@ public:	//誰からもアクセス可能
 	void SetRot(D3DXVECTOR3 rot);
 	void SetBoxCollider(CBoxCollider *pBoxCollider);
 	void SetMtxWorld(LPDIRECT3DDEVICE9 pDevice);
+	void SetColRange(D3DXVECTOR3 colRange);
+	void SetReturnFlag(bool bReturnFlag);
 
 	D3DXVECTOR3 GetPos(void);
 	D3DXVECTOR3 GetRot(void);
+	D3DXVECTOR3 GetColRange(void);
 	CBoxCollider *GetBoxCollider(void);
+	bool GetReturnFlag(void);
 
 	virtual	void Hit(CScene *pScene);
 
@@ -56,7 +60,8 @@ private:	//自分だけがアクセス可能
 	//メンバ変数
 	D3DXVECTOR3					m_pos;								// 位置
 	D3DXVECTOR3					m_rot;								// 向き
-
+	D3DXVECTOR3					m_colRange;							// 当たり判定の大きさ
+	bool						m_bReturnFlag;						// 当たった際に戻すかどうか
 	D3DXMATRIX					m_mtxWorld;							// マトリックス
 	CBoxCollider				*m_pBoxCollider;					// 当たり判定箱へのポインタ
 };

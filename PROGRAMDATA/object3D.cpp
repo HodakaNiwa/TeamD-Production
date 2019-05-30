@@ -25,8 +25,10 @@
 //=============================================================================
 CObject3D::CObject3D(int nPriority,OBJTYPE type) : CScene(nPriority,type)
 {
-	m_pos = INITIALIZE_D3DXVECTOR3;				//位置
-	m_rot = INITIALIZE_D3DXVECTOR3;				//向き
+	m_pos = INITIALIZE_D3DXVECTOR3;						//位置
+	m_rot = INITIALIZE_D3DXVECTOR3;						//向き
+	m_colRange = D3DXVECTOR3(75.0f,75.0f, 75.0f);		//当たり判定の大きさ
+	m_bReturnFlag = true;								//当たった際に戻すかどうか
 	m_pBoxCollider = NULL;
 }
 //=============================================================================
@@ -37,7 +39,7 @@ CObject3D::~CObject3D()
 
 }
 //=============================================================================
-// ポリゴンの生成
+// オブジェクト3Dの生成
 //=============================================================================
 CObject3D *CObject3D::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot)
 {
@@ -70,7 +72,7 @@ HRESULT CObject3D::Init()
 	//当たり判定箱の生成処理
 	if (m_pBoxCollider == NULL)
 	{
-		m_pBoxCollider = CBoxCollider::Create(pos, 25.0f, 25.0f, 25.0f,true);
+		m_pBoxCollider = CBoxCollider::Create(pos, m_colRange.x, m_colRange.y, m_colRange.z,m_bReturnFlag);
 	}
 
 	//種類の設置処理
@@ -99,7 +101,7 @@ void CObject3D::Uninit(void)
 //=============================================================================
 void CObject3D::Update(void)
 {
-	CDebugProc::Print(1, "位置  : x[%.1f],y[%.1f],z[%.1f]\n", m_pos.x, m_pos.y, m_pos.z);
+
 }
 
 //=============================================================================
@@ -136,6 +138,22 @@ void CObject3D::SetRot(D3DXVECTOR3 rot)
 void CObject3D::SetBoxCollider(CBoxCollider *pBoxCollider)
 {
 	m_pBoxCollider = pBoxCollider;
+}
+
+//=============================================================================
+// 当たり判定の大きさの設置処理
+//=============================================================================
+void CObject3D::SetColRange(D3DXVECTOR3 colRange)
+{
+	m_colRange = colRange;
+}
+
+//=============================================================================
+// 当たった際戻すかどうかの設置処理
+//=============================================================================
+void CObject3D::SetReturnFlag(bool bReturnFlag)
+{
+	m_bReturnFlag = bReturnFlag;
 }
 
 //=============================================================================
@@ -177,6 +195,22 @@ D3DXVECTOR3 CObject3D::GetPos(void)
 D3DXVECTOR3 CObject3D::GetRot(void)
 {
 	return m_rot;
+}
+
+//=============================================================================
+// 当たり判定の大きさの取得処理
+//=============================================================================
+D3DXVECTOR3 CObject3D::GetColRange(void)
+{
+	return m_colRange;
+}
+
+//=============================================================================
+// 当たった際戻すかどうかの取得処理
+//=============================================================================
+bool CObject3D::GetReturnFlag(void)
+{
+	return m_bReturnFlag;
 }
 
 //=============================================================================
