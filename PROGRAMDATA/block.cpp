@@ -7,33 +7,31 @@
 #include "block.h"
 #include "manager.h"
 #include "boxCollider.h"
+//#include "system.h"
 #include "renderer.h"
 
 //*****************************************************************************
-//    マクロ定義
+//     マクロ定義
 //*****************************************************************************
 
 
 //*****************************************************************************
-//    静的メンバ変数
+//     静的メンバ変数
 //*****************************************************************************
 
-//*****************************************************************************
-//    CBlockの処理
-//*****************************************************************************
 //=============================================================================
 //    コンストラクタ
 //=============================================================================
 CBlock::CBlock(int nPriority, OBJTYPE objType) : CObject3D(nPriority, objType)
 {
 	// 各種値のクリア
-	m_pMesh = NULL;                            // メッシュへのポインタ
-	m_pBuffMat = NULL;                         // マテリアル情報へのポインタ
-	m_nNumMat = 0;                             // マテリアル情報の数
-	m_VtxMax = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 最大の頂点座標
-	m_VtxMin = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 最小の頂点座標
-	m_fAlpha = 0.0f;                           // モデルの透明度
-	m_bBreak = false;                          // 壊せるかどうか
+	m_pMesh = NULL;                      // メッシュへのポインタ
+	m_pBuffMat = NULL;                   // マテリアル情報へのポインタ
+	m_nNumMat = 0;                       // マテリアル情報の数
+	m_VtxMax = INITIALIZE_D3DXVECTOR3;   // 最大の頂点座標
+	m_VtxMin = INITIALIZE_D3DXVECTOR3;   // 最小の頂点座標
+	m_fAlpha = 0.0f;                     // モデルの透明度
+	m_bBreak = false;                    // 壊せるかどうか
 }
 
 //=============================================================================
@@ -55,7 +53,7 @@ CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, TYPE type, int nModelId
 		pBlock = new CBlock(nPriority);
 		if (pBlock != NULL)
 		{// インスタンスを生成できた
-		    // 各種値の設定
+		 // 各種値の設定
 			pBlock->SetPos(pos);                                     // 座標
 			pBlock->SetRot(rot);                                     // 向き
 			pBlock->SetType(type);                                   // 種類番号
@@ -64,7 +62,7 @@ CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, TYPE type, int nModelId
 			pBlock->SetAlpha(1.0f);                                  // モデルの透明度
 			pBlock->BindModel(pMesh, pBuffMat, nNumMat, pTexture);   // モデル情報割り当て
 
-			// 当たり判定用箱モデルを作成
+																	 // 当たり判定用箱モデルを作成
 			pBlock->CreateBoxCollider(fBoxWidth, fBoxHeight, fBoxDepth);
 
 			if (FAILED(pBlock->Init()))
@@ -90,6 +88,8 @@ CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, TYPE type, int nModelId
 //=============================================================================
 HRESULT CBlock::Init(void)
 {
+	//種類の設置処理
+	SetObjType(OBJTYPE_BLOCK);
 	return S_OK;
 }
 
@@ -98,6 +98,7 @@ HRESULT CBlock::Init(void)
 //=============================================================================
 void CBlock::Uninit(void)
 {
+	//オブジェクト3Dの終了処理
 	CObject3D::Uninit();
 }
 
@@ -118,16 +119,21 @@ void CBlock::Draw(void)
 	D3DXMATERIAL *pMat;      // マテリアルデータへのポインタ
 	float fAlphaDef = 0.0f;  // デフォルトの透明度
 
-	// レンダリングクラス型のポインタ
-	CRenderer *pRenderer = CManager::GetRenderer();
+	//レンダリングの取得
+	CRenderer *pRenderer;
+	pRenderer = CManager::GetRenderer();
+
+	//デバイスの取得
+	LPDIRECT3DDEVICE9 pDevice;
+	pDevice = pRenderer->GetDevice();
 
 	if (pRenderer != NULL)
 	{// レンダリングクラスが生成されている
-	    // デバイスの取得
+	 // デバイスの取得
 		LPDIRECT3DDEVICE9 pDevice = pRenderer->GetDevice();
 		if (pDevice != NULL)
 		{// デバイスが取得できた
-		    // ワールドマトリックス設定処理
+		 // ワールドマトリックス設定処理
 			SetMtxWorld(pDevice);
 
 			// 現在のマテリアルを取得
@@ -135,26 +141,26 @@ void CBlock::Draw(void)
 
 			if (m_pBuffMat != NULL && m_pMesh != NULL)
 			{// Xファイルからモデルデータが読み込めている
-			    // マテリアルデータへのポインタを取得
+			 // マテリアルデータへのポインタを取得
 				pMat = (D3DXMATERIAL*)m_pBuffMat->GetBufferPointer();
 
 				for (int nCntMat = 0; nCntMat < (int)m_nNumMat; nCntMat++)
 				{// 設定されていたマテリアルの数だけ繰り返し
-					// 透明度の設定
+				 // 透明度の設定
 					fAlphaDef = pMat[nCntMat].MatD3D.Diffuse.a;
 					pMat[nCntMat].MatD3D.Diffuse.a = m_fAlpha;
 
-				    // マテリアルの設定
+					// マテリアルの設定
 					pDevice->SetMaterial(&pMat[nCntMat].MatD3D);
 
 					if (m_pTexture != NULL)
 					{// テクスチャ情報が引き出せている
-					    // テクスチャの設定
+					 // テクスチャの設定
 						pDevice->SetTexture(0, m_pTexture[nCntMat]);
 					}
 					else
 					{// テクスチャ情報が引き出せていない
-					    // テクスチャの設定
+					 // テクスチャの設定
 						pDevice->SetTexture(0, NULL);
 					}
 
@@ -180,7 +186,14 @@ void CBlock::Draw(void)
 //=============================================================================
 void CBlock::Hit(CScene *pScene)
 {
-
+	switch (m_bBreak)
+	{
+	case false:
+		break;
+	case true:
+		Uninit();
+		break;
+	}
 }
 
 //=============================================================================

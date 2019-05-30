@@ -38,7 +38,7 @@ public:    // 誰でもアクセス可能
 	void Update(void);
 	void Draw(void);
 	void Hit(CScene *pScene);
-	void BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, D3DXVECTOR3 VtxMax = D3DXVECTOR3(0.0f,0.0f,0.0f), D3DXVECTOR3 VtxMin = D3DXVECTOR3(0.0f, 0.0f, 0.0f));
+	void BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, D3DXVECTOR3 VtxMax = D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3 VtxMin = D3DXVECTOR3(0.0f, 0.0f, 0.0f));
 
 	void SetType(const TYPE type);
 	void SetModelIdx(const int nModelIdx);
@@ -71,12 +71,11 @@ private:   // このクラスだけがアクセス可能
 	int                 m_nModelIdx;    // 使用するモデルの番号
 	LPD3DXMESH          m_pMesh;        // メッシュへのポインタ
 	LPD3DXBUFFER        m_pBuffMat;     // マテリアル情報へのポインタ
- 	DWORD               m_nNumMat;      // マテリアル情報の数
+	DWORD               m_nNumMat;      // マテリアル情報の数
 	LPDIRECT3DTEXTURE9  *m_pTexture;    // テクスチャへのポインタ
 	D3DXVECTOR3         m_VtxMax;       // 最大の頂点座標
 	D3DXVECTOR3         m_VtxMin;       // 最小の頂点座標
 	float               m_fAlpha;       // モデルの透明度
 	bool                m_bBreak;       // 壊せるかどうか
 };
-
 #endif
