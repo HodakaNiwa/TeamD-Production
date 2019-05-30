@@ -7,7 +7,6 @@
 #include "modelcreate.h"
 #include "manager.h"
 #include "renderer.h"
-#include "loadfilefunction.h"
 
 //=============================================================================
 // コンストラクタ
@@ -15,6 +14,7 @@
 CModelCreate::CModelCreate()
 {
 	m_nNumModel = 0;    //モデルの総数初期化
+	m_pFileName = NULL; //ファイル名を初期化
 	m_pMesh = NULL;     //メッシュ初期化
 	m_pBuffMat = NULL;  //マテリアル初期化
 	m_pNumMat = NULL;   //マテリアル総数初期化
@@ -82,6 +82,19 @@ HRESULT CModelCreate::Init(void)
 			}
 		}
 	}
+
+	if (m_pFileName == NULL)
+	{//ファイル名の動的確保
+		m_pFileName = new char*[m_nNumModel];
+		if (m_pFileName != NULL)
+		{
+			for (int nCntTexture = 0; nCntTexture < m_nNumModel; nCntTexture++)
+			{//文字列の動的確保
+				m_pFileName[nCntTexture] = new char[256];
+			}
+		}
+	}
+
 	return S_OK;
 }
 
@@ -90,6 +103,18 @@ HRESULT CModelCreate::Init(void)
 //=============================================================================
 void CModelCreate::Uninit(void)
 {
+	//ファイル名の破棄
+	if (m_pFileName != NULL)
+	{
+		for (int nCntTexture = 0; nCntTexture < m_nNumModel; nCntTexture++)
+		{//テクスチャの総数分繰り返し
+			delete[] m_pFileName[nCntTexture];
+			m_pFileName[nCntTexture] = NULL;
+		}
+		delete[] m_pFileName;
+		m_pFileName = NULL;
+	}
+
 	// テクスチャの開放
 	if (m_pTexture != NULL)
 	{
@@ -163,6 +188,14 @@ void CModelCreate::Uninit(void)
 void CModelCreate::SetNumModel(int nNumModel)
 {
 	m_nNumModel = nNumModel;
+}
+
+//=============================================================================
+// ファイル名の設置処理
+//=============================================================================
+void CModelCreate::SetFileName(char *pFileName, int nIdx)
+{
+	strcpy(m_pFileName[nIdx], pFileName);
 }
 
 //=============================================================================
@@ -292,6 +325,21 @@ void CModelCreate::SetMaterial(LPDIRECT3DDEVICE9 pDevice,LPD3DXBUFFER pBuffMat, 
 	}
 }
 
+//=============================================================================
+// モデルの総数取得
+//=============================================================================
+int CModelCreate::GetNumModel(void)
+{
+	return m_nNumModel;
+}
+
+//=============================================================================
+// ファイル名の取得処理
+//=============================================================================
+char *CModelCreate::GetFileName(int nIdx)
+{
+	return m_pFileName[nIdx];
+}
 
 //=============================================================================
 // モデルのメッシュ情報を取得する
@@ -366,14 +414,6 @@ D3DXVECTOR3 CModelCreate::GetVtxMin(int nIdx)
 	}
 
 	return VtxMin;  // 頂点の最小値情報を返す
-}
-
-//=============================================================================
-// モデルの総数取得
-//=============================================================================
-int CModelCreate::GetNumModel(void)
-{
-	return m_nNumModel;
 }
 
 //=============================================================================

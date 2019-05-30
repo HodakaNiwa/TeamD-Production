@@ -56,6 +56,87 @@ CLightManager *CLightManager::Create(int nNumLight)
 }
 
 //=============================================================================
+//    中身をコピーする処理
+//=============================================================================
+CLightManager *CLightManager::Cpy(CLightManager *pLightManagerOld, int nNumLight)
+{
+	// 前回のライトの数を記憶
+	int nNumLightOld = pLightManagerOld->GetNumLight();
+
+	// 前回のライトを全てOffに設定
+	for (int nCntLight = 0; nCntLight < nNumLightOld; nCntLight++)
+	{// 今回必要な数だけ繰り返し
+		CManager::GetRenderer()->GetDevice()->LightEnable(nCntLight, false);
+	}
+
+	// 今回必要な数だけライトを設定する
+	CLight *pLight = NULL;
+	CLightManager *pLightManager = CLightManager::Create(nNumLight);
+	for (int nCntLight = 0; nCntLight < nNumLightOld; nCntLight++)
+	{// コピーのために前回のライトの数分繰り返し
+		if (nCntLight < nNumLight)
+		{// 今回必要な数を超えていない
+			// ライトを生成
+			pLight = pLightManagerOld->GetCpyLight(nCntLight);
+
+			// ライトを設定
+			pLightManager->SettingLight(pLight, nCntLight);
+		}
+	}
+
+	// 足りない分のライトは適当に値を決めて生成
+	for (int nCntLight = nNumLightOld; nCntLight < nNumLight; nCntLight++)
+	{// コピーのために前回のライトの数分繰り返し
+	    // ライトを生成
+		pLight = CDirectionalLight::Create(D3DXVECTOR3(0.0f, -1.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f),
+			D3DXCOLOR(0.2f, 0.2f, 0.2f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+		// ライトを設定
+		pLightManager->SettingLight(pLight, nCntLight);
+	}
+
+
+	// 前回のライト管轄クラスを破棄する
+	if (pLightManagerOld != NULL)
+	{
+		pLightManagerOld->Uninit();
+		delete pLightManagerOld;
+		pLightManagerOld = NULL;
+	}
+
+	return pLightManager;
+}
+
+//=============================================================================
+//    ライト情報をコピーする処理
+//=============================================================================
+CLight *CLightManager::GetCpyLight(int nIdx)
+{
+	// ライトをゲットする
+	CLight *pLightCpy = GetLight(nIdx);
+
+	// 情報をコピーしてアドレスを返す
+	CLight *pLight = NULL;
+	D3DLIGHT9 Light = pLightCpy->GetLight();
+	if (pLightCpy->GetType() == CLight::TYPE_DIRECTIONAL)
+	{// ディレクショナルライトだったら
+		pLight = CDirectionalLight::Create(Light.Direction, Light.Diffuse, Light.Ambient, Light.Specular);
+	}
+	else if (pLightCpy->GetType() == CLight::TYPE_POINT)
+	{// ポイントライトだったら
+		pLight = CPointLight::Create(Light.Position, Light.Diffuse, Light.Ambient, Light.Specular,
+			Light.Attenuation0, Light.Attenuation1, Light.Attenuation2, Light.Range);
+	}
+	else if (pLightCpy->GetType() == CLight::TYPE_SPOT)
+	{// スポットライトだったら
+		pLight = CSpotLight::Create(Light.Position, Light.Direction, Light.Diffuse, Light.Ambient, Light.Specular,
+			Light.Attenuation0, Light.Attenuation1, Light.Attenuation2, Light.Range, Light.Falloff,Light.Theta,Light.Phi);
+	}
+
+	return pLight;
+}
+
+//=============================================================================
 //    初期化処理
 //=============================================================================
 HRESULT CLightManager::Init(int nNumLight)
@@ -64,7 +145,7 @@ HRESULT CLightManager::Init(int nNumLight)
 	m_nNumLight = nNumLight;
 
 	// ライトクラスのポインタを確保する
-	if (m_apLight == NULL)
+	if (m_apLight == NULL && m_nNumLight > 0)
 	{// メモリが確保できる状態である
 		m_apLight = new CLight*[nNumLight];
 		if (m_apLight != NULL)
@@ -126,19 +207,22 @@ void CLightManager::Update(void)
 //=============================================================================
 void CLightManager::SettingLight(CLight *pLight, const int nIdx)
 {
-	m_apLight[nIdx] = pLight;
+	if (m_apLight != NULL)
+	{// ライト用のアドレスが確保されている
+		m_apLight[nIdx] = pLight;
 
-	CRenderer *pRenderer = CManager::GetRenderer();
-	if (pRenderer != NULL)
-	{// レンダリングクラスが取得できた
-		LPDIRECT3DDEVICE9 pDevice = pRenderer->GetDevice();  	// デバイスの取得
-		if (pDevice != NULL)
-		{// デバイスが取得できた
-		 // ライトを設定する
-			pDevice->SetLight(nIdx, &m_apLight[nIdx]->GetLight());
+		CRenderer *pRenderer = CManager::GetRenderer();
+		if (pRenderer != NULL)
+		{// レンダリングクラスが取得できた
+			LPDIRECT3DDEVICE9 pDevice = pRenderer->GetDevice();  	// デバイスの取得
+			if (pDevice != NULL)
+			{// デバイスが取得できた
+			    // ライトを設定する
+				pDevice->SetLight(nIdx, &m_apLight[nIdx]->GetLight());
 
-			// ライトのON/OFFを切り替え
-			pDevice->LightEnable(nIdx, m_apLight[nIdx]->GetSwitch());
+				// ライトのON/OFFを切り替え
+				pDevice->LightEnable(nIdx, m_apLight[nIdx]->GetSwitch());
+			}
 		}
 	}
 }
@@ -154,7 +238,7 @@ void CLightManager::SwitchLight(const int nIdx)
 		LPDIRECT3DDEVICE9 pDevice = pRenderer->GetDevice();  	// デバイスの取得
 		if (pDevice != NULL)
 		{// デバイスが取得できた
-		 // ライトのON/OFFを切り替え
+		    // ライトのON/OFFを切り替え
 			bool bSwitch = m_apLight[nIdx]->GetSwitch();
 			bSwitch = bSwitch ? false : true;
 			m_apLight[nIdx]->SetSwitch(bSwitch);

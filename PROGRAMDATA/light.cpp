@@ -37,6 +37,34 @@ CLight::~CLight()
 }
 
 //=============================================================================
+//    ライトの種類を変更しアドレスを返す処理
+//=============================================================================
+CLight *CLight::ChangeLightType(TYPE type)
+{
+	CLight *pLight = NULL;
+
+	// ライトを生成
+	if (type == TYPE_DIRECTIONAL)
+	{// ディレクショナルライトだったら
+		pLight = CDirectionalLight::Create(D3DXVECTOR3(0.0f, -1.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f),
+			D3DXCOLOR(0.2f, 0.2f, 0.2f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+	}
+	else if (type == TYPE_POINT)
+	{// ポイントライトだったら
+		pLight = CPointLight::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f),
+			D3DXCOLOR(0.2f, 0.2f, 0.2f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 0.1f, 0.01f, 0.0f, 300.0f);
+	}
+	else if (type == TYPE_SPOT)
+	{// ポイントライトだったら
+		pLight = CSpotLight::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3(0.0f, -1.0f, 0.0f),
+			D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(0.2f, 0.2f, 0.2f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f),
+			0.1f, 0.01f, 0.0f, 300.0f, 1.0f, D3DX_PI * 0.5f, D3DX_PI * 2.0f);
+	}
+
+	return pLight;
+}
+
+//=============================================================================
 //    終了処理
 //=============================================================================
 void CLight::Uninit(void)
@@ -179,6 +207,7 @@ void CDirectionalLight::CreateLight(D3DXVECTOR3 Dir, D3DXCOLOR Diffuse, D3DXCOLO
 	// 各種値の設定
 	// ライトの種類
 	Light.Type = D3DLIGHT_DIRECTIONAL;
+	SetType(TYPE_DIRECTIONAL);
 
 	// ライトの拡散光
 	Light.Diffuse = Diffuse;
@@ -284,6 +313,7 @@ void CPointLight::CreateLight(D3DXVECTOR3 pos, D3DXCOLOR Diffuse, D3DXCOLOR Ambi
 	// 各種値の設定
 	// ライトの種類
 	Light.Type = D3DLIGHT_POINT;
+	SetType(TYPE_POINT);
 
 	// ライトの位置
 	Light.Position = pos;
@@ -397,6 +427,7 @@ void CSpotLight::CreateLight(D3DXVECTOR3 pos, D3DXVECTOR3 Dir, D3DXCOLOR Diffuse
 	// 各種値の設定
 	// ライトの種類
 	Light.Type = D3DLIGHT_SPOT;
+	SetType(TYPE_SPOT);
 
 	// ライトの位置
 	Light.Position = pos;

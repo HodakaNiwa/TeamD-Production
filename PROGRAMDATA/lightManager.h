@@ -27,6 +27,7 @@ public:    // 誰でもアクセス可能
 	~CLightManager();
 
 	static CLightManager *Create(int nNumLight = 3);
+	static CLightManager *Cpy(CLightManager *pLightManagerOld, int nNumLight);
 
 	HRESULT Init(int nNumLight = 3);
 	void Uninit(void);
@@ -42,6 +43,8 @@ public:    // 誰でもアクセス可能
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:   // このクラスだけがアクセス可能
+	CLight *GetCpyLight(int nIdx);
+
 	int    m_nNumLight;     // ライトの数
 	CLight **m_apLight;     // ライトクラスへのポインタ
 };

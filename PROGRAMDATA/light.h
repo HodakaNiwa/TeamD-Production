@@ -27,6 +27,8 @@ public:    // 誰でもアクセス可能
 		TYPE_MAX
 	}TYPE;
 
+	static CLight *ChangeLightType(TYPE type);
+
 	CLight();
 	virtual ~CLight();
 	virtual HRESULT Init(void) = 0;
