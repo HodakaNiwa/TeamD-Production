@@ -79,30 +79,4 @@ private:   // このクラスだけがアクセス可能
 	bool                m_bBreak;       // 壊せるかどうか
 };
 
-
-//*****************************************************************************
-//    ブロック配置用クラスの定義
-//*****************************************************************************
-class CSetBlock : public CBlock
-{
-public:    // 誰でもアクセス可能
-	CSetBlock(int nPriority = 3, OBJTYPE objType = OBJTYPE_3D);
-	~CSetBlock();
-
-	static CSetBlock *Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, bool bBreak, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth = 75.0f, float fBoxHeight = 75.0f, float fBoxDepth = 75.0f, int nPriority = 3);
-
-	HRESULT Init(void);
-	void Uninit(void);
-	void Update(void);
-	void Draw(void);
-
-	void SetSelectModel(const int nSelectModel);
-	int GetSelectModel(void);
-
-protected: // このクラスと派生クラスだけがアクセス可能
-
-private:   // このクラスだけがアクセス可能
-	int m_nSelectModel;
-};
-
 #endif
