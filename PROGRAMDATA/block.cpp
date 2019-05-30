@@ -7,31 +7,33 @@
 #include "block.h"
 #include "manager.h"
 #include "boxCollider.h"
-#include "system.h"
-// #include "renderer.h"
+#include "renderer.h"
 
 //*****************************************************************************
-//     マクロ定義
+//    マクロ定義
 //*****************************************************************************
 
 
 //*****************************************************************************
-//     静的メンバ変数
+//    静的メンバ変数
 //*****************************************************************************
 
+//*****************************************************************************
+//    CBlockの処理
+//*****************************************************************************
 //=============================================================================
 //    コンストラクタ
 //=============================================================================
 CBlock::CBlock(int nPriority, OBJTYPE objType) : CObject3D(nPriority, objType)
 {
 	// 各種値のクリア
-	m_pMesh = NULL;                      // メッシュへのポインタ
-	m_pBuffMat = NULL;                   // マテリアル情報へのポインタ
-	m_nNumMat = 0;                       // マテリアル情報の数
-	m_VtxMax = INITIALIZE_D3DXVECTOR3;   // 最大の頂点座標
-	m_VtxMin = INITIALIZE_D3DXVECTOR3;   // 最小の頂点座標
-	m_fAlpha = 0.0f;                     // モデルの透明度
-	m_bBreak = false;                    // 壊せるかどうか
+	m_pMesh = NULL;                            // メッシュへのポインタ
+	m_pBuffMat = NULL;                         // マテリアル情報へのポインタ
+	m_nNumMat = 0;                             // マテリアル情報の数
+	m_VtxMax = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 最大の頂点座標
+	m_VtxMin = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 最小の頂点座標
+	m_fAlpha = 0.0f;                           // モデルの透明度
+	m_bBreak = false;                          // 壊せるかどうか
 }
 
 //=============================================================================
@@ -45,7 +47,7 @@ CBlock::~CBlock()
 //=============================================================================
 //    生成処理
 //=============================================================================
-CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, bool bBreak, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth, int nPriority)
+CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, TYPE type, int nModelIdx, bool bBreak, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth, int nPriority)
 {
 	CBlock *pBlock = NULL;      // ブロッククラス型のポインタ
 	if (pBlock == NULL)
@@ -56,6 +58,8 @@ CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, bool bBreak, LPD3DXMESH
 		    // 各種値の設定
 			pBlock->SetPos(pos);                                     // 座標
 			pBlock->SetRot(rot);                                     // 向き
+			pBlock->SetType(type);                                   // 種類番号
+			pBlock->SetModelIdx(nModelIdx);                          // 使用するモデルの番号
 			pBlock->SetBreak(bBreak);                                // 壊せるかどうか
 			pBlock->SetAlpha(1.0f);                                  // モデルの透明度
 			pBlock->BindModel(pMesh, pBuffMat, nNumMat, pTexture);   // モデル情報割り当て
@@ -94,7 +98,7 @@ HRESULT CBlock::Init(void)
 //=============================================================================
 void CBlock::Uninit(void)
 {
-
+	CObject3D::Uninit();
 }
 
 //=============================================================================
@@ -202,6 +206,22 @@ void CBlock::BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, L
 }
 
 //=============================================================================
+//    種類番号設定処理
+//=============================================================================
+void CBlock::SetType(const TYPE type)
+{
+	m_Type = type;
+}
+
+//=============================================================================
+//    使用するモデルの番号設定処理
+//=============================================================================
+void CBlock::SetModelIdx(const int nModelIdx)
+{
+	m_nModelIdx = nModelIdx;
+}
+
+//=============================================================================
 //    メッシュへのポインタ設定処理
 //=============================================================================
 void CBlock::SetMesh(const LPD3DXMESH pMesh)
@@ -266,6 +286,22 @@ void CBlock::SetBreak(const bool bBreak)
 }
 
 //=============================================================================
+//    種類番号取得処理
+//=============================================================================
+CBlock::TYPE CBlock::GetType(void)
+{
+	return m_Type;
+}
+
+//=============================================================================
+//    使用するモデルの番号取得処理
+//=============================================================================
+int CBlock::GetModelIdx(void)
+{
+	return m_nModelIdx;
+}
+
+//=============================================================================
 //    メッシュへのポインタ取得処理
 //=============================================================================
 LPD3DXMESH CBlock::GetMesh(void)
@@ -327,4 +363,109 @@ float CBlock::GetAlpha(void)
 bool CBlock::GetBreak(void)
 {
 	return m_bBreak;
+}
+
+
+//*****************************************************************************
+//    CSetBlockの処理
+//*****************************************************************************
+//=============================================================================
+//    コンストラクタ
+//=============================================================================
+CSetBlock::CSetBlock(int nPriority, OBJTYPE objType) : CBlock(nPriority, objType)
+{
+	m_nSelectModel = 0;
+}
+
+//=============================================================================
+//    デストラクタ
+//=============================================================================
+CSetBlock::~CSetBlock()
+{
+
+}
+
+//=============================================================================
+//    生成処理
+//=============================================================================
+CSetBlock *CSetBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, bool bBreak, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth, int nPriority)
+{
+	CSetBlock *pSetBlock = NULL;      // 配置用ブロッククラス型のポインタ
+	if (pSetBlock == NULL)
+	{// メモリが空になっている
+		pSetBlock = new CSetBlock(nPriority);
+		if (pSetBlock != NULL)
+		{// インスタンスを生成できた
+		    // 各種値の設定
+			pSetBlock->SetPos(pos);                                     // 座標
+			pSetBlock->SetRot(rot);                                     // 向き
+			pSetBlock->SetBreak(bBreak);                                // 壊せるかどうか
+			pSetBlock->SetAlpha(0.5f);                                  // モデルの透明度
+			pSetBlock->BindModel(pMesh, pBuffMat, nNumMat, pTexture);   // モデル情報割り当て
+
+			if (FAILED(pSetBlock->Init()))
+			{// 初期化に失敗した
+				return NULL;
+			}
+		}
+		else
+		{// インスタンスを生成できなかった
+			return NULL;
+		}
+	}
+	else
+	{// インスタンスを生成できなかった
+		return NULL;
+	}
+
+	return pSetBlock;
+}
+
+//=============================================================================
+//    初期化処理
+//=============================================================================
+HRESULT CSetBlock::Init(void)
+{
+	return S_OK;
+}
+
+//=============================================================================
+//    終了処理
+//=============================================================================
+void CSetBlock::Uninit(void)
+{
+	CBlock::Uninit();
+}
+
+
+//=============================================================================
+//    更新処理
+//=============================================================================
+void CSetBlock::Update(void)
+{
+
+}
+
+//=============================================================================
+//    描画処理
+//=============================================================================
+void CSetBlock::Draw(void)
+{
+	CBlock::Draw();
+}
+
+//=============================================================================
+//    選択しているモデル番号を設定する
+//=============================================================================
+void CSetBlock::SetSelectModel(const int nSelectModel)
+{
+	m_nSelectModel = nSelectModel;
+}
+
+//=============================================================================
+//    選択しているモデル番号を取得する
+//=============================================================================
+int CSetBlock::GetSelectModel(void)
+{
+	return m_nSelectModel;
 }
