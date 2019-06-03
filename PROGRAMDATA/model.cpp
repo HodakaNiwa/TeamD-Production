@@ -46,7 +46,7 @@ CModel::~CModel()
 //=============================================================================
 //    生成処理
 //=============================================================================
-CModel *CModel::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, D3DXVECTOR3 VtxMax, D3DXVECTOR3 VtxMin, LPDIRECT3DTEXTURE9 *pTexture)
+CModel *CModel::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, D3DXVECTOR3 VtxMax, D3DXVECTOR3 VtxMin)
 {
 	CModel *pModel = NULL;  // モデルクラス型のポインタ
 	if (pModel == NULL)
@@ -54,7 +54,7 @@ CModel *CModel::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3D
 		pModel = new CModel;
 		if (pModel != NULL)
 		{// インスタンスを生成できた
-			if (FAILED(pModel->Init(pos, rot, pMesh, pBuffMat, nNumMat, VtxMax, VtxMin, pTexture)))
+			if (FAILED(pModel->Init(pos, rot, pMesh, pBuffMat, nNumMat, pTexture, VtxMax, VtxMin)))
 			{// 初期化に失敗した
 				return NULL;
 			}
@@ -75,7 +75,7 @@ CModel *CModel::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3D
 //=============================================================================
 //    初期化処理
 //=============================================================================
-HRESULT CModel::Init(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, D3DXVECTOR3 VtxMax, D3DXVECTOR3 VtxMin, LPDIRECT3DTEXTURE9 *pTexture)
+HRESULT CModel::Init(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, D3DXVECTOR3 VtxMax, D3DXVECTOR3 VtxMin)
 {
 	// レンダリングクラスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
