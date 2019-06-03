@@ -1,0 +1,36 @@
+﻿  basemode.cpp
+  block.cpp
+  boxCollider.cpp
+  bullet.cpp
+  camera.cpp
+  cameraManager.cpp
+  character.cpp
+  debuglog.cpp
+  enemy.cpp
+  fade.cpp
+  fileLoader.cpp
+  fileSaver.cpp
+  functionlib.cpp
+  game.cpp
+  input.cpp
+  light.cpp
+  lightManager.cpp
+  main.cpp
+  manager.cpp
+  map.cpp
+  コンパイル中...
+  meshfield.cpp
+  model.cpp
+  modelcreate.cpp
+  object3D.cpp
+  player.cpp
+  renderer.cpp
+  scene.cpp
+  server.cpp
+  serverlib.cpp
+  textureManager.cpp
+  コード生成しています。
+  All 482 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  コード生成が終了しました。
+  サーバーを利用したプレイヤーの移動.vcxproj -> C:\Users\game127\Documents\Visual Studio 2015\Projects\3年チーム制作(前期)\テスト&検証\サーバーを利用したプレイヤーの移動\Release\サーバーを利用したプレイヤーの移動.exe
+  サーバーを利用したプレイヤーの移動.vcxproj -> C:\Users\game127\Documents\Visual Studio 2015\Projects\3年チーム制作(前期)\テスト&検証\サーバーを利用したプレイヤーの移動\Release\サーバーを利用したプレイヤーの移動.pdb (Full PDB)
