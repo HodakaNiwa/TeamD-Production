@@ -1,0 +1,662 @@
+#==============================================================================
+#
+# ゲームフィールド情報スクリプトファイル [gamefield000.txt]
+# Author : Hodaka Niwa
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# ブロック配置情報
+#------------------------------------------------------------------------------
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 243.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 243.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 243.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 243.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 243.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 206.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 206.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 206.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 206.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 206.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 168.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 168.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 168.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 168.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 168.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 131.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 131.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 131.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 131.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 131.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 -18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 -18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 -18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 -18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 -18.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 -56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 -56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 -56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 -56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 -56.3		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -356.3 0.0 -93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -318.8 0.0 -93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -281.3 0.0 -93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -243.8 0.0 -93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+BLOCKSET
+	TYPE = 0				# 種類
+	MODELIDX = 0			# 使用するモデルの番号
+	POS = -206.3 0.0 -93.8		# 座標
+	ROT = 0.0 0.0 0.0		# 向き
+	BREAK = 1				# 壊せるかどうか
+	COLLISION
+		WIDTH = 37.5		# 当たり判定の幅
+		HEIGHT = 37.5		# 当たり判定の高さ
+		DEPTH = 37.5		# 当たり判定の奥行
+	END_COLLISION
+END_BLOCKSET
+
+END_SCRIPT		# この行は絶対消さないこと！
