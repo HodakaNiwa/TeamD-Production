@@ -1,0 +1,10 @@
+﻿  manager.cpp
+  server.cpp
+  serverlib.cpp
+  コード生成しています。
+  24 of 103 functions (23.3%) were compiled, the rest were copied from previous compilation.
+    3 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
+  コード生成が終了しました。
+  サーバー構築.vcxproj -> C:\Users\game127\Documents\Visual Studio 2015\Projects\3年チーム制作(前期)\テスト&検証\サーバー構築\Release\サーバー構築.exe
+  サーバー構築.vcxproj -> C:\Users\game127\Documents\Visual Studio 2015\Projects\3年チーム制作(前期)\テスト&検証\サーバー構築\Release\サーバー構築.pdb (Full PDB)

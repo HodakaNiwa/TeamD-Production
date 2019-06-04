@@ -23,6 +23,7 @@ public:    //誰からもアクセス可能
 	void Uninit(void);
 
 	void SetNumModel(int nNumModel);
+	void SetFileName(char *pFileName, int nIdx);
 	void SetMesh(LPD3DXMESH pMesh, int nIdx);
 	void SetBuffMat(LPD3DXBUFFER pBuffMat, int nIdx);
 	void SetNumMat(DWORD nNumMat, int nIdx);
@@ -30,18 +31,22 @@ public:    //誰からもアクセス可能
 	void SetVtxMin(D3DXVECTOR3 nNumMat, int nIdx);
 	void SetMaterial(LPDIRECT3DDEVICE9 pDevice,LPD3DXBUFFER pBuffMat, DWORD nNumMat, int nIdx);
 
+	int	GetNumModel(void);
+	char *GetFileName(int nIdx);
 	LPD3DXMESH GetMesh(int nIdx);
 	LPD3DXBUFFER GetBuffMat(int nIdx);
 	DWORD GetNumMat(int nIdx);
 	D3DXVECTOR3 GetVtxMax(int nIdx);
 	D3DXVECTOR3 GetVtxMin(int nIdx);
-	int			GetNumModel(void);
+	LPDIRECT3DTEXTURE9	*GetTexture(int nIdx);
+
 	//静的メンバ変数
 	static CModelCreate *Create(int nNumModel);
 
 private:   //自分だけがアクセス可能
 	//メンバ変数
 	int                   m_nNumModel;    // モデル総数
+	char				  **m_pFileName;  // ファイル名
 	LPD3DXMESH            *m_pMesh;       // メッシュのポインタ
 	LPD3DXBUFFER          *m_pBuffMat;    // マテリアルのポインタ
 	DWORD                 *m_pNumMat;     // マテリアル総数のポインタ
