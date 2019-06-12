@@ -24,7 +24,11 @@
 #include "cameraManager.h"
 #include "light.h"
 #include "lightManager.h"
+#include "textureManager.h"
 #include "fade.h"
+#include "meshfield.h"
+#include "headquarters.h"
+#include "respawn.h"
 
 //=============================================================================
 // マクロ定義
@@ -266,13 +270,19 @@ void CImGui_Jukiya::EditerDebug(void)
 			ImGui::RadioButton(u8"ゲームフィールド", &nEditMode, CEditor::EDITMODE_GAMEFIELD); ImGui::SameLine();
 			ImGui::RadioButton(u8"ライト", &nEditMode, CEditor::EDITMODE_LIGHT); ImGui::SameLine();
 			ImGui::RadioButton(u8"配置物", &nEditMode, CEditor::EDITMODE_OBJECT);
+			ImGui::RadioButton(u8"リスポーン", &nEditMode, CEditor::EDITMODE_RESPAWN); ImGui::SameLine();
+			ImGui::RadioButton(u8"司令部", &nEditMode, CEditor::EDITMODE_HEADQUARTERS); ImGui::SameLine();
 			pEditor->SetEditMode((CEditor::EDITMODE)nEditMode);
 			ImGui::TreePop();
 		}
 		ImGui::Text("");
+		ImGui::Text("");
 
 		// カメラ情報表示
 		CameraDebug(pEditor);
+
+		// 地面情報表示
+		FieldDebug(pEditor);
 
 		// マップ情報表示
 		MapDebug(pEditor);
@@ -293,6 +303,14 @@ void CImGui_Jukiya::EditerDebug(void)
 	else if (pEditor->GetEditMode() == CEditor::EDITMODE_OBJECT)
 	{// 配置物情報表示
 		ObjectDebug(pEditor);
+	}
+	else if (pEditor->GetEditMode() == CEditor::EDITMODE_RESPAWN)
+	{// リスポーン位置情報表示
+		RespawnDebug(pEditor);
+	}
+	else if (pEditor->GetEditMode() == CEditor::EDITMODE_HEADQUARTERS)
+	{// 司令部情報表示
+		HeadQuartersDebug(pEditor);
 	}
 }
 
@@ -367,6 +385,26 @@ void CImGui_Jukiya::EditorCameraDebug(CCamera *pCamera)
 void CImGui_Jukiya::TopViewCameraDebug(CCamera *pCamera)
 {
 
+}
+
+//=============================================================================
+// ImGuiの地面情報描画処理
+//=============================================================================
+void CImGui_Jukiya::FieldDebug(CEditor *pEditor)
+{
+	// ヘッダー生成開始
+	ImGui::CollapsingHeader(u8"地面情報");
+
+	// 地面に張り付けるテクスチャ番号を設定
+	int nNumTex = pEditor->GetMap()->GetTextureManager()->GetNumTexture();
+	int nFieldTexIdx = pEditor->GetMap()->GetFieldTexIdx();
+	ImGui::SliderInt(u8"テクスチャの番号", &nFieldTexIdx, 0, nNumTex - 1);
+	ImGui::Text("");
+	pEditor->GetMap()->SetFieldTexIdx(nFieldTexIdx);
+
+	// 地面にテクスチャを設定
+	CMeshField *pMeshField = pEditor->GetMap()->GetMeshField();
+	pMeshField->BindTexture(pEditor->GetMap()->GetTextureManager()->GetTexture(nFieldTexIdx));
 }
 
 //=============================================================================
@@ -517,6 +555,8 @@ void CImGui_Jukiya::LoadMapDebug(CEditor *pEditor, CMap *pMap)
 		else
 		{
 			m_bLoadMapDisp = true;
+			pEditor->SetRespawnModel();
+			pEditor->SetMeshField(pMap->GetMeshField());
 		}
 		m_nLoadMapCounter = IMGUI_LOAD_DISP;
 	}
@@ -555,6 +595,33 @@ void CImGui_Jukiya::LightDebug(CEditor *pEditor)
 }
 
 //=============================================================================
+// ImGuiのライト増減情報描画処理
+//=============================================================================
+CLightManager *CImGui_Jukiya::LightIncreDecreDebug(CLightManager *pLightManager)
+{
+	CLightManager *pLightManagerNew = pLightManager;
+	if (pLightManager != NULL)
+	{
+		// ライトの数を取得
+		int nNumLight = pLightManager->GetNumLight();
+		int nNumLightDef = nNumLight;
+
+		// ライトの数を増減させる
+		ImGui::InputInt(u8"ライトの数", &nNumLight);
+
+		// 増減判定
+		if (nNumLight != nNumLightDef && nNumLight > 0)
+		{// デフォルトの値から変更された
+		    // ライト情報をコピーして渡す
+			pLightManagerNew = CLightManager::Cpy(pLightManager, nNumLight);
+			m_nLightIdx = 0;
+		}
+	}
+
+	return pLightManagerNew;
+}
+
+//=============================================================================
 // ImGuiのライト情報描画処理
 //=============================================================================
 void CImGui_Jukiya::LightInfoDebug(CLightManager *pLightManager)
@@ -567,19 +634,21 @@ void CImGui_Jukiya::LightInfoDebug(CLightManager *pLightManager)
 
 		// ライトの数を取得
 		int nNumLight = pLightManager->GetNumLight();
+		if (m_nLightIdx > nNumLight)
+		{
+			m_nLightIdx = 0;
+		}
 
 		// ライト情報を表示
-		for (int nCntLight = 0; nCntLight < nNumLight; nCntLight++)
-		{// 現在生成されているライトの数だけ繰り返し
-			pLightManager = LightInfo(pLightManager, nCntLight);
-		}
+		ImGui::SliderInt(u8"表示する番号", &m_nLightIdx, 0, nNumLight - 1);
+		LightInfo(pLightManager, m_nLightIdx);
 	}
 }
 
 //=============================================================================
 // ImGuiのライト情報表示処理
 //=============================================================================
-CLightManager *CImGui_Jukiya::LightInfo(CLightManager *pLightManager, int nCntLight)
+void CImGui_Jukiya::LightInfo(CLightManager *pLightManager, int nCntLight)
 {
 	ImGui::Text(u8"ライト%d   ", nCntLight);
 	// ライト情報を取得
@@ -614,8 +683,6 @@ CLightManager *CImGui_Jukiya::LightInfo(CLightManager *pLightManager, int nCntLi
 		pLightManager->SettingLight(pLight, nCntLight);
 		ImGui::Separator();
 	}
-
-	return pLightManager;
 }
 
 //=============================================================================
@@ -768,32 +835,6 @@ void CImGui_Jukiya::SpotLightInfoDebug(CSpotLight *pSpotLight)
 }
 
 //=============================================================================
-// ImGuiのライト増減情報描画処理
-//=============================================================================
-CLightManager *CImGui_Jukiya::LightIncreDecreDebug(CLightManager *pLightManager)
-{
-	CLightManager *pLightManagerNew = pLightManager;
-	if (pLightManager != NULL)
-	{
-		// ライトの数を取得
-		int nNumLight = pLightManager->GetNumLight();
-		int nNumLightDef = nNumLight;
-
-		// ライトの数を増減させる
-		ImGui::InputInt(u8"ライトの数", &nNumLight);
-
-		// 増減判定
-		if (nNumLight != nNumLightDef && nNumLight > 0)
-		{// デフォルトの値から変更された
-			// ライト情報をコピーして渡す
-			pLightManagerNew = CLightManager::Cpy(pLightManager, nNumLight);
-		}
-	}
-
-	return pLightManagerNew;
-}
-
-//=============================================================================
 // ImGuiのゲームフィールド情報描画処理
 //=============================================================================
 void CImGui_Jukiya::GameFieldDebug(CEditor *pEditor)
@@ -803,8 +844,27 @@ void CImGui_Jukiya::GameFieldDebug(CEditor *pEditor)
 		// ウィンドウ生成開始
 		ImGui::Begin(u8"ゲームフィールド情報");
 
-		// ブロック情報表示
-		BlockDebug(pEditor);
+		// 配置するオブジェクトの種類を設定
+		int nGameFieldMode = pEditor->GetGameFieldMode();
+		ImGui::RadioButton(u8"ブロック", &nGameFieldMode, CEditor::GAMEFIELDMODE_BLOCK); ImGui::SameLine();
+		ImGui::RadioButton(u8"川", &nGameFieldMode, CEditor::GAMEFIELDMODE_RIVER); ImGui::SameLine();
+		ImGui::RadioButton(u8"氷", &nGameFieldMode, CEditor::GAMEFIELDMODE_ICE);
+		pEditor->SetGameFieldMode((CEditor::GAMEFIELDMODE)nGameFieldMode);
+		ImGui::Text("");
+
+		// 現在のモードによって処理わけ
+		if (nGameFieldMode == CEditor::GAMEFIELDMODE_BLOCK)
+		{// ブロック情報表示
+			BlockDebug(pEditor);
+		}
+		else if (nGameFieldMode == CEditor::GAMEFIELDMODE_RIVER)
+		{// 川情報表示
+			RiverDebug(pEditor);
+		}
+		else if (nGameFieldMode == CEditor::GAMEFIELDMODE_ICE)
+		{// 氷情報表示
+			IceDebug(pEditor);
+		}
 
 		// ウィンドウ生成終了
 		ImGui::End();
@@ -816,68 +876,83 @@ void CImGui_Jukiya::GameFieldDebug(CEditor *pEditor)
 //=============================================================================
 void CImGui_Jukiya::BlockDebug(CEditor *pEditor)
 {
-	if (pEditor != NULL)
-	{
-		// マップクラスを取得
-		CMap *pMap = pEditor->GetMap();
+	// マップクラスを取得
+	CMap *pMap = pEditor->GetMap();
 
-		// モデル管轄クラスを取得
-		CModelCreate *pModelCreate = pMap->GetModelCreate();
+	// モデル管轄クラスを取得
+	CModelCreate *pModelCreate = pMap->GetModelCreate();
 
-		// ブロック情報取得
-		int nBlockType = pEditor->GetBlockType();
-		int nBlockModelIdx = pEditor->GetBlockModelIdx();
-		bool bBlockBreak = pEditor->GetBlockBreak();
-		float fBlockColWidth = pEditor->GetBlockColWidth();
-		float fBlockColHeight = pEditor->GetBlockColHeight();
-		float fBlockColDepth = pEditor->GetBlockColDepth();
-		int nBlockTypeDef = nBlockType;
-		int nBlockModelIdxDef = nBlockModelIdx;
-		float fBlockColWidthDef = fBlockColWidth;
-		float fBlockColHeightDef = fBlockColHeight;
-		float fBlockColDepthDef = fBlockColDepth;
+	// ブロック情報取得
+	int nBlockType = pEditor->GetBlockType();
+	int nBlockModelIdx = pEditor->GetBlockModelIdx();
+	bool bBlockBreak = pEditor->GetBlockBreak();
+	float fBlockColWidth = pEditor->GetBlockColWidth();
+	float fBlockColHeight = pEditor->GetBlockColHeight();
+	float fBlockColDepth = pEditor->GetBlockColDepth();
+	int nBlockTypeDef = nBlockType;
+	int nBlockModelIdxDef = nBlockModelIdx;
+	float fBlockColWidthDef = fBlockColWidth;
+	float fBlockColHeightDef = fBlockColHeight;
+	float fBlockColDepthDef = fBlockColDepth;
 
-		// ヘッダー生成開始
-		ImGui::CollapsingHeader(u8"配置するブロックの値設定");
+	// ヘッダー生成開始
+	ImGui::CollapsingHeader(u8"ブロックの値設定");
 
-		// ブロック情報を表示
-		ImGui::InputInt(u8"種類", &nBlockType);
-		ImGui::InputInt(u8"使用するモデルの番号", &nBlockModelIdx);
-		ImGui::Checkbox(u8"壊せるかどうか", &bBlockBreak);
-		ImGui::InputFloat(u8"当たり判定の幅", &fBlockColWidth);
-		ImGui::InputFloat(u8"当たり判定の高さ", &fBlockColHeight);
-		ImGui::InputFloat(u8"当たり判定の奥行", &fBlockColDepth);
+	// ブロック情報を表示
+	ImGui::InputInt(u8"種類", &nBlockType);
+	ImGui::InputInt(u8"使用するモデルの番号", &nBlockModelIdx);
+	ImGui::Checkbox(u8"壊せるかどうか", &bBlockBreak);
+	ImGui::InputFloat(u8"当たり判定の幅", &fBlockColWidth);
+	ImGui::InputFloat(u8"当たり判定の高さ", &fBlockColHeight);
+	ImGui::InputFloat(u8"当たり判定の奥行", &fBlockColDepth);
 
-		// ブロック情報判定
-		if (nBlockType > CBlock::TYPE_MAX - 1 || nBlockType < 0)
-		{// ブロックの種類の総数を超えて入力されている
-			nBlockType = nBlockTypeDef;
-		}
-		if (nBlockModelIdx > pModelCreate->GetNumModel() - 1 || nBlockModelIdx < 0)
-		{// 読み込んだモデルの総数を超えて入力されている
-			nBlockModelIdx = nBlockModelIdxDef;
-		}
-		if (fBlockColWidth < 0.0f)
-		{// 当たり判定幅情報が0を下回っている
-			fBlockColWidth = fBlockColWidthDef;
-		}
-		if (fBlockColHeight < 0.0f)
-		{// 当たり判定高さ情報が0を下回っている
-			fBlockColHeight = fBlockColHeightDef;
-		}
-		if (fBlockColDepth < 0.0f)
-		{// 当たり判定奥行情報が0を下回っている
-			fBlockColDepth = fBlockColDepthDef;
-		}
-
-		// ブロック情報設定
-		pEditor->SetBlockType(nBlockType);
-		pEditor->SetBlockModelIdx(nBlockModelIdx);
-		pEditor->SetBlockBreak(bBlockBreak);
-		pEditor->SetBlockColWidth(fBlockColWidth);
-		pEditor->SetBlockColHeight(fBlockColHeight);
-		pEditor->SetBlockColDepth(fBlockColDepth);
+	// ブロック情報判定
+	if (nBlockType < 0)
+	{// ブロック種類データが0を下回っている
+		nBlockType = nBlockTypeDef;
 	}
+	if (nBlockModelIdx > pModelCreate->GetNumModel() - 1 || nBlockModelIdx < 0)
+	{// 読み込んだモデルの総数を超えて入力されている
+		nBlockModelIdx = nBlockModelIdxDef;
+	}
+	if (fBlockColWidth < 0.0f)
+	{// 当たり判定幅情報が0を下回っている
+		fBlockColWidth = fBlockColWidthDef;
+	}
+	if (fBlockColHeight < 0.0f)
+	{// 当たり判定高さ情報が0を下回っている
+		fBlockColHeight = fBlockColHeightDef;
+	}
+	if (fBlockColDepth < 0.0f)
+	{// 当たり判定奥行情報が0を下回っている
+		fBlockColDepth = fBlockColDepthDef;
+	}
+
+	// ブロック情報設定
+	pEditor->SetBlockType(nBlockType);
+	pEditor->SetBlockModelIdx(nBlockModelIdx);
+	pEditor->SetBlockBreak(bBlockBreak);
+	pEditor->SetBlockColWidth(fBlockColWidth);
+	pEditor->SetBlockColHeight(fBlockColHeight);
+	pEditor->SetBlockColDepth(fBlockColDepth);
+}
+
+//=============================================================================
+// ImGuiの川情報描画処理
+//=============================================================================
+void CImGui_Jukiya::RiverDebug(CEditor *pEditor)
+{
+	// ヘッダー生成開始
+	ImGui::CollapsingHeader(u8"川の値設定");
+}
+
+//=============================================================================
+// ImGuiの氷情報描画処理
+//=============================================================================
+void CImGui_Jukiya::IceDebug(CEditor *pEditor)
+{
+	// ヘッダー生成開始
+	ImGui::CollapsingHeader(u8"氷の値設定");
 }
 
 //=============================================================================
@@ -889,6 +964,135 @@ void CImGui_Jukiya::ObjectDebug(CEditor *pEditor)
 	{
 		// ウィンドウ生成開始
 		ImGui::Begin(u8"配置物情報");
+
+		// 配置するオブジェクトの種類を設定
+		int nObjMode = pEditor->GetObjectMode();
+		ImGui::RadioButton(u8"モデル", &nObjMode, CEditor::OBJECTMODE_MODEL); ImGui::SameLine();
+		ImGui::RadioButton(u8"ビルボード", &nObjMode, CEditor::OBJECTMODE_BILLBOARD); ImGui::SameLine();
+		ImGui::RadioButton(u8"エフェクト", &nObjMode, CEditor::OBJECTMODE_EFFECT);
+		pEditor->SetObjectMode((CEditor::OBJECTMODE)nObjMode);
+		ImGui::Text("");
+
+		// 現在のモードによって処理わけ
+		if (nObjMode == CEditor::OBJECTMODE_MODEL)
+		{// 配置モデル情報表示
+			ObjModelDebug(pEditor);
+		}
+		else if (nObjMode == CEditor::OBJECTMODE_BILLBOARD)
+		{// 配置ビルボード情報表示
+			ObjBillboardDebug(pEditor);
+		}
+		else if (nObjMode == CEditor::OBJECTMODE_EFFECT)
+		{// 配置エフェクト情報表示
+			ObjEffectDebug(pEditor);
+		}
+
+		// ウィンドウ生成終了
+		ImGui::End();
+	}
+}
+
+//=============================================================================
+// ImGuiの配置モデル情報描画処理
+//=============================================================================
+void CImGui_Jukiya::ObjModelDebug(CEditor *pEditor)
+{
+	// ヘッダー生成開始
+	ImGui::CollapsingHeader(u8"配置モデルの値設定");
+}
+
+//=============================================================================
+// ImGuiの配置ビルボード情報描画処理
+//=============================================================================
+void CImGui_Jukiya::ObjBillboardDebug(CEditor *pEditor)
+{
+	// ヘッダー生成開始
+	ImGui::CollapsingHeader(u8"配置ビルボードの値設定");
+}
+
+//=============================================================================
+// ImGuiのエフェクト情報描画処理
+//=============================================================================
+void CImGui_Jukiya::ObjEffectDebug(CEditor *pEditor)
+{
+	// ヘッダー生成開始
+	ImGui::CollapsingHeader(u8"配置エフェクトの値設定");
+}
+
+//=============================================================================
+// ImGuiのリスポーン情報描画処理
+//=============================================================================
+void CImGui_Jukiya::RespawnDebug(CEditor *pEditor)
+{
+	if (pEditor != NULL)
+	{
+		// ウィンドウ生成開始
+		ImGui::Begin(u8"プレイヤーのリスポーン情報");
+
+		// プレイヤーのリスポーン情報描画
+		ImGui::SliderInt(u8"情報を操作する番号", &m_nPlayerResIdx, 0, MAX_PLAYER_RESPAWN - 1);
+		RespawnInfoDebug(pEditor->GetMap()->GetPlayerRespawn(m_nPlayerResIdx));
+
+		// ウィンドウ生成終了
+		ImGui::End();
+
+		// ウィンドウ生成開始
+		ImGui::Begin(u8"敵のリスポーン情報");
+
+		// 敵のリスポーン情報描画
+		ImGui::SliderInt(u8"情報を操作する番号", &m_nEnemyResIdx, 0, MAX_ENEMY_RESPAWN - 1);
+		RespawnInfoDebug(pEditor->GetMap()->GetEnemyRespawn(m_nEnemyResIdx));
+
+		// ウィンドウ生成終了
+		ImGui::End();
+	}
+}
+
+//=============================================================================
+// ImGuiのプレイヤーのリスポーン情報描画処理
+//=============================================================================
+void CImGui_Jukiya::RespawnInfoDebug(CRespawn *pRespawn)
+{
+	if (pRespawn != NULL)
+	{
+		// 今いるエリア番号を取得
+		int nResAreaX = pRespawn->GetAreaX();
+		int nResAreaZ = pRespawn->GetAreaZ();
+
+		// エリア番号編集
+		ImGui::SliderInt(u8"横のエリア", &nResAreaX, 1, MASU_BLOCK_X);
+		ImGui::SliderInt(u8"奥行のエリア", &nResAreaZ, 1, MASU_BLOCK_Z);
+
+		// エリア番号設定
+		pRespawn->SetArea(nResAreaX, nResAreaZ);
+	}
+}
+
+//=============================================================================
+// ImGuiの司令部情報描画処理
+//=============================================================================
+void CImGui_Jukiya::HeadQuartersDebug(CEditor *pEditor)
+{
+	if (pEditor != NULL)
+	{
+		// ウィンドウ生成開始
+		ImGui::Begin(u8"司令部情報");
+
+		// 司令部の情報描画処理
+		CHeadQuarters *pHeadQuarters = pEditor->GetMap()->GetHeadQuarters();
+		if (pHeadQuarters != NULL)
+		{
+			// 今いるエリア番号を取得
+			int nHeadAreaX = pHeadQuarters->GetAreaX();
+			int nHeadAreaZ = pHeadQuarters->GetAreaZ();
+
+			// エリア番号編集
+			ImGui::SliderInt(u8"横のエリア", &nHeadAreaX, 1, MASU_BLOCK_X);
+			ImGui::SliderInt(u8"奥行のエリア", &nHeadAreaZ, 1, MASU_BLOCK_Z);
+
+			// エリア番号設定
+			pHeadQuarters->SetArea(nHeadAreaX, nHeadAreaZ);
+		}
 
 		// ウィンドウ生成終了
 		ImGui::End();
@@ -919,6 +1123,7 @@ void CImGui_Jukiya::ClearVariable(void)
 	ClearLightVariable();        // ライト用
 	ClearGameFieldVariable();    // ゲームフィールド用
 	ClearObjectVariable();       // 配置物用
+	ClearRespawnVariable();      // リスポーン用
 }
 
 //=============================================================================
@@ -959,6 +1164,7 @@ void CImGui_Jukiya::ClearTexListVariable(void)
 //=============================================================================
 void CImGui_Jukiya::ClearLightVariable(void)
 {
+	m_nLightIdx = 0;
 	m_nSaveLightCounter = 0;
 	m_bSaveLightDisp = false;
 	m_nLoadLightCounter = 0;
@@ -985,4 +1191,13 @@ void CImGui_Jukiya::ClearObjectVariable(void)
 	m_bSaveObjectDisp = false;
 	m_nLoadObjectCounter = 0;
 	m_bLoadObjectDisp = false;
+}
+
+//=============================================================================
+// ImGuiのリスポーン用変数をクリアする
+//=============================================================================
+void CImGui_Jukiya::ClearRespawnVariable(void)
+{
+	m_nPlayerResIdx = 0;
+	m_nEnemyResIdx = 0;
 }

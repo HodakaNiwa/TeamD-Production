@@ -16,6 +16,11 @@
 #include "lightManager.h"
 #include "block.h"
 #include "boxCollider.h"
+#include "object3D.h"
+#include "respawn.h"
+#include "headquarters.h"
+#include "meshfield.h"
+#include "basemode.h"
 #include "scene.h"
 
 //*****************************************************************************
@@ -39,7 +44,7 @@
 #define MAPSET "MAPSET"
 #define END_MAPSET "END_MAPSET"
 #define LIGHT_FILENAME "LIGHT_FILENAME = "
-#define GAMEFILED_FILENAME "GAMEFILED_FILENAME = "
+#define GAMEFIELD_FILENAME "GAMEFIELD_FILENAME = "
 #define OBJECT_FILENAME "OBJECT_FILENAME = "
 
 // 共通情報
@@ -86,6 +91,13 @@
 #define HEIGHT "HEIGHT = "
 #define DEPTH "DEPTH = "
 
+// 地面情報
+#define FIELDSET "FIELDSET"
+#define TEX_IDX "TEX_IDX = "
+#define XBLOCK "XBLOCK = "
+#define ZBLOCK "ZBLOCK = "
+#define END_FIELDSET "END_FIELDSET"
+
 // 川情報
 #define RIVERSET "RIVERSET"
 #define END_RIVERSET "END_RIVERSET"
@@ -116,6 +128,7 @@
 //=============================================================================
 CMap::CMap()
 {
+	m_nFieldTexIdx = 0;                    // 地面に張り付けるテクスチャの番号
 	strcpy(m_aFileName, "\0");             // 読み込むマップデータのファイル名
 	strcpy(m_aModelListFileName, "\0");    // 読み込むモデルリスト情報のファイル名
 	strcpy(m_aTexListFileName, "\0");      // 読み込むテクスチャリスト情報のファイル名
@@ -125,7 +138,6 @@ CMap::CMap()
 	m_pTextureManager = NULL;              // テクスチャ管轄クラスへのポインタ
 	m_pModelCreate = NULL;                 // モデル管轄クラスへのポインタ
 	m_pLightManager = NULL;                // ライト管轄クラスへのポインタ
-
 }
 
 //=============================================================================
@@ -199,6 +211,15 @@ void CMap::Uninit(void)
 	Save(AUTOSAVEFILENAME_MAP);
 #endif
 
+	// 司令部を開放する
+	ReleaseHeadQuarters();
+
+	// プレイヤーのリスポーン位置を開放する
+	ReleasePlayerRespawn();
+
+	// 敵のリスポーン位置を開放する
+	ReleaseEnemyRespawn();
+
 	// テクスチャ管轄クラスを開放する
 	ReleaseTextureManager();
 
@@ -261,8 +282,14 @@ HRESULT CMap::Save(char *pSaveFileName)
 		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
 		pFileSaver->Print("\n");
 
+		// モデル情報のスクリプトファイル名を保存
+		SaveModelList(pFileSaver);
+
+		// テクスチャ情報のスクリプトファイル名を保存
+		SaveTexList(pFileSaver);
+
 		// 司令部の位置を保存
-		SaveBasePos(pFileSaver);
+		SaveHeadQuartersPos(pFileSaver);
 
 		// プレイヤーのリスポーン位置を保存
 		SavePlayerRespawn(pFileSaver);
@@ -270,17 +297,11 @@ HRESULT CMap::Save(char *pSaveFileName)
 		// 敵のリスポーン位置を保存
 		SaveEnemyRespawn(pFileSaver);
 
-		// モデル情報のスクリプトファイル名を保存
-		SaveModelList(pFileSaver);
-
-		// テクスチャ情報のスクリプトファイル名を保存
-		SaveTexList(pFileSaver);
-
 		// マップ情報を保存
 		SaveMap(pFileSaver);
 
 		// スクリプト終了の合図を書き込み
-		pFileSaver->Print("%s		# この行は絶対消さないこと！\n", END_SCRIPT);
+		pFileSaver->Print("\n%s		# この行は絶対消さないこと！\n", END_SCRIPT);
 
 		// メモリの開放
 		if (pFileSaver != NULL)
@@ -318,10 +339,24 @@ HRESULT CMap::Save(char *pSaveFileName)
 //=============================================================================
 HRESULT CMap::ChangeMap(char *pLoadFileName)
 {
+	// ファイルオープンできるかチェック
+	CFileLoader *pFileLoader = CFileLoader::Create(pLoadFileName);
+	if (pFileLoader == NULL)
+	{// ファイルオープンに失敗(処理を停止)
+		return E_FAIL;
+	}
+	else
+	{// ファイルオープンに成功(メモリを開放し処理続行)
+		pFileLoader->Uninit();
+		delete pFileLoader;
+		pFileLoader = NULL;
+	}
+
 	// 生成されているオブジェクトをすべて破棄する
 	DeleteMap();
 
 	// 新たにマップデータを読み込む
+	m_nFieldTexIdx = 0;                       // 地面のテクスチャ番号リセット
 	strcpy(m_aFileName, pLoadFileName);       // ファイル名コピー
 	if (FAILED(Load(pLoadFileName)))
 	{
@@ -343,9 +378,17 @@ HRESULT CMap::LoadScript(char *pStr, CFileLoader *pFileLoader)
 	while (1)
 	{// 抜けるまでループ
 		strcpy(pStr, pFileLoader->GetString(pStr));
-		if (CFunctionLib::Memcmp(pStr, BASE_POS) == 0)
+		if (CFunctionLib::Memcmp(pStr, MODELLIST_FILENAME) == 0)
+		{// モデルリスト情報だった
+			LoadModelList(CFunctionLib::ReadString(pStr, aStr, MODELLIST_FILENAME), pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, TEXLIST_FILENAME) == 0)
+		{// テクスチャリスト情報だった
+			LoadTextureList(CFunctionLib::ReadString(pStr, aStr, TEXLIST_FILENAME), pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, BASE_POS) == 0)
 		{// 基地の位置情報だった
-			LoadBasePos(pStr);
+			LoadHeadQuartersPos(pStr);
 		}
 		else if (CFunctionLib::Memcmp(pStr, PLAYER_RESPAWN) == 0)
 		{// プレイヤーのリスポーン位置情報だった
@@ -357,14 +400,6 @@ HRESULT CMap::LoadScript(char *pStr, CFileLoader *pFileLoader)
 			LoadEnemyRespawn(pStr, nCntLoadEnemyRes);
 			nCntLoadEnemyRes++;
 		}
-		else if (CFunctionLib::Memcmp(pStr, MODELLIST_FILENAME) == 0)
-		{// モデルリスト情報だった
-			LoadModelList(CFunctionLib::ReadString(pStr, aStr, MODELLIST_FILENAME), pStr);
-		}
-		else if (CFunctionLib::Memcmp(pStr, TEXLIST_FILENAME) == 0)
-		{// テクスチャリスト情報だった
-			LoadTextureList(CFunctionLib::ReadString(pStr, aStr, TEXLIST_FILENAME), pStr);
-		}
 		else if (CFunctionLib::Memcmp(pStr, MAPSET) == 0)
 		{// マップセット情報だった
 			LoadMap(pStr, pFileLoader);
@@ -374,37 +409,6 @@ HRESULT CMap::LoadScript(char *pStr, CFileLoader *pFileLoader)
 			break;
 		}
 	}
-
-	return S_OK;
-}
-
-//=============================================================================
-//    基地の位置読み込み処理
-//=============================================================================
-HRESULT CMap::LoadBasePos(char *pStr)
-{
-	m_BasePos = CFunctionLib::ReadVector3(pStr, BASE_POS);
-
-	return S_OK;
-}
-
-//=============================================================================
-//    プレイヤーのリスポーン位置(2人分)読み込み処理
-//=============================================================================
-HRESULT CMap::LoadPlayerRespawn(char *pStr, int nCntPlayerRes)
-{
-	m_PlayerRespawn[nCntPlayerRes] = CFunctionLib::ReadVector3(pStr, PLAYER_RESPAWN);
-
-	return S_OK;
-}
-
-//=============================================================================
-//    敵のリスポーン位置(3箇所分)読み込み処理
-//=============================================================================
-HRESULT CMap::LoadEnemyRespawn(char *pStr, int nCntEnemyRes)
-{
-	// 敵のリスポーン位置を読み込み
-	m_EnemyRespawn[nCntEnemyRes] = CFunctionLib::ReadVector3(pStr, ENEMY_RESPAWN);
 
 	return S_OK;
 }
@@ -567,6 +571,62 @@ HRESULT CMap::LoadTexture(char *pStr, CFileLoader *pFileLoader)
 }
 
 //=============================================================================
+//    基地の位置読み込み処理
+//=============================================================================
+HRESULT CMap::LoadHeadQuartersPos(char *pStr)
+{
+	// 司令部の位置を設定
+	int nWord = 0;
+	int nAreaX = CFunctionLib::ReadInt(pStr, BASE_POS);
+	pStr = CFunctionLib::HeadPutout(pStr, BASE_POS);
+	nWord = CFunctionLib::PopString(pStr, " ");
+	pStr += nWord;
+	int nAreaZ = CFunctionLib::ReadInt(pStr, "");
+
+	// 司令部を生成
+	m_pHeadQuarters = CHeadQuarters::Create(nAreaX, nAreaZ, m_pModelCreate->GetMesh(0), m_pModelCreate->GetBuffMat(0),
+		m_pModelCreate->GetNumMat(0), m_pModelCreate->GetTexture(0));
+
+	return S_OK;
+}
+
+//=============================================================================
+//    プレイヤーのリスポーン位置(2人分)読み込み処理
+//=============================================================================
+HRESULT CMap::LoadPlayerRespawn(char *pStr, int nCntPlayerRes)
+{
+	// プレイヤーのリスポーン位置を設定
+	int nWord = 0;
+	int nAreaX = CFunctionLib::ReadInt(pStr, PLAYER_RESPAWN);
+	pStr = CFunctionLib::HeadPutout(pStr, PLAYER_RESPAWN);
+	nWord = CFunctionLib::PopString(pStr, " ");
+	pStr += nWord;
+	int nAreaZ = CFunctionLib::ReadInt(pStr, "");
+	D3DXVECTOR3 Pos = CFunctionLib::ReadVector3(pStr, PLAYER_RESPAWN);
+	m_pPlayerRespawn[nCntPlayerRes] = CRespawn::Create(nAreaX, nAreaZ);
+
+	return S_OK;
+}
+
+//=============================================================================
+//    敵のリスポーン位置(3箇所分)読み込み処理
+//=============================================================================
+HRESULT CMap::LoadEnemyRespawn(char *pStr, int nCntEnemyRes)
+{
+	// 敵のリスポーン位置を読み込み
+	int nWord = 0;
+	int nAreaX = CFunctionLib::ReadInt(pStr, ENEMY_RESPAWN);
+	pStr = CFunctionLib::HeadPutout(pStr, ENEMY_RESPAWN);
+	nWord = CFunctionLib::PopString(pStr, " ");
+	pStr += nWord;
+	int nAreaZ = CFunctionLib::ReadInt(pStr, "");
+	D3DXVECTOR3 Pos = CFunctionLib::ReadVector3(pStr, ENEMY_RESPAWN);
+	m_pEnemyRespawn[nCntEnemyRes] = CRespawn::Create(nAreaX, nAreaZ);
+
+	return S_OK;
+}
+
+//=============================================================================
 //    マップ情報読み込み処処理
 //=============================================================================
 HRESULT CMap::LoadMap(char *pStr, CFileLoader *pFileLoader)
@@ -579,9 +639,9 @@ HRESULT CMap::LoadMap(char *pStr, CFileLoader *pFileLoader)
 		{// ライト情報だった
 			LoadLight(CFunctionLib::ReadString(pStr, aStr, LIGHT_FILENAME), pStr);
 		}
-		else if (CFunctionLib::Memcmp(pStr, GAMEFILED_FILENAME) == 0)
+		else if (CFunctionLib::Memcmp(pStr, GAMEFIELD_FILENAME) == 0)
 		{// ゲームフィールド情報だった
-			LoadGameField(CFunctionLib::ReadString(pStr, aStr, GAMEFILED_FILENAME), pStr);
+			LoadGameField(CFunctionLib::ReadString(pStr, aStr, GAMEFIELD_FILENAME), pStr);
 		}
 		else if (CFunctionLib::Memcmp(pStr, OBJECT_FILENAME) == 0)
 		{// 配置物情報だった
@@ -891,7 +951,11 @@ HRESULT CMap::LoadGameFieldInfo(char *pStr, CFileLoader *pFileLoader)
 	while (1)
 	{// 抜けるまでループ
 		strcpy(pStr, pFileLoader->GetString(pStr));
-		if (CFunctionLib::Memcmp(pStr, BLOCKSET) == 0)
+		if (CFunctionLib::Memcmp(pStr, FIELDSET) == 0)
+		{// 地面情報だった
+			LoadField(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, BLOCKSET) == 0)
 		{// ブロック情報だった
 			LoadBlock(pStr, pFileLoader);
 		}
@@ -902,6 +966,49 @@ HRESULT CMap::LoadGameFieldInfo(char *pStr, CFileLoader *pFileLoader)
 	}
 
 	return S_OK;
+}
+
+//=============================================================================
+//    地面情報読み込み処理
+//=============================================================================
+void CMap::LoadField(char *pStr, CFileLoader *pFileLoader)
+{
+	float fFieldWidth = 0.0f;
+	float fFieldDepth = 0.0f;
+	int nFieldXBlock = 0;
+	int nFieldZBlock = 0;
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TEX_IDX) == 0)
+		{// 使用するテクスチャ番号情報だった
+			m_nFieldTexIdx = CFunctionLib::ReadInt(pStr, TEX_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, WIDTH) == 0)
+		{// 1マス分の地面の横幅情報だった
+			fFieldWidth = CFunctionLib::ReadFloat(pStr, WIDTH);
+		}
+		else if (CFunctionLib::Memcmp(pStr, DEPTH) == 0)
+		{// 1マス分の地面の奥行情報だった
+			fFieldDepth = CFunctionLib::ReadFloat(pStr, DEPTH);
+		}
+		else if (CFunctionLib::Memcmp(pStr, XBLOCK) == 0)
+		{// 横の分割数情報だった
+			nFieldXBlock = CFunctionLib::ReadInt(pStr, XBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ZBLOCK) == 0)
+		{// 奥行の分割数情報だった
+			nFieldZBlock = CFunctionLib::ReadInt(pStr, ZBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_FIELDSET) == 0)
+		{// 地面情報終了の合図があった
+			m_pMeshField = CMeshField::Create(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3,
+				D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f),fFieldWidth, fFieldDepth, nFieldXBlock, nFieldZBlock,
+				1, 1, NULL, true);
+			m_pMeshField->BindTexture(m_pTextureManager->GetTexture(m_nFieldTexIdx));
+			break;
+		}
+	}
 }
 
 //=============================================================================
@@ -1071,62 +1178,6 @@ void CMap::LoadObjEffect(char *pStr, CFileLoader *pFileLoader)
 }
 
 //=============================================================================
-//    基地の位置情報保存処理
-//=============================================================================
-HRESULT CMap::SaveBasePos(CFileSaver *pFileSaver)
-{
-	// コメント部分を書き込み
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-	pFileSaver->Print("# 司令部の位置\n");
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-
-	// 司令部の位置を書き込み
-	pFileSaver->Print("%s%.1f %.1f %.1f\n\n", BASE_POS, m_BasePos.x, m_BasePos.y, m_BasePos.z);
-
-	return S_OK;
-}
-
-//=============================================================================
-//    プレイヤーのリスポーン位置情報保存処理
-//=============================================================================
-HRESULT CMap::SavePlayerRespawn(CFileSaver *pFileSaver)
-{
-	// コメント部分を書き込み
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-	pFileSaver->Print("# プレイヤーのリスポーン位置\n");
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-
-	// プレイヤーのリスポーン位置を書き込み
-	for (int nCntRes = 0; nCntRes < MAX_PLAYER_RESPAWN; nCntRes++)
-	{
-		pFileSaver->Print("%s%.1f %.1f %.1f\n", PLAYER_RESPAWN, m_PlayerRespawn[nCntRes].x, m_PlayerRespawn[nCntRes].y, m_PlayerRespawn[nCntRes].z);
-	}
-	pFileSaver->Print("\n");
-
-	return S_OK;
-}
-
-//=============================================================================
-//    敵のリスポーン位置情報保存処理
-//=============================================================================
-HRESULT CMap::SaveEnemyRespawn(CFileSaver *pFileSaver)
-{
-	// コメント部分を書き込み
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-	pFileSaver->Print("# 敵のリスポーン位置\n");
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-
-	// 敵のリスポーン位置を書き込み
-	for (int nCntRes = 0; nCntRes < MAX_ENEMY_RESPAWN; nCntRes++)
-	{
-		pFileSaver->Print("%s%.1f %.1f %.1f\n", ENEMY_RESPAWN, m_EnemyRespawn[nCntRes].x, m_EnemyRespawn[nCntRes].y, m_EnemyRespawn[nCntRes].z);
-	}
-	pFileSaver->Print("\n");
-
-	return S_OK;
-}
-
-//=============================================================================
 //    モデルリストのファイル名情報保存処理
 //=============================================================================
 HRESULT CMap::SaveModelList(CFileSaver *pFileSaver)
@@ -1163,6 +1214,62 @@ HRESULT CMap::SaveTexList(CFileSaver *pFileSaver)
 }
 
 //=============================================================================
+//    基地の位置情報保存処理
+//=============================================================================
+HRESULT CMap::SaveHeadQuartersPos(CFileSaver *pFileSaver)
+{
+	// コメント部分を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 司令部の位置(横 : 奥行)\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+
+	// 司令部の位置を書き込み
+	pFileSaver->Print("%s%d %d\n\n", BASE_POS, m_pHeadQuarters->GetAreaX(), m_pHeadQuarters->GetAreaZ());
+
+	return S_OK;
+}
+
+//=============================================================================
+//    プレイヤーのリスポーン位置情報保存処理
+//=============================================================================
+HRESULT CMap::SavePlayerRespawn(CFileSaver *pFileSaver)
+{
+	// コメント部分を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# プレイヤーのリスポーン位置(横 : 奥行)\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+
+	// プレイヤーのリスポーン位置を書き込み
+	for (int nCntRes = 0; nCntRes < MAX_PLAYER_RESPAWN; nCntRes++)
+	{
+		pFileSaver->Print("%s%d %d\n", PLAYER_RESPAWN, m_pPlayerRespawn[nCntRes]->GetAreaX(), m_pPlayerRespawn[nCntRes]->GetAreaZ());
+	}
+	pFileSaver->Print("\n");
+
+	return S_OK;
+}
+
+//=============================================================================
+//    敵のリスポーン位置情報保存処理
+//=============================================================================
+HRESULT CMap::SaveEnemyRespawn(CFileSaver *pFileSaver)
+{
+	// コメント部分を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 敵のリスポーン位置(横 : 奥行)\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+
+	// 敵のリスポーン位置を書き込み
+	for (int nCntRes = 0; nCntRes < MAX_ENEMY_RESPAWN; nCntRes++)
+	{
+		pFileSaver->Print("%s%d %d\n", ENEMY_RESPAWN, m_pEnemyRespawn[nCntRes]->GetAreaX(), m_pEnemyRespawn[nCntRes]->GetAreaZ());
+	}
+	pFileSaver->Print("\n");
+
+	return S_OK;
+}
+
+//=============================================================================
 //    マップセット情報保存処理
 //=============================================================================
 HRESULT CMap::SaveMap(CFileSaver *pFileSaver)
@@ -1179,9 +1286,9 @@ HRESULT CMap::SaveMap(CFileSaver *pFileSaver)
 	strcpy(aSaveGameFieldFileName, SAVEFILENAME_GAMEFIELD);
 	strcpy(aSaveObjectFileName, SAVEFILENAME_OBJECT);
 	pFileSaver->Print("%s\n", MAPSET);      // マップセット情報読み込み開始の合図を書き込み
-	pFileSaver->Print("	%s%s					# ライト情報のスクリプトファイル名\n", LIGHT_FILENAME, strcat(aSaveLightFileName, m_aLightFileName));
-	pFileSaver->Print("	%s%s		# ゲームフィールド情報のスクリプトファイル名\n", GAMEFILED_FILENAME, strcat(aSaveGameFieldFileName, m_aGameFieldFileName));
-	pFileSaver->Print("	%s%s				# 配置物情報のスクリプトファイル名\n", OBJECT_FILENAME, strcat(aSaveObjectFileName, m_aObjectFileName));
+	pFileSaver->Print("	%s%s				# ライト情報のスクリプトファイル名\n", LIGHT_FILENAME, strcat(aSaveLightFileName, m_aLightFileName));
+	pFileSaver->Print("	%s%s	# ゲームフィールド情報のスクリプトファイル名\n", GAMEFIELD_FILENAME, strcat(aSaveGameFieldFileName, m_aGameFieldFileName));
+	pFileSaver->Print("	%s%s			# 配置物情報のスクリプトファイル名\n", OBJECT_FILENAME, strcat(aSaveObjectFileName, m_aObjectFileName));
 	pFileSaver->Print("%s\n", END_MAPSET);  // マップセット情報読み込み終了の合図を書き込み
 
 	return S_OK;
@@ -1451,7 +1558,7 @@ void CMap::SaveSpotLight(CSpotLight *pSpotLight, CFileSaver *pFileSaver)
 	pFileSaver->Print("	%s%.3f							# ライトの範囲\n", RANGE, fLightRange);
 	pFileSaver->Print("	%s%.3f							# ライトのフォールオフ\n", FALLOFF, fLightFalloff);
 	pFileSaver->Print("	%s%.3f							# ライトの内部コーンの角度\n", THETA, fLightTheta);
-	pFileSaver->Print("	%s%.3f							# ライトの外部コーンの角度\n", PHI, fLighPhi);
+	pFileSaver->Print("	%s%.3f								# ライトの外部コーンの角度\n", PHI, fLighPhi);
 	pFileSaver->Print("%s\n", END_SPOTLIGHTSET);
 	pFileSaver->Print("\n");
 }
@@ -1480,7 +1587,7 @@ HRESULT CMap::SaveGameField(char *pGameFieldFileName)
 		SaveGameFieldInfo(pFileSaver);
 
 		// スクリプト終了の合図を書き込み
-		pFileSaver->Print("%s		# この行は絶対消さないこと！\n", END_SCRIPT);
+		pFileSaver->Print("\n%s		# この行は絶対消さないこと！\n", END_SCRIPT);
 
 		// メモリの開放
 		if (pFileSaver != NULL)
@@ -1499,6 +1606,50 @@ HRESULT CMap::SaveGameField(char *pGameFieldFileName)
 //=============================================================================
 void CMap::SaveGameFieldInfo(CFileSaver *pFileSaver)
 {
+	// 地面情報を書き込み
+	SaveField(pFileSaver);
+
+	// ブロック情報を書き込み
+	SaveBlock(pFileSaver);
+
+	// 川情報を書き込み
+	SaveRiver(pFileSaver);
+
+	// 氷情報を書き込み
+	SaveIce(pFileSaver);
+}
+
+//=============================================================================
+//    地面の情報を保存する処理
+//=============================================================================
+void CMap::SaveField(CFileSaver *pFileSaver)
+{
+	// コメント部分を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 地面情報\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+
+	// 各種情報を取得
+	float fFieldWidth = m_pMeshField->GetWidth();
+	float fFieldDepth = m_pMeshField->GetHeight();
+	int nFieldXBlock = m_pMeshField->GetXBlock();
+	int nFieldZBlock = m_pMeshField->GetZBlock();
+
+	// 各種情報をテキストファイルに書き込み
+	pFileSaver->Print("%s\n", FIELDSET);
+	pFileSaver->Print("	%s%d		# 使用するテクスチャの番号(テクスチャリストの番号と照合)\n", TEX_IDX, m_nFieldTexIdx);
+	pFileSaver->Print("	%s%.1f	# 1マス分の横幅\n", WIDTH, fFieldWidth);
+	pFileSaver->Print("	%s%.1f	# 1マス分の奥行\n", DEPTH, fFieldDepth);
+	pFileSaver->Print("	%s%d		# 横の分割数\n", XBLOCK, nFieldXBlock);
+	pFileSaver->Print("	%s%d		# 奥行の分割数\n", ZBLOCK, nFieldZBlock);
+	pFileSaver->Print("%s\n\n", END_FIELDSET);
+}
+
+//=============================================================================
+//    ブロックを保存する処理
+//=============================================================================
+void CMap::SaveBlock(CFileSaver *pFileSaver)
+{
 	// コメント部分を書き込み
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 	pFileSaver->Print("# ブロック配置情報\n");
@@ -1515,17 +1666,20 @@ void CMap::SaveGameFieldInfo(CFileSaver *pFileSaver)
 			pSceneNext = pScene->GetNext();
 			if (pScene->GetObjType() == CScene::OBJTYPE_BLOCK)
 			{// ブロッククラスだった
-				SaveBlock((CBlock*)pScene, pFileSaver);
+				SaveBlockInfo((CBlock*)pScene, pFileSaver);
 			}
 			pScene = pSceneNext;
 		}
 	}
+
+	// 可読性のため改行
+	pFileSaver->Print("\n");
 }
 
 //=============================================================================
 //    ブロックの情報を保存する処理
 //=============================================================================
-void CMap::SaveBlock(CBlock *pBlock, CFileSaver *pFileSaver)
+void CMap::SaveBlockInfo(CBlock *pBlock, CFileSaver *pFileSaver)
 {
 	// 各種情報を取得
 	int nBlockType = pBlock->GetType();
@@ -1540,7 +1694,7 @@ void CMap::SaveBlock(CBlock *pBlock, CFileSaver *pFileSaver)
 	// 各種情報をテキストファイルに保存
 	pFileSaver->Print("%s\n", BLOCKSET);
 	pFileSaver->Print("	%s%d				# 種類\n", BLOCKTYPE, nBlockType);
-	pFileSaver->Print("	%s%d			# 使用するモデルの番号\n", MODELIDX, nBlockType);
+	pFileSaver->Print("	%s%d			# 使用するモデルの番号\n", MODELIDX, nBlockModelIdx);
 	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, BlockPos.x, BlockPos.y, BlockPos.z);
 	pFileSaver->Print("	%s%.1f %.1f %.1f		# 向き\n", ROT, BlockRot.x, BlockRot.y, BlockRot.z);
 	pFileSaver->Print("	%s%d				# 壊せるかどうか\n", BREAK, (int)bBlockBreak);
@@ -1554,19 +1708,31 @@ void CMap::SaveBlock(CBlock *pBlock, CFileSaver *pFileSaver)
 }
 
 //=============================================================================
-//    氷情報保存処理
-//=============================================================================
-void CMap::SaveIce(CFileSaver *pFileSaver)
-{
-
-}
-
-//=============================================================================
 //    川情報保存処理
 //=============================================================================
 void CMap::SaveRiver(CFileSaver *pFileSaver)
 {
+	// コメント部分を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 川配置情報\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
+	// 可読性のため改行
+	pFileSaver->Print("\n");
+}
+
+//=============================================================================
+//    氷情報保存処理
+//=============================================================================
+void CMap::SaveIce(CFileSaver *pFileSaver)
+{
+	// コメント部分を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 氷配置情報\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+
+	// 可読性のため改行
+	pFileSaver->Print("\n");
 }
 
 //=============================================================================
@@ -1671,6 +1837,18 @@ void CMap::SaveObjEffect(CFileSaver *pFileSaver)
 //=============================================================================
 void CMap::DeleteMap(void)
 {
+	// 地面を破棄
+	ReleaseMeshField();
+
+	// 司令部を破棄
+	ReleaseHeadQuarters();
+
+	// プレイヤーのリスポーン位置を破棄
+	ReleasePlayerRespawn();
+
+	// 敵のリスポーン位置を破棄
+	ReleaseEnemyRespawn();
+
 	// ライトを破棄
 	DeleteLight();
 
@@ -1815,6 +1993,76 @@ void CMap::ReleaseLightManager(void)
 }
 
 //=============================================================================
+//    地面を開放する
+//=============================================================================
+void CMap::ReleaseMeshField(void)
+{
+	if (m_pMeshField != NULL)
+	{
+		m_pMeshField->Uninit();
+		m_pMeshField = NULL;
+	}
+}
+
+//=============================================================================
+//    司令部を開放する
+//=============================================================================
+void CMap::ReleaseHeadQuarters(void)
+{
+	if (m_pHeadQuarters != NULL)
+	{
+		m_pHeadQuarters->Uninit();
+		m_pHeadQuarters = NULL;
+	}
+}
+
+//=============================================================================
+//    プレイヤーのリスポーン位置を開放する
+//=============================================================================
+void CMap::ReleasePlayerRespawn(void)
+{
+	for (int nCntRes = 0; nCntRes < MAX_PLAYER_RESPAWN; nCntRes++)
+	{
+		if (m_pPlayerRespawn[nCntRes] != NULL)
+		{
+			m_pPlayerRespawn[nCntRes]->Uninit();
+			m_pPlayerRespawn[nCntRes] = NULL;
+		}
+	}
+}
+
+//=============================================================================
+//    敵のリスポーン位置を開放する
+//=============================================================================
+void CMap::ReleaseEnemyRespawn(void)
+{
+	for (int nCntRes = 0; nCntRes < MAX_ENEMY_RESPAWN; nCntRes++)
+	{
+		if (m_pEnemyRespawn[nCntRes] != NULL)
+		{
+			m_pEnemyRespawn[nCntRes]->Uninit();
+			m_pEnemyRespawn[nCntRes] = NULL;
+		}
+	}
+}
+
+//=============================================================================
+//    地面に張り付けるテクスチャの番号を取得する
+//=============================================================================
+int CMap::GetFieldTexIdx(void)
+{
+	return m_nFieldTexIdx;
+}
+
+//=============================================================================
+//    地面クラスへのポインタを取得する
+//=============================================================================
+CMeshField *CMap::GetMeshField(void)
+{
+	return m_pMeshField;
+}
+
+//=============================================================================
 //    テクスチャ管轄クラスへのポインタを取得する
 //=============================================================================
 CTextureManager *CMap::GetTextureManager(void)
@@ -1879,6 +2127,46 @@ char *CMap::GetObjectFileName(void)
 }
 
 //=============================================================================
+//    司令部クラスへのポインタを取得する
+//=============================================================================
+CHeadQuarters *CMap::GetHeadQuarters(void)
+{
+	return m_pHeadQuarters;
+}
+
+//=============================================================================
+//    プレイヤーのリスポーンクラスへのポインタを取得する
+//=============================================================================
+CRespawn *CMap::GetPlayerRespawn(int nIdx)
+{
+	return m_pPlayerRespawn[nIdx];
+}
+
+//=============================================================================
+//    敵のリスポーンクラスへのポインタを取得する
+//=============================================================================
+CRespawn *CMap::GetEnemyRespawn(int nIdx)
+{
+	return m_pEnemyRespawn[nIdx];
+}
+
+//=============================================================================
+//    地面に張り付けるテクスチャの番号を設定する
+//=============================================================================
+void CMap::SetFieldTexIdx(const int nFieldTexIdx)
+{
+	m_nFieldTexIdx = nFieldTexIdx;
+}
+
+//=============================================================================
+//    地面クラスへのポインタを設定する
+//=============================================================================
+void CMap::SetMeshField(CMeshField *pMeshField)
+{
+	m_pMeshField = pMeshField;
+}
+
+//=============================================================================
 //    テクスチャ管轄クラスへのポインタを設定する
 //=============================================================================
 void CMap::SetTextureManager(CTextureManager *pTextureManager)
@@ -1940,4 +2228,28 @@ void CMap::SetGameFieldFileName(char *pFileName)
 void CMap::SetObjectFileName(char *pFileName)
 {
 	strcpy(m_aObjectFileName, pFileName);
+}
+
+//=============================================================================
+//    司令部クラス型のポインタを設定する
+//=============================================================================
+void CMap::SetHeadQuarters(CHeadQuarters *pHeadQuarters)
+{
+	m_pHeadQuarters = pHeadQuarters;
+}
+
+//=============================================================================
+//    プレイヤーのリスポーンクラス型のポインタを設定する
+//=============================================================================
+void CMap::SetPlayerRespawn(CRespawn *pRespawn, int nIdx)
+{
+	m_pPlayerRespawn[nIdx] = pRespawn;
+}
+
+//=============================================================================
+//    敵のリスポーンクラス型のポインタを設定する
+//=============================================================================
+void CMap::SetEnemyRespawn(CRespawn *pRespawn, int nIdx)
+{
+	m_pEnemyRespawn[nIdx] = pRespawn;
 }

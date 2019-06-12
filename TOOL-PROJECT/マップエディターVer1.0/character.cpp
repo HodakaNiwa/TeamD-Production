@@ -1,7 +1,7 @@
 //=============================================================================
 //
 // キャラクターの処理 [character.cpp]
-// Author : Jukiya Hayakawa
+// Author : Jukiya Hayakawa & Hodaka Niwa
 //
 //=============================================================================
 #include "character.h"
@@ -9,7 +9,7 @@
 #include "renderer.h"
 #include "debugproc.h"
 #include "model.h"
-#include "bullet.h"
+#include "motion.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -22,13 +22,12 @@
 //=============================================================================
 // キャラクターのコンストラクタ
 //=============================================================================
-CCharacter::CCharacter(int nPrioriry, OBJTYPE objtype) : CObject3D()
+CCharacter::CCharacter(int nPrioriry, OBJTYPE objtype) : CObject3D(nPrioriry, objtype)
 {
-	m_pModel = NULL;							//モデル情報へのポインタ
-	m_posOld = INITIALIZE_D3DXVECTOR3;			//過去の位置
-	m_move = INITIALIZE_D3DXVECTOR3;			//移動量
-	m_bShoot = false;							//撃っているかどうか
+	m_apModel = NULL;		 // モデル情報へのポインタ
+	m_pMotionManager = NULL; // モーションクラスへのポインタ
 }
+
 //=============================================================================
 // キャラクターのコンストラクタ
 //=============================================================================
@@ -42,11 +41,15 @@ CCharacter::~CCharacter()
 //=============================================================================
 HRESULT CCharacter::Init(void)
 {
-	//オブジェクトの初期化処理
+	// オブジェクトの初期化処理
 	CObject3D::Init();
 
-	//種類の設置処理
+	// 変数をクリアする
+	ClearVariable();
+
+	// 種類の設置処理
 	SetObjType(OBJTYPE_CHARACTER);
+
 	return S_OK;
 }
 
@@ -55,19 +58,14 @@ HRESULT CCharacter::Init(void)
 //=============================================================================
 void CCharacter::Uninit(void)
 {
-	//モデルの破棄
-	if (m_pModel != NULL)
-	{
-		m_pModel->Uninit();
-		delete m_pModel;
-		m_pModel = NULL;
-	}
+	// モデルの破棄
+	ReleaseModel();
+
+	// モーションの破棄
+	ReleaseMotionManager();
 
 	//オブジェクトの終了処理
 	CObject3D::Uninit();
-
-	//オブジェクトの破棄
-	Release();
 }
 
 //=============================================================================
@@ -82,10 +80,110 @@ void CCharacter::Update(void)
 //=============================================================================
 void CCharacter::Draw(void)
 {
-	//if (m_pModel != NULL)
-	//{
-	//	m_pModel->Draw();
-	//}
+	if (m_apModel != NULL)
+	{
+		ModelDraw();
+	}
+}
+
+//=============================================================================
+// 変数をクリアする処理
+//=============================================================================
+void CCharacter::ClearVariable(void)
+{
+	m_fAccel = 0.0f;                            // 移動できるスピード量
+	m_fInertia = 0.0f;                          // 慣性量
+	m_posOld = INITIALIZE_D3DXVECTOR3;			// 過去の位置
+	m_move = INITIALIZE_D3DXVECTOR3;			// 移動量
+	m_bShoot = false;							// 撃っているかどうか
+}
+
+//=============================================================================
+// モデルクラスを開放する処理
+//=============================================================================
+void CCharacter::ReleaseModel(void)
+{
+	if (m_apModel != NULL)
+	{
+		for (int nCntParts = 0; nCntParts < m_nNumParts; nCntParts++)
+		{
+			if (m_apModel[nCntParts] != NULL)
+			{
+				m_apModel[nCntParts]->Uninit();
+				delete m_apModel[nCntParts];
+				m_apModel[nCntParts] = NULL;
+			}
+		}
+		delete[] m_apModel;
+		m_apModel = NULL;
+	}
+}
+
+//=============================================================================
+// モーション管轄クラスを開放する処理
+//=============================================================================
+void CCharacter::ReleaseMotionManager(void)
+{
+	if (m_pMotionManager != NULL)
+	{
+		m_pMotionManager->Uninit();
+		delete m_pMotionManager;
+		m_pMotionManager = NULL;
+	}
+}
+
+//=============================================================================
+// モデルを描画する処理
+//=============================================================================
+void CCharacter::ModelDraw(void)
+{
+	for (int nCntParts = 0; nCntParts < m_nNumParts; nCntParts++)
+	{
+		if (m_apModel[nCntParts] != NULL)
+		{
+			m_apModel[nCntParts]->Draw();
+		}
+	}
+}
+
+//=============================================================================
+// モデルのパーツ数を設定する
+//=============================================================================
+void CCharacter::SetNumPart(const int nNumParts)
+{
+	m_nNumParts = 0;
+}
+
+//=============================================================================
+// モデルクラスへのポインタを設定する
+//=============================================================================
+void CCharacter::SetModel(CModel **apModel)
+{
+	m_apModel = apModel;
+}
+
+//=============================================================================
+// モーション管轄クラスへのポインタを設定する
+//=============================================================================
+void CCharacter::SetMotionManager(CMotionManager *pMotionManager)
+{
+	m_pMotionManager = pMotionManager;
+}
+
+//=============================================================================
+// 移動できるスピード量を設定する
+//=============================================================================
+void CCharacter::SetAccel(const float fAccel)
+{
+	m_fAccel = fAccel;
+}
+
+//=============================================================================
+// 慣性量を設定する
+//=============================================================================
+void CCharacter::SetInertia(const float fInertia)
+{
+	m_fInertia = fInertia;
 }
 
 //=============================================================================
@@ -118,6 +216,46 @@ void CCharacter::SetShoot(bool bShoot)
 void CCharacter::SetNowRotInfo(CCharacter::NOW_ROT_INFO nowRotInfo)
 {
 	m_nowRotInfo = nowRotInfo;
+}
+
+//=============================================================================
+// パーツ数取得処理
+//=============================================================================
+int CCharacter::GetNumPart(void)
+{
+	return m_nNumParts;
+}
+
+//=============================================================================
+// モデルクラスへのポインタ取得処理
+//=============================================================================
+CModel **CCharacter::GetModel(void)
+{
+	return m_apModel;
+}
+
+//=============================================================================
+// モーション管轄クラスへのポインタ取得処理
+//=============================================================================
+CMotionManager *CCharacter::GetMotionManager(void)
+{
+	return m_pMotionManager;
+}
+
+//=============================================================================
+// 移動できるスピード量設定処理
+//=============================================================================
+float CCharacter::GetAccel(void)
+{
+	return m_fAccel;
+}
+
+//=============================================================================
+// 慣性量取得処理
+//=============================================================================
+float CCharacter::GetInertia(void)
+{
+	return m_fInertia;
 }
 
 //=============================================================================

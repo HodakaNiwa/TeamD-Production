@@ -167,6 +167,7 @@
     <ClCompile Include="fileSaver.cpp" />
     <ClCompile Include="functionlib.cpp" />
     <ClCompile Include="grid.cpp" />
+    <ClCompile Include="headquarters.cpp" />
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="imgui_demo.cpp" />
     <ClCompile Include="imgui_draw.cpp" />
@@ -187,6 +188,7 @@
     <ClCompile Include="object3D.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="respawn.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="scene2D.cpp" />
     <ClCompile Include="scene3D.cpp" />
@@ -212,6 +214,7 @@
     <ClInclude Include="fileSaver.h" />
     <ClInclude Include="functionlib.h" />
     <ClInclude Include="grid.h" />
+    <ClInclude Include="headquarters.h" />
     <ClInclude Include="imconfig.h" />
     <ClInclude Include="imgui.h" />
     <ClInclude Include="imgui_impl_dx9.h" />
@@ -234,6 +237,7 @@
     <ClInclude Include="object3D.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="renderer.h" />
+    <ClInclude Include="respawn.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="scene2D.h" />
     <ClInclude Include="scene3D.h" />

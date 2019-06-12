@@ -15,12 +15,12 @@
 //*****************************************************************************
 #define CLASS_NAME		"AppClass"			        // ウインドウのクラス名
 #define WINDOW_NAME		"マップエディターVer1.0"	// ウインドウのキャプション名
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //*****************************************************************************
 // グローバル変数:

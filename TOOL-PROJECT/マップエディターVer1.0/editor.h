@@ -16,6 +16,7 @@ class CGrid;
 class CBlock;
 class CFileLoader;
 class CFileSaver;
+class CModelCreate;
 
 //*****************************************************************************
 // クラス定義
@@ -41,6 +42,8 @@ public:	//誰からもアクセス可能
 		EDITMODE_GAMEFIELD = 0,   // ゲームフィールド
 		EDITMODE_LIGHT,           // ライト
 		EDITMODE_OBJECT,          // 配置物
+		EDITMODE_RESPAWN,         // リスポーン位置
+		EDITMODE_HEADQUARTERS,    // 司令部
 		EDITMODE_MAX
 	}EDITMODE;
 
@@ -54,6 +57,17 @@ public:	//誰からもアクセス可能
 		CAMERAMODE_TOP,        // トップビューのカメラ(固定カメラ)
 		CAMERAMODE_MAX
 	}CAMERAMODE;
+
+	//-------------------------------
+	//  配置するゲームフィールドの種類
+	//-------------------------------
+	typedef enum
+	{
+		GAMEFIELDMODE_BLOCK = 0, // ブロック
+		GAMEFIELDMODE_RIVER,     // 川
+		GAMEFIELDMODE_ICE,       // 氷
+		GAMEFIELDMODE_MAX
+	}GAMEFIELDMODE;
 
 	//-------------------------------
 	//  配置するオブジェクトの種類
@@ -73,12 +87,19 @@ public:	//誰からもアクセス可能
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
+	void SetRespawnModel(void);
 	void SetMode(const MODE mode);
 	void SetEditMode(const EDITMODE editMode);
 	void SetCameraMode(const CAMERAMODE cameraMode);
+	void SetGameFieldMode(const GAMEFIELDMODE gameFieldMode);
+	void SetObjectMode(const OBJECTMODE objMode);
+	void SetMeshField(CMeshField *pMeshField);
+
 	MODE GetMode(void);
 	EDITMODE GetEditMode(void);
 	CAMERAMODE GetCameraMode(void);
+	GAMEFIELDMODE GetGameFieldMode(void);
+	OBJECTMODE GetObjectMode(void);
 
 	// エディター用関数
 	int GetMasuX(void);
@@ -152,8 +173,13 @@ private:	//自分だけがアクセス可能
 	void ClearObjectVariable(void);
 
 	void LoadSystem(void);
-	void LoadMapFileName(CFileLoader *pFileLoader, char *pStr);
+	void LoadSystemScript(CFileLoader *pFileLoader, char *pStr);
+	void LoadPlayerRespawnModel(CModelCreate *pModelCreate, char *pStr);
+	void LoadEnemyRespawnModel(CModelCreate *pModelCreate, char *pStr);
+	void LoadMapFileName(char *pStr);
 	void SaveSystem(void);
+	void SavePlayerRespawnModel(CFileSaver *pFileSaver);
+	void SaveEnemyRespawnModel(CFileSaver *pFileSaver);
 	void SaveMapFileName(CFileSaver *pFileSaver);
 
 	void CreateCamera(void);
@@ -167,6 +193,8 @@ private:	//自分だけがアクセス可能
 	void BlockDestroyCheck(CBlock *pBlock, D3DXVECTOR3 DestroyPos, float fDestroyWidth, float fDestroyDepth, bool bSwitchX, bool bSwitchZ);
 
 	// エディター用変数
+	char m_aPlayerRespawnFileName[256];   // プレイヤーのリスポーンモデルのファイル名
+	char m_aEnemyRespawnFileName[256];    // 敵のリスポーンモデルのファイル名
 	CMeshField *m_pMeshField;             // メッシュフィールドクラスへのポインタ
 	CGrid *m_pGrid;                       // グリッド線クラスへのポインタ
 	int m_nMasuX;                         // 現在マウスがさしているエリア番号
@@ -177,6 +205,8 @@ private:	//自分だけがアクセス可能
 	MODE m_Mode;                          // 生成するか破棄するか
 	EDITMODE m_EditMode;                  // 現在編集できるオブジェクトの種類
 	CAMERAMODE m_CameraMode;              // カメラのモード(どのカメラを使うか決定する)
+	GAMEFIELDMODE m_GameFieldMode;        // ゲームフィールドに配置するオブジェクトの種類
+	OBJECTMODE m_ObjMode;                 // 配置するオブジェクトの種類
 
 	// ブロック用変数
 	int m_nBlockType;                     // 配置するブロックの種類番号

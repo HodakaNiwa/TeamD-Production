@@ -18,12 +18,14 @@
 #include "cameraManager.h"
 #include "player.h"
 #include "enemy.h"
+#include "fileLoader.h"
+#include "fileSaver.h"
+#include "functionlib.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define DEMOPLAY_MAP_FILENAME "data/TEXT/MAP/map000.txt"
-
+#define DEMOPLAY_SYSTEM_FILENAME  "data/TEXT/demoplay.ini"    // 初期化に使用するシステムファイル名
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -67,6 +69,9 @@ CDemoplay *CDemoplay::Create()
 //=============================================================================
 HRESULT CDemoplay::Init(void)
 {
+	// システムの初期化
+	LoadSystem();
+
 	// カメラの生成
 	CreateCamera();
 
@@ -143,6 +148,107 @@ void CDemoplay::CreateCamera(void)
 //=============================================================================
 void CDemoplay::CreateMap(void)
 {
-	CMap *pMap = CMap::Create(DEMOPLAY_MAP_FILENAME);
+	CMap *pMap = CMap::Create(m_aMapFileName);
 	SetMap(pMap);
+}
+
+//=============================================================================
+// デモプレイのシステム情報を読み込む
+//=============================================================================
+void CDemoplay::LoadSystem(void)
+{
+	char aStr[256] = "\0";
+	CFileLoader *pFileLoader = NULL;
+	pFileLoader = CFileLoader::Create(DEMOPLAY_SYSTEM_FILENAME);
+	if (pFileLoader != NULL)
+	{
+		strcpy(aStr, pFileLoader->GetString(aStr));
+		if (CFunctionLib::Memcmp(aStr, SCRIPT) == 0)
+		{// 読み込み開始の合図だった
+			LoadSystemScript(pFileLoader, aStr);
+		}
+
+		// メモリの開放
+		if (pFileLoader != NULL)
+		{
+			pFileLoader->Uninit();
+			delete pFileLoader;
+			pFileLoader = NULL;
+		}
+	}
+}
+
+//=============================================================================
+// デモプレイのシステム情報をファイルから読み込む
+//=============================================================================
+void CDemoplay::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
+{
+	while (1)
+	{
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, MAP_FILENAME) == 0)
+		{// マップファイル名だった
+			LoadMapFileName(pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		{// スクリプトファイル終了の合図だった
+			break;
+		}
+	}
+}
+
+//=============================================================================
+// デモプレイの読み込むマップファイル名を読み込む
+//=============================================================================
+void CDemoplay::LoadMapFileName(char *pStr)
+{
+	strcpy(m_aMapFileName, CFunctionLib::ReadString(pStr, m_aMapFileName, MAP_FILENAME));
+}
+
+//=============================================================================
+// デモプレイのシステム情報を保存する
+//=============================================================================
+void CDemoplay::SaveSystem(void)
+{
+	char aStr[256] = "\0";
+	CFileSaver *pFileSaver = NULL;
+	pFileSaver = CFileSaver::Create(DEMOPLAY_SYSTEM_FILENAME);
+	if (pFileSaver != NULL)
+	{
+		// ファイルの冒頭分を書き込み
+		pFileSaver->Print("#==============================================================================\n");
+		pFileSaver->Print("#\n");
+		pFileSaver->Print("# デモプレイシステムファイル [demoplay.ini]\n");
+		pFileSaver->Print("# Author : Hodaka Niwa\n");
+		pFileSaver->Print("#\n");
+		pFileSaver->Print("#==============================================================================\n");
+		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
+		pFileSaver->Print("\n");
+
+		// 読み込むマップのファイル名を書き込み
+		SaveMapFileName(pFileSaver);
+
+		// スクリプト終了の合図を書き込み
+		pFileSaver->Print("%s		# この行は絶対消さないこと！\n", END_SCRIPT);
+
+		// メモリの開放
+		if (pFileSaver != NULL)
+		{
+			pFileSaver->Uninit();
+			delete pFileSaver;
+			pFileSaver = NULL;
+		}
+	}
+}
+
+//=============================================================================
+// デモプレイの読み込むマップファイル名を保存する
+//=============================================================================
+void CDemoplay::SaveMapFileName(CFileSaver *pFileSaver)
+{
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 読み込むマップのファイル名\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("%s%s", MAP_FILENAME, m_aMapFileName);
+	pFileSaver->Print("\n");
 }

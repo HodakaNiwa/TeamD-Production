@@ -7,6 +7,7 @@
 #include "basemode.h"
 #include "map.h"
 #include "cameraManager.h"
+#include "modelcreate.h"
 
 //*****************************************************************************
 //    マクロ定義
@@ -24,6 +25,7 @@ CBasemode::CBasemode()
 	// 各種値のクリア
 	m_pMap = NULL;             // マップクラスへのポインタ
 	m_pCameraManager = NULL;   // カメラ管轄クラスへのポインタ
+	m_pModelCreate = NULL;     // モデル管轄クラスへのポインタ
 }
 
 //=============================================================================
@@ -54,6 +56,14 @@ void CBasemode::Uninit(void)
 		delete m_pCameraManager;
 		m_pCameraManager = NULL;
 	}
+
+	// モデル管轄クラスの破棄
+	if (m_pModelCreate != NULL)
+	{
+		m_pModelCreate->Uninit();
+		delete m_pModelCreate;
+		m_pModelCreate = NULL;
+	}
 }
 
 
@@ -74,6 +84,14 @@ void CBasemode::SetCameraManager(CCameraManager *pCameraManager)
 }
 
 //=============================================================================
+//    モデル管轄クラスへのポインタを設定する
+//=============================================================================
+void CBasemode::SetModelCreate(CModelCreate *pModelCreate)
+{
+	m_pModelCreate = pModelCreate;
+}
+
+//=============================================================================
 //    マップクラスへのポインタを取得する
 //=============================================================================
 CMap *CBasemode::GetMap(void)
@@ -87,4 +105,12 @@ CMap *CBasemode::GetMap(void)
 CCameraManager *CBasemode::GetCameraManager(void)
 {
 	return m_pCameraManager;
+}
+
+//=============================================================================
+//    モデル管轄クラスへのポインタを取得する
+//=============================================================================
+CModelCreate *CBasemode::GetModelCreate(void)
+{
+	return m_pModelCreate;
 }

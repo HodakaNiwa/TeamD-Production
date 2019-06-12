@@ -46,7 +46,7 @@ private:	//自分だけがアクセス可能
 	CModel						*m_pModel;
 	CPlayer						*m_pPlayer;
 	//静的メンバ変数
-	static LPD3DXMESH			m_pMesh;						//メッシュ情報へのポインタ
+	static LPD3DXMESH			m_pMesh;					//メッシュ情報へのポインタ
 	static LPD3DXBUFFER			m_pBuffMat;					//マテリアル情報へのポインタ
 	static DWORD				m_nNumMat;					//マテリアル情報の数
 
