@@ -92,6 +92,7 @@ void CObject3D::Uninit(void)
 		delete m_pBoxCollider;
 		m_pBoxCollider = NULL;
 	}
+
 	//オブジェクトの破棄
 	Release();
 }

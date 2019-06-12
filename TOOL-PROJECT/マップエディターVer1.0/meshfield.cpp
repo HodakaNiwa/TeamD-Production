@@ -1301,7 +1301,7 @@ bool CMeshField::CheckPenetration(D3DXVECTOR3 pos, int *pXBlock, int *pYBlock, i
 	int nCntCheck = 0;                // 判定を通った回数を数える
 	D3DXCOLOR VerCol;                 // 頂点カラー保存用
 
-									  // 頂点情報の設定
+	// 頂点情報の設定
 	VERTEX_3D *pVtx;
 	LPDIRECT3DVERTEXBUFFER9 pVtxBuff = GetVtxBuff();
 

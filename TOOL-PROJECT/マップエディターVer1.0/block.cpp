@@ -45,7 +45,7 @@ CBlock::~CBlock()
 //=============================================================================
 //    生成処理
 //=============================================================================
-CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, TYPE type, int nModelIdx, bool bBreak, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth, int nPriority)
+CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nModelIdx, bool bBreak, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth, int nPriority)
 {
 	CBlock *pBlock = NULL;      // ブロッククラス型のポインタ
 	if (pBlock == NULL)
@@ -56,7 +56,7 @@ CBlock *CBlock::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, TYPE type, int nModelId
 		    // 各種値の設定
 			pBlock->SetPos(pos);                                     // 座標
 			pBlock->SetRot(rot);                                     // 向き
-			pBlock->SetType(type);                                   // 種類番号
+			pBlock->SetType(nType);                                  // 種類番号
 			pBlock->SetModelIdx(nModelIdx);                          // 使用するモデルの番号
 			pBlock->SetBreak(bBreak);                                // 壊せるかどうか
 			pBlock->SetAlpha(1.0f);                                  // モデルの透明度
@@ -221,9 +221,9 @@ void CBlock::BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, L
 //=============================================================================
 //    種類番号設定処理
 //=============================================================================
-void CBlock::SetType(const TYPE type)
+void CBlock::SetType(const int nType)
 {
-	m_Type = type;
+	m_nType = nType;
 }
 
 //=============================================================================
@@ -301,9 +301,9 @@ void CBlock::SetBreak(const bool bBreak)
 //=============================================================================
 //    種類番号取得処理
 //=============================================================================
-CBlock::TYPE CBlock::GetType(void)
+int CBlock::GetType(void)
 {
-	return m_Type;
+	return m_nType;
 }
 
 //=============================================================================

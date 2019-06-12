@@ -37,6 +37,9 @@ class CBlock;
 class CDirectionalLight;
 class CPointLight;
 class CSpotLight;
+class CMeshField;
+class CRespawn;
+class CHeadQuarters;
 
 //*****************************************************************************
 //    マップクラスの定義
@@ -56,13 +59,13 @@ public:    // 誰でもアクセス可能
 	HRESULT ChangeMap(char *pLoadFileName);
 
 	HRESULT LoadScript(char *pStr, CFileLoader *pFileLoader);
-	HRESULT LoadBasePos(char *pStr);
-	HRESULT LoadPlayerRespawn(char *pStr, int nCntPlayerRes);
-	HRESULT LoadEnemyRespawn(char *pStr, int nCntEnemyRes);
 	HRESULT LoadModelList(char *pModelFileName, char *pStr);
 	HRESULT LoadModel(char *pStr, CFileLoader *pFileLoader);
 	HRESULT LoadTextureList(char *pTextureFileName, char *pStr);
 	HRESULT LoadTexture(char *pStr, CFileLoader *pFileLoader);
+	HRESULT LoadHeadQuartersPos(char *pStr);
+	HRESULT LoadPlayerRespawn(char *pStr, int nCntPlayerRes);
+	HRESULT LoadEnemyRespawn(char *pStr, int nCntEnemyRes);
 	HRESULT LoadMap(char *pStr, CFileLoader *pFileLoader);
 	HRESULT LoadLight(char *pLightFileName, char *pStr);
 	HRESULT LoadLightInfo(char *pStr, CFileLoader *pFileLoader);
@@ -74,11 +77,11 @@ public:    // 誰でもアクセス可能
 	HRESULT LoadObject(char *pObjectName, char *pStr);
 	HRESULT LoadObjectInfo(char *pStr, CFileLoader *pFileLoader);
 
-	HRESULT SaveBasePos(CFileSaver *pFileSaver);
-	HRESULT SavePlayerRespawn(CFileSaver *pFileSaver);
-	HRESULT SaveEnemyRespawn(CFileSaver *pFileSaver);
 	HRESULT SaveModelList(CFileSaver *pFileSaver);
 	HRESULT SaveTexList(CFileSaver *pFileSaver);
+	HRESULT SavePlayerRespawn(CFileSaver *pFileSaver);
+	HRESULT SaveEnemyRespawn(CFileSaver *pFileSaver);
+	HRESULT SaveHeadQuartersPos(CFileSaver *pFileSaver);
 	HRESULT SaveMap(CFileSaver *pFileSaver);
 	HRESULT SaveModel(char *pModelFileName);
 	HRESULT SaveTexture(char *pTextureFileName);
@@ -91,6 +94,8 @@ public:    // 誰でもアクセス可能
 	void DeleteGameField(void);
 	void DeleteObject(void);
 
+	int GetFieldTexIdx(void);
+	CMeshField *GetMeshField(void);
 	CTextureManager *GetTextureManager(void);
 	CModelCreate *GetModelCreate(void);
 	CLightManager *GetLightManager(void);
@@ -99,7 +104,12 @@ public:    // 誰でもアクセス可能
 	char *GetLightFileName(void);
 	char *GetGameFieldFileName(void);
 	char *GetObjectFileName(void);
+	CHeadQuarters *GetHeadQuarters(void);
+	CRespawn *GetPlayerRespawn(int nIdx);
+	CRespawn *GetEnemyRespawn(int nIdx);
 
+	void SetFieldTexIdx(const int nFieldTexIdx);
+	void SetMeshField(CMeshField *pMeshField);
 	void SetTextureManager(CTextureManager *pTextureManager);
 	void SetModelCreate(CModelCreate *pModelCreate);
 	void SetLightManager(CLightManager *pLightManager);
@@ -108,10 +118,14 @@ public:    // 誰でもアクセス可能
 	void SetLightFileName(char *pFileName);
 	void SetGameFieldFileName(char *pFileName);
 	void SetObjectFileName(char *pFileName);
+	void SetHeadQuarters(CHeadQuarters *pHeadQuarters);
+	void SetPlayerRespawn(CRespawn *pRespawn, int nIdx);
+	void SetEnemyRespawn(CRespawn *pRespawn, int nIdx);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:   // このクラスだけがアクセス可能
+	void LoadField(char *pStr, CFileLoader *pFileLoader);
 	void LoadBlock(char *pStr, CFileLoader *pFileLoader);
 	void LoadCollision(char *pStr, CFileLoader *pFileLoader, float *pWidth, float *pHeight, float *pDepth);
 	void LoadIce(char *pStr, CFileLoader *pFileLoader);
@@ -121,9 +135,11 @@ private:   // このクラスだけがアクセス可能
 	void LoadObjEffect(char *pStr, CFileLoader *pFileLoader);
 
 	void SaveGameFieldInfo(CFileSaver *pFileSaver);
-	void SaveBlock(CBlock *pBlock, CFileSaver *pFileSaver);
-	void SaveIce(CFileSaver *pFileSaver);
+	void SaveField(CFileSaver *pFileSaver);
+	void SaveBlock(CFileSaver *pFileSaver);
+	void SaveBlockInfo(CBlock *pBlock, CFileSaver *pFileSaver);
 	void SaveRiver(CFileSaver *pFileSaver);
+	void SaveIce(CFileSaver *pFileSaver);
 	void SaveLightInfo(CFileSaver *pFileSaver);
 	void SaveDirectionalLight(CDirectionalLight *pDirLight, CFileSaver *pFileSaver);
 	void SavePointLight(CPointLight *pPointLight, CFileSaver *pFileSaver);
@@ -141,16 +157,23 @@ private:   // このクラスだけがアクセス可能
 	void ReleaseTextureManager(void);
 	void ReleaseModelManager(void);
 	void ReleaseLightManager(void);
+	void ReleaseMeshField(void);
+	void ReleaseHeadQuarters(void);
+	void ReleasePlayerRespawn(void);
+	void ReleaseEnemyRespawn(void);
 
+	int             m_nFieldTexIdx;                        // 地面に張り付けるテクスチャの番号
 	char            m_aFileName[256];                      // 読み込むマップデータのスクリプトファイル名
 	char            m_aModelListFileName[256];             // 読み込むモデルリスト情報スクリプトファイル名
 	char            m_aTexListFileName[256];               // 読み込むテクスチャリスト情報のスクリプトファイル名
 	char            m_aLightFileName[256];                 // 読み込むライト情報のスクリプトファイル名
 	char            m_aGameFieldFileName[256];             // 読み込むゲームフィールド情報のスクリプトファイル名
 	char            m_aObjectFileName[256];                // 読み込む配置物情報のスクリプトファイル名
-	D3DXVECTOR3     m_BasePos;                             // 司令部の位置
-	D3DXVECTOR3     m_PlayerRespawn[MAX_PLAYER_RESPAWN];   // プレイヤーのリスポーン位置(2人分)
-	D3DXVECTOR3     m_EnemyRespawn[MAX_ENEMY_RESPAWN];     // 敵のリスポーン位置(3箇所分)
+
+	CMeshField      *m_pMeshField;                         // 地面クラスへのポインタ
+	CHeadQuarters   *m_pHeadQuarters;                      // 司令部クラス型のポインタ
+	CRespawn        *m_pPlayerRespawn[MAX_PLAYER_RESPAWN]; // プレイヤーのリスポーン位置(2人分)
+	CRespawn        *m_pEnemyRespawn[MAX_ENEMY_RESPAWN];   // 敵のリスポーン位置(3箇所分)
 	CTextureManager *m_pTextureManager;                    // テクスチャ管轄クラスへのポインタ
 	CModelCreate    *m_pModelCreate;                       // モデル管轄クラスへのポインタ
 	CLightManager   *m_pLightManager;                      // ライト管轄クラスへのポインタ

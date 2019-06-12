@@ -20,6 +20,7 @@ class CLight;
 class CDirectionalLight;
 class CPointLight;
 class CSpotLight;
+class CRespawn;
 
 //*****************************************************************************
 // クラス定義
@@ -43,6 +44,7 @@ private:	//自分だけがアクセス可能
 	void ClearLightVariable(void);
 	void ClearGameFieldVariable(void);
 	void ClearObjectVariable(void);
+	void ClearRespawnVariable(void);
 
 	CLightManager *ChangeLight(CLightManager *pLightManager, int nCntLight, CLight *pLightOld, int nLightType, int nLightTypeDef);
 
@@ -52,6 +54,7 @@ private:	//自分だけがアクセス可能
 	void GameCameraDebug(CCamera *pCamera);
 	void EditorCameraDebug(CCamera *pCamera);
 	void TopViewCameraDebug(CCamera *pCamera);
+	void FieldDebug(CEditor *pEditor);
 	int SaveDisp(int nCounter, bool bDisp);
 	int LoadDisp(int nCounter, bool bDisp);
 	void MapDebug(CEditor *pEditor);
@@ -61,15 +64,25 @@ private:	//自分だけがアクセス可能
 	void LightDebug(CEditor *pEditor);
 	CLightManager *LightIncreDecreDebug(CLightManager *pLightManager);
 	void LightInfoDebug(CLightManager *pLightManager);
-	CLightManager *LightInfo(CLightManager *pLightManager, int nCntLight);
+	void LightInfo(CLightManager *pLightManager, int nCntLight);
 	void DirectionalLightInfoDebug(CDirectionalLight *pDirLight);
 	void PointLightInfoDebug(CPointLight *pPointLight);
 	void SpotLightInfoDebug(CSpotLight *pSpotLight);
 
 	void GameFieldDebug(CEditor *pEditor);
 	void BlockDebug(CEditor *pEditor);
+	void RiverDebug(CEditor *pEditor);
+	void IceDebug(CEditor *pEditor);
 
 	void ObjectDebug(CEditor *pEditor);
+	void ObjModelDebug(CEditor *pEditor);
+	void ObjBillboardDebug(CEditor *pEditor);
+	void ObjEffectDebug(CEditor *pEditor);
+
+	void RespawnDebug(CEditor *pEditor);
+	void RespawnInfoDebug(CRespawn *pRespawn);
+
+	void HeadQuartersDebug(CEditor *pEditor);
 
 	void DemoplayDebug(void);
 
@@ -93,6 +106,7 @@ private:	//自分だけがアクセス可能
 	bool m_bLoadTexListDisp;              // テクスチャリスト情報読み込み成否情報を表示するかどうか
 
 	// ライト情報用変数
+	int m_nLightIdx;                      // ライトの情報を操作する番号
 	int m_nSaveLightCounter;              // ライト情報保存成否情報表示用カウンター
 	bool m_bSaveLightDisp;                // ライト情報保存成否情報を表示するかどうか
 	int m_nLoadLightCounter;              // ライト情報読み込み成否情報表示用カウンター
@@ -109,5 +123,9 @@ private:	//自分だけがアクセス可能
 	bool m_bSaveObjectDisp;               // 配置物情報保存成否情報を表示するかどうか
 	int m_nLoadObjectCounter;             // 配置物情報読み込み成否情報表示用カウンター
 	bool m_bLoadObjectDisp;               // 配置物情報読み込み成否情報を表示するかどうか
+
+	// リスポーン用変数
+	int m_nPlayerResIdx;
+	int m_nEnemyResIdx;
 };
 #endif

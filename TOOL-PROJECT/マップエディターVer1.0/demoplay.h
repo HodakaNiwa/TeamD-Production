@@ -10,6 +10,10 @@
 #include "main.h"
 #include "basemode.h"
 
+//前方宣言
+class CFileLoader;
+class CFileSaver;
+
 //*****************************************************************************
 // クラス定義
 //*****************************************************************************
@@ -30,5 +34,13 @@ public:	//誰からもアクセス可能
 private:	//自分だけがアクセス可能
 	void CreateCamera(void);
 	void CreateMap(void);
+
+	void LoadSystem(void);
+	void LoadSystemScript(CFileLoader *pFileLoader, char *pStr);
+	void LoadMapFileName(char *pStr);
+	void SaveSystem(void);
+	void SaveMapFileName(CFileSaver *pFileSaver);
+
+	char m_aMapFileName[256];     // 読み込むマップのファイル名
 };
 #endif

@@ -21,17 +21,21 @@
 #include "fileLoader.h"
 #include "fileSaver.h"
 #include "functionlib.h"
+#include "model.h"
+#include "respawn.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
 #define EDITOR_SYSTEM_FILENAME            "data/TEXT/editor.ini"    // 初期化に使用するシステムファイル名
-#define EDITOR_MAP_SAVEFILENAME_INI       "map000.txt"              // マップ情報を保存するファイル名
-#define EDITOR_MODELLIST_SAVEFILENAME_INI "modellist000.txt"        // モデルリスト情報を保存するファイル名
-#define EDITOR_TEXLIST_SAVEFILENAME_INI   "texlist000.txt"          // テクスチャリスト情報を保存するファイル名
-#define EDITOR_LIGHT_SAVEFILENAME_INI     "light000.txt"            // ライト情報を保存するファイル名
-#define EDITOR_GAMEFILED_SAVEFILENAME_INI "gamefield000.txt"        // ゲームフィールド情報を保存するファイル名
-#define EDITOR_OBJECT_SAVEFILENAME_INI    "object000.txt"           // 配置物情報を保存するファイル名
+#define EDITOR_MAP_SAVEFILENAME_INI       "map.txt"                 // マップ情報を保存するファイル名
+#define EDITOR_MODELLIST_SAVEFILENAME_INI "modellist.txt"           // モデルリスト情報を保存するファイル名
+#define EDITOR_TEXLIST_SAVEFILENAME_INI   "texlist.txt"             // テクスチャリスト情報を保存するファイル名
+#define EDITOR_LIGHT_SAVEFILENAME_INI     "light.txt"               // ライト情報を保存するファイル名
+#define EDITOR_GAMEFILED_SAVEFILENAME_INI "gamefield.txt"           // ゲームフィールド情報を保存するファイル名
+#define EDITOR_OBJECT_SAVEFILENAME_INI    "object.txt"              // 配置物情報を保存するファイル名
+#define EDITOR_PLAYERRESPAWN_FILENAME     "PLAYERRESPAWN_MODEL = "  // プレイヤーのリスポーンモデルのファイル名
+#define EDITOR_ENEMYRESPAWN_FILENAME      "ENEMYRESPAWN_MODEL = "   // 敵のリスポーンモデルのファイル名
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -88,11 +92,14 @@ HRESULT CEditor::Init(void)
 	//マップを生成
 	CreateMap();
 
-	// 地面を生成
-	m_pMeshField = CMeshField::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), MASU_SIZE_X_HALF, MASU_SIZE_Z_HALF, MASU_BLOCK_X * 2, MASU_BLOCK_Z * 2, 1, 1, NULL, true);
+	// 地面クラスへのポインタを取得
+	m_pMeshField = GetMap()->GetMeshField();
 
 	// グリッド線を生成
 	m_pGrid = CGrid::Create(D3DXVECTOR3(0.0f, 1.0f, 0.0f), MASU_SIZE_X_HALF, MASU_SIZE_Z_HALF, MASU_BLOCK_X * 2, MASU_BLOCK_Z * 2);
+
+	// リスポーンモデルを設定
+	SetRespawnModel();
 
 	return S_OK;
 }
@@ -547,6 +554,8 @@ void CEditor::ClearEditorVariable(void)
 	m_Mode = MODE_CREATE;
 	m_EditMode = EDITMODE_GAMEFIELD;
 	m_CameraMode = CAMERAMODE_GAME;
+	m_GameFieldMode = GAMEFIELDMODE_BLOCK;
+	m_ObjMode = OBJECTMODE_MODEL;
 }
 
 //=============================================================================
@@ -654,6 +663,32 @@ void CEditor::CreateMap(void)
 }
 
 //=============================================================================
+// エディターのリスポーンモデルを設定する
+//=============================================================================
+void CEditor::SetRespawnModel(void)
+{
+	// プレイヤーのリスポーンモデル
+	CModel *pModel = NULL;
+	CRespawn *pRespawn = NULL;
+	for (int nCntRes = 0; nCntRes < MAX_PLAYER_RESPAWN; nCntRes++)
+	{
+		pRespawn = GetMap()->GetPlayerRespawn(nCntRes);
+		pModel = CModel::Create(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, GetModelCreate()->GetMesh(0),
+			GetModelCreate()->GetBuffMat(0), GetModelCreate()->GetNumMat(0), GetModelCreate()->GetTexture(0));
+		pRespawn->SetModel(pModel);
+	}
+
+	// 敵のリスポーンモデル
+	for (int nCntRes = 0; nCntRes < MAX_ENEMY_RESPAWN; nCntRes++)
+	{
+		pRespawn = GetMap()->GetEnemyRespawn(nCntRes);
+		pModel = CModel::Create(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, GetModelCreate()->GetMesh(1),
+			GetModelCreate()->GetBuffMat(1), GetModelCreate()->GetNumMat(1), GetModelCreate()->GetTexture(1));
+		pRespawn->SetModel(pModel);
+	}
+}
+
+//=============================================================================
 // エディターのシステム情報を読み込む
 //=============================================================================
 void CEditor::LoadSystem(void)
@@ -666,11 +701,7 @@ void CEditor::LoadSystem(void)
 		strcpy(aStr, pFileLoader->GetString(aStr));
 		if (CFunctionLib::Memcmp(aStr, SCRIPT) == 0)
 		{// 読み込み開始の合図だった
-			strcpy(aStr, pFileLoader->GetString(aStr));
-			if (CFunctionLib::Memcmp(aStr, MAP_FILENAME) == 0)
-			{// マップファイル名だった
-				LoadMapFileName(pFileLoader, aStr);
-			}
+			LoadSystemScript(pFileLoader, aStr);
 		}
 
 		// メモリの開放
@@ -684,9 +715,80 @@ void CEditor::LoadSystem(void)
 }
 
 //=============================================================================
+// エディターのシステム情報をファイルから読み込む
+//=============================================================================
+void CEditor::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
+{
+	CModelCreate *pModelCreate = CModelCreate::Create(2);
+	while (1)
+	{
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, EDITOR_PLAYERRESPAWN_FILENAME) == 0)
+		{// プレイヤーのリスポーンモデルファイル名だった
+			LoadPlayerRespawnModel(pModelCreate, pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, EDITOR_ENEMYRESPAWN_FILENAME) == 0)
+		{// 敵のリスポーンモデルファイル名だった
+			LoadEnemyRespawnModel(pModelCreate, pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, MAP_FILENAME) == 0)
+		{// マップファイル名だった
+			LoadMapFileName(pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		{// スクリプトファイル終了の合図だった
+			SetModelCreate(pModelCreate);
+			break;
+		}
+	}
+}
+
+//=============================================================================
+// エディターのプレイヤーのリスポーンモデルファイル名を読み込む
+//=============================================================================
+void CEditor::LoadPlayerRespawnModel(CModelCreate *pModelCreate, char *pStr)
+{
+	// ファイル名を読み込み
+	strcpy(m_aPlayerRespawnFileName, CFunctionLib::ReadString(pStr, m_aPlayerRespawnFileName, EDITOR_PLAYERRESPAWN_FILENAME));
+
+	// Xファイルからモデルを読み込み
+	LPD3DXMESH pMesh = NULL;
+	LPD3DXBUFFER pBuffMat = NULL;
+	DWORD nNumMat = 0;
+	D3DXLoadMeshFromX(m_aPlayerRespawnFileName, D3DXMESH_SYSTEMMEM, CManager::GetRenderer()->GetDevice(), NULL,
+		&pBuffMat, NULL, &nNumMat, &pMesh);
+
+	// モデル管轄クラスにポインタを設定する
+	pModelCreate->SetMesh(pMesh, 0);
+	pModelCreate->SetMaterial(CManager::GetRenderer()->GetDevice(), pBuffMat, nNumMat, 0);
+	pModelCreate->SetFileName(m_aPlayerRespawnFileName, 0);
+}
+
+//=============================================================================
+// エディターの敵のリスポーンモデルファイル名を読み込む
+//=============================================================================
+void CEditor::LoadEnemyRespawnModel(CModelCreate *pModelCreate, char *pStr)
+{
+	// ファイル名を読み込み
+	strcpy(m_aEnemyRespawnFileName, CFunctionLib::ReadString(pStr, m_aEnemyRespawnFileName, EDITOR_ENEMYRESPAWN_FILENAME));
+
+	// Xファイルからモデルを読み込み
+	LPD3DXMESH pMesh = NULL;
+	LPD3DXBUFFER pBuffMat = NULL;
+	DWORD nNumMat = 0;
+	D3DXLoadMeshFromX(m_aEnemyRespawnFileName, D3DXMESH_SYSTEMMEM, CManager::GetRenderer()->GetDevice(), NULL,
+		&pBuffMat, NULL, &nNumMat, &pMesh);
+
+	// モデル管轄クラスにポインタを設定する
+	pModelCreate->SetMesh(pMesh, 1);
+	pModelCreate->SetMaterial(CManager::GetRenderer()->GetDevice(), pBuffMat, nNumMat, 1);
+	pModelCreate->SetFileName(m_aEnemyRespawnFileName, 1);
+}
+
+//=============================================================================
 // エディターの読み込むマップファイル名を読み込む
 //=============================================================================
-void CEditor::LoadMapFileName(CFileLoader *pFileLoader, char *pStr)
+void CEditor::LoadMapFileName(char *pStr)
 {
 	strcpy(m_aMapFileName, CFunctionLib::ReadString(pStr, m_aMapFileName, MAP_FILENAME));
 }
@@ -711,6 +813,12 @@ void CEditor::SaveSystem(void)
 		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
 		pFileSaver->Print("\n");
 
+		// プレイヤーのリスポーンモデルファイル名を書き込み
+		SavePlayerRespawnModel(pFileSaver);
+
+		// 敵のリスポーンモデルファイル名を書き込み
+		SaveEnemyRespawnModel(pFileSaver);
+
 		// 読み込むマップのファイル名を書き込み
 		SaveMapFileName(pFileSaver);
 
@@ -728,11 +836,34 @@ void CEditor::SaveSystem(void)
 }
 
 //=============================================================================
+// エディターのプレイヤーのリスポーンモデルファイル名を保存する
+//=============================================================================
+void CEditor::SavePlayerRespawnModel(CFileSaver *pFileSaver)
+{
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# プレイヤーのリスポーンモデルファイル名\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("%s%s", EDITOR_PLAYERRESPAWN_FILENAME, m_aPlayerRespawnFileName);
+	pFileSaver->Print("\n");
+}
+
+//=============================================================================
+// エディターの敵のリスポーンモデルファイル名を保存する
+//=============================================================================
+void CEditor::SaveEnemyRespawnModel(CFileSaver *pFileSaver)
+{
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 敵のリスポーンモデルファイル名\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("%s%s", EDITOR_ENEMYRESPAWN_FILENAME, m_aEnemyRespawnFileName);
+	pFileSaver->Print("\n");
+}
+
+//=============================================================================
 // エディターの読み込むマップファイル名を保存する
 //=============================================================================
 void CEditor::SaveMapFileName(CFileSaver *pFileSaver)
 {
-	// 冒頭部分を書き込み
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 	pFileSaver->Print("# 読み込むマップのファイル名\n");
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
@@ -762,6 +893,30 @@ void CEditor::SetEditMode(const EDITMODE editMode)
 void CEditor::SetCameraMode(const CAMERAMODE cameraMode)
 {
 	m_CameraMode = cameraMode;
+}
+
+//=============================================================================
+// ゲームフィールドに配置するオブジェクトの種類を設定する
+//=============================================================================
+void CEditor::SetGameFieldMode(const GAMEFIELDMODE gameFieldMode)
+{
+	m_GameFieldMode = gameFieldMode;
+}
+
+//=============================================================================
+// 配置するオブジェクトの種類を設定する
+//=============================================================================
+void CEditor::SetObjectMode(const OBJECTMODE objMode)
+{
+	m_ObjMode = objMode;
+}
+
+//=============================================================================
+// 地面クラスへのポインタを設定する
+//=============================================================================
+void CEditor::SetMeshField(CMeshField *pMeshField)
+{
+	m_pMeshField = pMeshField;
 }
 
 //=============================================================================
@@ -826,6 +981,22 @@ CEditor::EDITMODE CEditor::GetEditMode(void)
 CEditor::CAMERAMODE CEditor::GetCameraMode(void)
 {
 	return m_CameraMode;
+}
+
+//=============================================================================
+// ゲームフィールドに配置するオブジェクトの種類を取得する
+//=============================================================================
+CEditor::GAMEFIELDMODE CEditor::GetGameFieldMode(void)
+{
+	return m_GameFieldMode;
+}
+
+//=============================================================================
+// 配置するオブジェクトの種類を取得する
+//=============================================================================
+CEditor::OBJECTMODE CEditor::GetObjectMode(void)
+{
+	return m_ObjMode;
 }
 
 //=============================================================================
