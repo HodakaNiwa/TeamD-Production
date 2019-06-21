@@ -1,6 +1,6 @@
 #==============================================================================
 #
-# マップ情報スクリプトファイル [map000.txt]
+# マップ情報スクリプトファイル [map002.txt]
 # Author : Hodaka Niwa
 #
 #==============================================================================
@@ -9,12 +9,12 @@ SCRIPT			# この行は絶対消さないこと！
 #------------------------------------------------------------------------------
 # モデル情報のスクリプトファイル名
 #------------------------------------------------------------------------------
-MODELLIST_FILENAME = data/TEXT/MAP/MODELLIST/modellist000.txt
+MODELLIST_FILENAME = data/TEXT/MAP/MODELLIST/modellist002.txt
 
 #------------------------------------------------------------------------------
 # テクスチャ情報のスクリプトファイル名
 #------------------------------------------------------------------------------
-TEXLIST_FILENAME = data/TEXT/MAP/TEXLIST/texlist000.txt
+TEXLIST_FILENAME = data/TEXT/MAP/TEXLIST/texlist002.txt
 
 #------------------------------------------------------------------------------
 # 司令部の位置(横 : 奥行)
@@ -38,10 +38,10 @@ ENEMY_RESPAWN = 16 2
 # マップ情報
 #------------------------------------------------------------------------------
 MAPSET
-	LIGHT_FILENAME = data/TEXT/MAP/LIGHT/light000.txt				# ライト情報のスクリプトファイル名
-	GAMEFIELD_FILENAME = data/TEXT/MAP/GAMEFIELD/gamefield000.txt	# ゲームフィールド情報のスクリプトファイル名
-	OBJECT_FILENAME = data/TEXT/MAP/OBJECT/object000.txt			# 配置物情報のスクリプトファイル名
-	ENEMYLIST_FILENAME = data/TEXT/MAP/ENEMYLIST/enemylist000.txt	# 敵の生成情報情報のスクリプトファイル名
+	LIGHT_FILENAME = data/TEXT/MAP/LIGHT/light002.txt				# ライト情報のスクリプトファイル名
+	GAMEFIELD_FILENAME = data/TEXT/MAP/GAMEFIELD/gamefield002.txt	# ゲームフィールド情報のスクリプトファイル名
+	OBJECT_FILENAME = data/TEXT/MAP/OBJECT/object002.txt			# 配置物情報のスクリプトファイル名
+	ENEMYLIST_FILENAME = data/TEXT/MAP/ENEMYLIST/enemylist002.txt	# 敵の生成情報情報のスクリプトファイル名
 END_MAPSET
 
 END_SCRIPT		# この行は絶対消さないこと！

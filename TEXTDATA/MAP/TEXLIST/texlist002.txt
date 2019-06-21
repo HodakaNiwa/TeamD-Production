@@ -1,20 +1,23 @@
 #==============================================================================
 #
-# モデルリスト情報スクリプトファイル [autosave_modellist.txt]
+# テクスチャリスト情報スクリプトファイル [texlist002.txt]
 # Author : Hodaka Niwa
 #
 #==============================================================================
 SCRIPT			# この行は絶対消さないこと！
 
 #------------------------------------------------------------------------------
-# 読み込むモデル数
+# 読み込むテクスチャ数
 #------------------------------------------------------------------------------
-NUM_MODEL = 2
+NUM_TEXTURE = 5
 
 #------------------------------------------------------------------------------
-# 読み込むモデルのファイル名
+# 読み込むテクスチャのファイル名
 #------------------------------------------------------------------------------
-MODEL_FILENAME = data/MODEL/flag.x
-MODEL_FILENAME = data/MODEL/test000.x
+TEXTURE_FILENAME = data/TEXTURE/MAP/field000.jpg
+TEXTURE_FILENAME = data/TEXTURE/MAP/field001.jpg
+TEXTURE_FILENAME = data/TEXTURE/MAP/field002.jpg
+TEXTURE_FILENAME = data/TEXTURE/MAP/field003.jpg
+TEXTURE_FILENAME = data/TEXTURE/MAP/field004.jpg
 
 END_SCRIPT		# この行は絶対消さないこと！
