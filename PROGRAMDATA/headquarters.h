@@ -24,10 +24,10 @@ class CModel;
 class CHeadQuarters : public CObject3D
 {
 public:    // 誰でもアクセス可能
-	CHeadQuarters();
+	CHeadQuarters(int nPriority = 3, OBJTYPE objType = OBJTYPE_HEADQUARTERS);
 	~CHeadQuarters();
 
-	static CHeadQuarters *Create(int nAreaX, int nAreaZ, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture);
+	static CHeadQuarters *Create(int nAreaX, int nAreaZ, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, int nPriority = 3);
 
 	HRESULT Init(int nAreaX, int nAreaZ, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture);
 	void Uninit(void);
