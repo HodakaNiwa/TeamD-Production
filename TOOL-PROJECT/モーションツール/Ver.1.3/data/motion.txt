@@ -1,0 +1,81 @@
+#==============================================================================
+#
+# 『モーションビューワ』スクリプトファイル [motion.txt]
+# Author : AKIRA TANAKA
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# モデル数
+#------------------------------------------------------------------------------
+NUM_MODEL = 7
+
+#------------------------------------------------------------------------------
+# モデルファイル名
+#------------------------------------------------------------------------------
+MODEL_FILENAME = data/MODEL/milktea/body000.x		# [0]体00
+MODEL_FILENAME = data/MODEL/milktea/body001.x		# [1]体01
+MODEL_FILENAME = data/MODEL/milktea/Caterpillar.x	# [2]キャタピラー
+MODEL_FILENAME = data/MODEL/milktea/drink000.x		# [3]ドリンク00
+MODEL_FILENAME = data/MODEL/milktea/drink001.x		# [4]ドリンク01
+MODEL_FILENAME = data/MODEL/milktea/straw.x			# [5]ストロー
+MODEL_FILENAME = data/MODEL/milktea/tire.x			# [6]タイヤ
+
+
+#------------------------------------------------------------------------------
+# キャラクター情報
+#------------------------------------------------------------------------------
+CHARACTERSET
+	PARTSSET
+		INDEX = 0					# 体00
+		PARENT = -1					# (親)NULL
+		POS = 0.0 5.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 1					# 体01
+		PARENT = 0					# (親)体00
+		POS = 11.0 41.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 2					# 右腕
+		PARENT = 0					# (親)体
+		POS = -0.0 0.0 20.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 3					# 右手
+		PARENT = 2					# (親)右腕
+		POS = -0.0 0.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 4					# 左腕
+		PARENT = 0					# (親)体
+		POS = 0 0.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 5					# 左手
+		PARENT = 4					# (親)左腕
+		POS = 0.0 0.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 6					# 右腿
+		PARENT = 0					# (親)体
+		POS = -0.0 0.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+END_CHARACTERSET
+
+END_SCRIPT		# この行は絶対消さないこと！
