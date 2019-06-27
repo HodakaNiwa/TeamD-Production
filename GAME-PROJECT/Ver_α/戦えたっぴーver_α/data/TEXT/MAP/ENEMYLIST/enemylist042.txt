@@ -1,0 +1,138 @@
+#==============================================================================
+#
+# 敵の生成情報スクリプトファイル [enemylist042.txt]
+# Author : Hodaka Niwa
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# 生成する敵の数
+#------------------------------------------------------------------------------
+NUM_ENEMYLIST = 20
+
+#------------------------------------------------------------------------------
+# 敵の生成情報
+#------------------------------------------------------------------------------
+ENEMYLISTSET
+	RESPAWN = 1			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 60			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 60			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 60			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 150			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 150			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 150			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 240			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 240			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 240			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 330			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 330			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 330			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 330			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 450			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 450			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 450			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 540			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 540			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 540			# 出現させる時間
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 540			# 出現させる時間
+END_ENEMYLISTSET
+
+
+END_SCRIPT		# この行は絶対消さないこと！
