@@ -1,0 +1,123 @@
+#==============================================================================
+#
+# 『モーションビューワ』スクリプトファイル [motion.txt]
+# Author : AKIRA TANAKA
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# モデル数
+#------------------------------------------------------------------------------
+NUM_MODEL = 12
+
+#------------------------------------------------------------------------------
+# モデルファイル名
+#------------------------------------------------------------------------------
+MODEL_FILENAME = data/MODEL/milktea/body000.x		# [0]体00
+MODEL_FILENAME = data/MODEL/milktea/body001.x		# [1]体01
+MODEL_FILENAME = data/MODEL/milktea/Caterpillar.x	# [2]キャタピラー
+MODEL_FILENAME = data/MODEL/milktea/drink000.x		# [3]ドリンク00
+MODEL_FILENAME = data/MODEL/milktea/drink001.x		# [4]ドリンク01
+MODEL_FILENAME = data/MODEL/milktea/straw.x			# [5]ストロー
+MODEL_FILENAME = data/MODEL/milktea/tire.x			# [6]タイヤ
+MODEL_FILENAME = data/MODEL/milktea/Caterpillar.x	# [7]キャタピラー
+MODEL_FILENAME = data/MODEL/milktea/straw.x			# [8]ストロー
+MODEL_FILENAME = data/MODEL/milktea/tire.x			# [9]タイヤ
+MODEL_FILENAME = data/MODEL/milktea/tire.x			# [10]タイヤ
+MODEL_FILENAME = data/MODEL/milktea/tire.x			# [11]タイヤ
+
+#------------------------------------------------------------------------------
+# キャラクター情報
+#------------------------------------------------------------------------------
+CHARACTERSET
+	PARTSSET
+		INDEX = 0					# カップ
+		PARENT = -1					# (親)NULL
+		POS = 0.0 10.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 1					# 小さいカップ
+		PARENT = 0					# (親)体00
+		POS = 11.0 48.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 2					# キャタピラ(右)
+		PARENT = 0					# (親)体
+		POS = 0.0 0.0 20.0
+		ROT = 0.0 3.14 0.0
+	END_PARTSSET
+	
+	PARTSSET
+		INDEX = 7					# キャタピラ(左)
+		PARENT = 0					# (親)体
+		POS = 0.0 0.0 -20.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 3					# 本体ドリンク
+		PARENT = 2					# (親)右腕
+		POS = -0.0 12.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 4					# 上部のドリンク
+		PARENT = 0					# (親)体
+		POS = 11.0 49.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET
+		INDEX = 5					# ストロー
+		PARENT = 4					# (親)左腕
+		POS = 1.0 52.0 3.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+	
+	PARTSSET
+		INDEX = 8					# ストロー
+		PARENT = 4					# (親)左腕
+		POS = 1.0 52.0 -3.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+	
+	PARTSSET
+		INDEX = 6					# タイヤ
+		PARENT = 0					# (親)体
+		POS = 20.0 8.0 22.0
+		ROT = 0.0 3.14 0.0
+	END_PARTSSET
+	
+	PARTSSET
+		INDEX = 9					# タイヤ
+		PARENT = 0					# (親)体
+		POS = 20.0 8.0 -22.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+	
+	PARTSSET
+		INDEX = 10					# タイヤ
+		PARENT = 0					# (親)体
+		POS = -20.0 8.0 22.0
+		ROT = 0.0 3.14 0.0
+	END_PARTSSET
+	
+		PARTSSET
+		INDEX = 11					# タイヤ
+		PARENT = 0					# (親)体
+		POS = -20.0 8.0 -22.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+	
+	
+
+
+END_CHARACTERSET
+
+END_SCRIPT		# この行は絶対消さないこと！
