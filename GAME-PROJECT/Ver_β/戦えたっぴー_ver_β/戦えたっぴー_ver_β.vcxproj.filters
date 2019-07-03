@@ -1,0 +1,405 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="ソース ファイル\管轄クラス">
+      <UniqueIdentifier>{6e51054a-9724-4abc-9a98-1b4e68d81238}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\ライブラリ">
+      <UniqueIdentifier>{ae96b439-bb15-4568-980f-f5356c1cef28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\マップ">
+      <UniqueIdentifier>{8e187fad-b8b7-4b18-937c-bab6fc3a1616}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\システム">
+      <UniqueIdentifier>{47cec0da-e237-4bb8-9d4b-8f80626bea34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\サーバー">
+      <UniqueIdentifier>{7253bd9a-3d96-4419-a20a-bbbddfa3675f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\管轄クラス">
+      <UniqueIdentifier>{79b929ec-2edc-4fd8-91b0-83d46aa47796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\ライブラリ">
+      <UniqueIdentifier>{47f90bcf-a27a-4cdf-b61d-4190843d50c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\モード">
+      <UniqueIdentifier>{7912e18e-3019-4353-a0a1-01989ce0dbe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\マップ">
+      <UniqueIdentifier>{37bb7964-17a1-4cc9-b625-10919775480b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\システム">
+      <UniqueIdentifier>{945bf327-c4c5-4166-9116-615cf5f177e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\サーバー">
+      <UniqueIdentifier>{4d92e1d2-ca4b-496e-955d-c80663b1522d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\モード">
+      <UniqueIdentifier>{6c73e299-4e67-479e-ab18-3f54fc0a59bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\オブジェクト">
+      <UniqueIdentifier>{d9ff2ec9-bb86-4ce0-9be9-dbad5e5fe23f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\オブジェクト\3Dオブジェクト">
+      <UniqueIdentifier>{b1ff353f-8e52-45b1-9d63-fbc8c6352390}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\オブジェクト\3Dオブジェクト\キャラクター">
+      <UniqueIdentifier>{c0d8d566-b40c-449d-a3ea-cb9c626bc4f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\オブジェクト\3Dオブジェクト\エフェクト">
+      <UniqueIdentifier>{37f64df9-edb4-4e09-acdd-b546dec55e74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\オブジェクト\2Dオブジェクト">
+      <UniqueIdentifier>{8404a8bd-f5b6-4e27-9751-84083a69d757}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\オブジェクト">
+      <UniqueIdentifier>{adc4a00b-48f1-4acb-aa83-a742f15d8d5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\オブジェクト\3Dオブジェクト">
+      <UniqueIdentifier>{522e8670-20d9-490c-9fc0-92f112719ec0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\オブジェクト\3Dオブジェクト\キャラクター">
+      <UniqueIdentifier>{d7380ef8-fe91-4f8e-94d3-44a8b276b133}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\オブジェクト\3Dオブジェクト\エフェクト">
+      <UniqueIdentifier>{dc7aae59-c902-48d2-864a-519c3d67fce8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\オブジェクト\2Dオブジェクト">
+      <UniqueIdentifier>{c0f14760-7c18-4afd-9943-8be723cf2f52}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="manager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="motion.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="serverlib.cpp">
+      <Filter>ソース ファイル\サーバー</Filter>
+    </ClCompile>
+    <ClCompile Include="server.cpp">
+      <Filter>ソース ファイル\サーバー</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト\キャラクター</Filter>
+    </ClCompile>
+    <ClCompile Include="character.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト\キャラクター</Filter>
+    </ClCompile>
+    <ClCompile Include="result.cpp">
+      <Filter>ソース ファイル\モード</Filter>
+    </ClCompile>
+    <ClCompile Include="game.cpp">
+      <Filter>ソース ファイル\モード</Filter>
+    </ClCompile>
+    <ClCompile Include="charaselect.cpp">
+      <Filter>ソース ファイル\モード</Filter>
+    </ClCompile>
+    <ClCompile Include="title.cpp">
+      <Filter>ソース ファイル\モード</Filter>
+    </ClCompile>
+    <ClCompile Include="functionlib.cpp">
+      <Filter>ソース ファイル\ライブラリ</Filter>
+    </ClCompile>
+    <ClCompile Include="fileSaver.cpp">
+      <Filter>ソース ファイル\ライブラリ</Filter>
+    </ClCompile>
+    <ClCompile Include="fileLoader.cpp">
+      <Filter>ソース ファイル\ライブラリ</Filter>
+    </ClCompile>
+    <ClCompile Include="enemy.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト\キャラクター</Filter>
+    </ClCompile>
+    <ClCompile Include="basemode.cpp">
+      <Filter>ソース ファイル\モード</Filter>
+    </ClCompile>
+    <ClCompile Include="camera.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="cameraManager.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="debugproc.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="fade.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="input.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="light.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="lightManager.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="sound.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="renderer.cpp">
+      <Filter>ソース ファイル\システム</Filter>
+    </ClCompile>
+    <ClCompile Include="textureManager.cpp">
+      <Filter>ソース ファイル\管轄クラス</Filter>
+    </ClCompile>
+    <ClCompile Include="modelcreate.cpp">
+      <Filter>ソース ファイル\管轄クラス</Filter>
+    </ClCompile>
+    <ClCompile Include="river.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="respawn.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="meshfield.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="icefield.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="block.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="map.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="headquarters.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="boxCollider.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="bullet.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="meshRing.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="meshSphere.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="object3D.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="scene3D.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="sceneBillboard.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="effectManager.cpp">
+      <Filter>ソース ファイル\管轄クラス</Filter>
+    </ClCompile>
+    <ClCompile Include="item.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="sky.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="splash.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="particle.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="ringEffect.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="scene2D.cpp">
+      <Filter>ソース ファイル\オブジェクト\2Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="emitter.cpp">
+      <Filter>ソース ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>ソース ファイル\オブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="tutorial.cpp">
+      <Filter>ソース ファイル\モード</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="main.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="manager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="motion.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="server.h">
+      <Filter>ヘッダー ファイル\サーバー</Filter>
+    </ClInclude>
+    <ClInclude Include="serverlib.h">
+      <Filter>ヘッダー ファイル\サーバー</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト\キャラクター</Filter>
+    </ClInclude>
+    <ClInclude Include="enemy.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト\キャラクター</Filter>
+    </ClInclude>
+    <ClInclude Include="character.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト\キャラクター</Filter>
+    </ClInclude>
+    <ClInclude Include="title.h">
+      <Filter>ヘッダー ファイル\モード</Filter>
+    </ClInclude>
+    <ClInclude Include="result.h">
+      <Filter>ヘッダー ファイル\モード</Filter>
+    </ClInclude>
+    <ClInclude Include="charaselect.h">
+      <Filter>ヘッダー ファイル\モード</Filter>
+    </ClInclude>
+    <ClInclude Include="game.h">
+      <Filter>ヘッダー ファイル\モード</Filter>
+    </ClInclude>
+    <ClInclude Include="functionlib.h">
+      <Filter>ヘッダー ファイル\ライブラリ</Filter>
+    </ClInclude>
+    <ClInclude Include="fileSaver.h">
+      <Filter>ヘッダー ファイル\ライブラリ</Filter>
+    </ClInclude>
+    <ClInclude Include="fileLoader.h">
+      <Filter>ヘッダー ファイル\ライブラリ</Filter>
+    </ClInclude>
+    <ClInclude Include="basemode.h">
+      <Filter>ヘッダー ファイル\モード</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="cameraManager.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="debugproc.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="fade.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="input.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="lightManager.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="light.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="sound.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="renderer.h">
+      <Filter>ヘッダー ファイル\システム</Filter>
+    </ClInclude>
+    <ClInclude Include="modelcreate.h">
+      <Filter>ヘッダー ファイル\管轄クラス</Filter>
+    </ClInclude>
+    <ClInclude Include="textureManager.h">
+      <Filter>ヘッダー ファイル\管轄クラス</Filter>
+    </ClInclude>
+    <ClInclude Include="block.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="headquarters.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="icefield.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="map.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="meshfield.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="respawn.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="river.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="effectManager.h">
+      <Filter>ヘッダー ファイル\管轄クラス</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="boxCollider.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="item.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="meshRing.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="meshSphere.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="object3D.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="scene3D.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="sceneBillboard.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="sky.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="scene2D.h">
+      <Filter>ヘッダー ファイル\オブジェクト\2Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="ringEffect.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="splash.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="particle.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="emitter.h">
+      <Filter>ヘッダー ファイル\オブジェクト\3Dオブジェクト\エフェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>ヘッダー ファイル\オブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="tutorial.h">
+      <Filter>ヘッダー ファイル\モード</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
