@@ -167,6 +167,9 @@ HRESULT CGame::Init(void)
 	// 変数を初期化する
 	ClearVariable();
 
+	// マップの番号を設定する
+	m_nMapIdx = CCharaSelect::GetStageType() * GAME_MAPIDX_MAX;
+
 	// システムの初期化
 	LoadSystem();
 

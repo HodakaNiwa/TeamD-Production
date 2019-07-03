@@ -201,6 +201,9 @@ HRESULT CCharaSelect::Init(void)
 //=============================================================================
 void CCharaSelect::Uninit(void)
 {
+	// ステージの種類を設定
+	m_nSelectStage = CHARASELECT_MAPTYPE_NUMBER;
+
 	// 共通の終了処理
 	CBasemode::Uninit();
 
