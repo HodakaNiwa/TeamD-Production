@@ -189,6 +189,7 @@ public:    // 誰でもアクセス可能
 	HRESULT Init(int nNumModel, int nNumKey, float fBlendMag, bool bLoop, int *pPlaybackKey);
 	void Uninit(int nNumModel);
 	void Update(CModel **pModel, int nNumModel, int *pKey, int *pCounter, int *pBlendCounter, int *pAllCounter);
+	void ReleaseKeyframe(int nNumModel);
 
 	CMotionAttack *GetAttack(void);
 	CMotionCollision **GetCollision(void);
@@ -209,6 +210,8 @@ public:    // 誰でもアクセス可能
 	void SetNumColData(const int nNumColData);
 	void SetOrbit(CMotionOrbit **pOrbit);
 	void SetNumOrbitData(const int nNumOrbitData);
+	void SetKeyFrame(CKeyframe ***apKeyFrame);
+	void SetKeyFrame(const int nIdxKey, CKeyframe **apKeyFrame);
 	void SetKeyFrame(const int nIdxModel, const int nIdxKey, CKeyframe *pKeyFrame);
 	void SetState(STATE state);
 	void SetNumKey(const int nNumKey);
@@ -249,8 +252,13 @@ public:    // 誰でもアクセス可能
 	HRESULT Init(int nNumMotion, int nNumModel);
 	void Uninit(void);
 	void Update(CModel **pModel);
+	void CpyMotion(CMotion *pMotion, int nIdx);
+	void CpyAttack(int nIdx, CMotionAttack *pAttackCpy);
+	void CpyCollision(int nIdx, CMotionCollision **apCollisionCpy, int nNumColData);
+	void CpyOrbit(int nIdx, CMotionOrbit **apOrbitCpy, int nNumOrbitData);
+	void CpyKeyframe(int nIdx, CKeyframe ***apKeyframeCpy, int nNumKey);
+	void CpyKey(CKeyframe *pKeyframe, CKeyframe *pKeyframeCpy);
 
-	void SetMotion(CMotion *pMotion, int nIdx);
 	void SetKey(int nKey);
 	void SetAllCounter(int nAllCounter);
 	void SetNumber(int nNumber);
