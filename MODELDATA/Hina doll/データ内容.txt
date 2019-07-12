@@ -1,0 +1,8 @@
+00_lady_body		:お雛様の体
+01_lady_hed			:お雛様の頭
+02_man_body			:お内裏様の体
+03_man_hed			:お内裏様の頭
+04_pedestal			:台座
+05_foldingscreen	:屏風
+06_Three_clolor_bowl:三色餅
+07_Paper_lantern	:ぼんぼり
