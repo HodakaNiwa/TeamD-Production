@@ -33,6 +33,7 @@ public:	//誰からもアクセス可能
 
 	void SetPlayer(CPlayer *pPlayer);
 	CPlayer *GetPlayer(void);
+	int GetIdx(void);
 
 	//静的メンバ関数
 	static CPlayer *Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nIdx);

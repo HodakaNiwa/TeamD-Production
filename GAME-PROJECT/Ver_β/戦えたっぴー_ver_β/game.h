@@ -41,6 +41,7 @@ public:	// 誰からもアクセス可能
 		STATE_NORMAL,
 		STATE_GAMEOVER,
 		STATE_GAMECLEAR,
+		STATE_CHANGE_MAP,
 		STATE_PREV_MAP,
 		STATE_NEXT_MAP,
 		STATE_END,
@@ -60,6 +61,18 @@ public:	// 誰からもアクセス可能
 		MAPTYPE_MAX
 	}MAPTYPE;
 
+	//---------------------
+	// ひな祭りのイベント
+	//---------------------
+	typedef enum
+	{
+		HINAEVENT_NONE = -1,
+		HINAEVENT_NORMAL,
+		HINAEVENT_CHERRY_BLOSSOMS,
+		HINAEVENT_DROP_ITEM,
+		HINAEVENT_MAX
+	}HINAEVENT;
+
 	// メンバ関数
 	CGame();
 	~CGame();
@@ -72,6 +85,14 @@ public:	// 誰からもアクセス可能
 	void DeleteBlock(const int nIdx);
 	void DeleteEnemy(const int nIdx);
 
+	// アイテムの処理実行用関数
+	void ItemEvent_Star(int nPlayerNumber);
+	void ItemEvent_Grenade(void);
+	void ItemEvent_1Up(int nPlayerNumber);
+	void ItemEvent_Scoop(void);
+	void ItemEvent_Clock(void);
+	void ItemEvent_Helmet(int nPlayerNumber);
+
 
 	void SetBulletModel(CBullet *pBullet);
 	void SetItemModel(CItem *pItem, int nType);
@@ -82,6 +103,7 @@ public:	// 誰からもアクセス可能
 	STATE GetState(void);
 	CPlayer *GetPlayer(const int nIdx);
 	int GetNumEnemy(void);
+	bool GetEnemyMove(void);
 
 	// 静的メンバ関数
 	static CGame *Create(void);
@@ -103,6 +125,7 @@ private:	// 自分だけがアクセス可能
 	void CreateStageBg(void);
 	void CreateStageLogo(void);
 	void CreateStageNumber(void);
+	void CreateBlossoms(void);
 
 
 	// 開放処理用関数
@@ -150,25 +173,34 @@ private:	// 自分だけがアクセス可能
 	char *SetDataToDeleteEnemy(char *pStr);
 	void ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nNumDeleteEnemy);
 
+
 	// 状態による更新処理分け用関数
 	void StageSelectUpdate(void);
 	void StageDispUpdate(void);
 	void NormalUpdate(void);
 	void GameOverUpdate(void);
 	void GameOverLogoUp(void);
+	void GameClearUpdate(void);
+	void ChangeMapUpdate(void);
 	void EndUpdate(void);
+
 
 	// マップイベント用関数(みんながいじる OR 追加するならここ！！ それ以外は別途相談して・・・)
 	void MapEvent_Candy(void);
 	void MapEvent_Christmas(void);
 	void MapEvent_NewYear(void);
 	void MapEvent_Hinamatsuri(void);
+	void MapEvent_Hinamatsuri_Normal(void);
+	void MapEvent_Hinamatsuri_CherryBlossoms(void);
+	void MapEvent_Hinamatsuri_DropItem(void);
+
 
 	// ゲーム内スポーン処理用関数
 	void SetPlayerPosToSpawn(void);
 	void CheckPlayerResSpawn(int nCntPlayer);
 	void CheckEnemySpawn(int nTime);
 	void EnemySpawn(CMap *pMap, CEnemy_ListData *pEnemyData, int nCnt);
+
 
 	// マップを変える用関数(デバッグ用の関数込み)
 	void ResetCounter(void);
@@ -184,17 +216,23 @@ private:	// 自分だけがアクセス可能
 	void LoadTexFileName(char *pStr, int nCntTex);
 	void LoadModel(char *pStr, int nCntModel);
 	void LoadMapFileName(char *pStr, int nCntMap);
+	void LoadItemEvent(char *pStr);
+	void LoadItemEventScript(CFileLoader *pFileLoader, char *pStr);
 	void LoadEffectFileName(char *pStr);
 	void LoadStageBg(CFileLoader *pFileLoader, char *pStr);
 	void LoadStageLogo(CFileLoader *pFileLoader, char *pStr);
 	void LoadStageNumber(CFileLoader *pFileLoader, char *pStr);
 	void LoadGameOverLogo(CFileLoader *pFileLoader, char *pStr);
+	void LoadHinamatsuriEvent(char *pStr);
+	void LoadHinamatsuriEventScript(CFileLoader *pFileLoader, char *pStr);
+	void LoadCherryBlossomsData(CFileLoader *pFileLoader, char *pStr);
 
 
 	// メンバ変数
 	int m_nNumMap;                        // 読み込むマップの数
 	char **m_pMapFileName;                // 読み込むマップのファイル名
 	int m_nMapIdx;                        // 現在のマップの番号
+	int m_nStageIdx;                      // 現在のステージ番号
 	CUI *m_pUI;                           // UIクラスへのポインタ
 	STATE m_State;                        // 今回の状態
 	STATE m_StateOld;                     // 前回の状態
@@ -213,6 +251,13 @@ private:	// 自分だけがアクセス可能
 	int m_nPlayerRespawnCounter;          // プレイヤーのリスポーンを管理するカウンター
 	int m_nBulletModelIdx;                // 弾が使用するモデルの番号
 	int m_nItemModelIdx[CItem::TYPE_MAX]; // アイテムが使用するモデルの番号
+	bool m_bEnemyMove;                    // 敵が動けるかどうか
+	int m_nEnemyMoveCounter;              // 敵が動けない状態になってからの時間を数えるカウンター
+	HINAEVENT m_HinaEvent;                // ひな祭りマップのイベントを分ける変数
+	int m_nEventCounter;                  // イベントカウンター
+
+	// プレイヤーの同期に必要
+	bool m_bDeletePlayerFlag;
 
 	// ブロックの同期に必要
 	int m_nNumDeleteBlock;
@@ -260,5 +305,31 @@ private:	// 自分だけがアクセス可能
 		float fHeight;
 	}GAMEOVERPOLY_DATA;
 	GAMEOVERPOLY_DATA m_GameOverPolyData;
+
+	typedef struct
+	{// アイテムイベントデータ
+		int nStop;
+	}ITEMEVENT_DATA;
+	ITEMEVENT_DATA m_ItemEventData;
+
+	typedef struct
+	{// 桜の花びらデータ
+		int nTime;
+		int nAppear;
+		int nTexIdx;
+		int nMoveXMax;
+		int nMoveXMin;
+		int nMoveYMax;
+		int nMoveYMin;
+		int nWidthMax;
+		int nWidthMin;
+		int nHeightMax;
+		int nHeightMin;
+		int nAngleSpeedMax;
+		int nAngleSpeedMin;
+		int nRotSpeedMax;
+		int nRotSpeedMin;
+	}CHERRYBLOSSOMS_DATA;
+	CHERRYBLOSSOMS_DATA m_CherryBlossomsData;
 };
 #endif

@@ -31,10 +31,12 @@ public:	//誰からもアクセス可能
 	static void Print(int nNumber,char *fmt, ...);
 	static void ClearString(void);
 	static void Draw(void);
+	static void SwitchDisp(void);
 
 private:	//自分だけがアクセス可能
 	//静的メンバ変数
 	static LPD3DXFONT m_pFont;				//フォント
 	static char		  m_aStr[MAX_CHAR];		//文字列
+	static bool       m_bDisp;              //描画するかどうか
 };
 #endif

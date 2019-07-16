@@ -10,6 +10,7 @@
 #include "renderer.h"
 #include "basemode.h"
 #include "game.h"
+#include "player.h"
 
 //*****************************************************************************
 //    マクロ定義
@@ -92,9 +93,6 @@ CItem *CItem::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nModelIdx,
 //=============================================================================
 HRESULT CItem::Init(void)
 {
-	// 種類の設置処理
-	SetObjType(OBJTYPE_ITEM);
-
 	// アイテムのモデルを設定
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
@@ -502,7 +500,16 @@ void CItemStar::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
-		// アイテムの効果発動
+		// プレイヤークラスのポインタにキャスト
+		CPlayer *pPlayer = (CPlayer*)pScene;
+
+		// アイテムのイベントを起こす
+		int nPlayerNumber = pPlayer->GetIdx();
+		if (CManager::GetMode() == CManager::MODE_GAME)
+		{
+			CGame *pGame = CManager::GetGame();
+			pGame->ItemEvent_Star(nPlayerNumber);
+		}
 
 		// アイテムを消す
 		Uninit();
@@ -629,7 +636,12 @@ void CItemGrenade::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
-		// アイテムの効果発動
+		// アイテムのイベントを起こす
+		if (CManager::GetMode() == CManager::MODE_GAME)
+		{
+			CGame *pGame = CManager::GetGame();
+			pGame->ItemEvent_Grenade();
+		}
 
 		// アイテムを消す
 		Uninit();
@@ -756,7 +768,16 @@ void CItem1up::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
-		// アイテムの効果発動
+		// プレイヤークラスのポインタにキャスト
+		CPlayer *pPlayer = (CPlayer*)pScene;
+
+		// アイテムのイベントを起こす
+		int nPlayerNumber = pPlayer->GetIdx();
+		if (CManager::GetMode() == CManager::MODE_GAME)
+		{
+			CGame *pGame = CManager::GetGame();
+			pGame->ItemEvent_1Up(nPlayerNumber);
+		}
 
 		// アイテムを消す
 		Uninit();
@@ -883,7 +904,12 @@ void CItemScoop::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
-		// アイテムの効果発動
+		// アイテムのイベントを起こす
+		if (CManager::GetMode() == CManager::MODE_GAME)
+		{
+			CGame *pGame = CManager::GetGame();
+			pGame->ItemEvent_Scoop();
+		}
 
 		// アイテムを消す
 		Uninit();
@@ -1010,7 +1036,12 @@ void CItemClock::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
-		// アイテムの効果発動
+		// アイテムのイベントを起こす
+		if (CManager::GetMode() == CManager::MODE_GAME)
+		{
+			CGame *pGame = CManager::GetGame();
+			pGame->ItemEvent_Clock();
+		}
 
 		// アイテムを消す
 		Uninit();
@@ -1137,7 +1168,16 @@ void CItemHelmet::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
-		// アイテムの効果発動
+		// プレイヤークラスのポインタにキャスト
+		CPlayer *pPlayer = (CPlayer*)pScene;
+
+		// アイテムのイベントを起こす
+		int nPlayerNumber = pPlayer->GetIdx();
+		if (CManager::GetMode() == CManager::MODE_GAME)
+		{
+			CGame *pGame = CManager::GetGame();
+			pGame->ItemEvent_Helmet(nPlayerNumber);
+		}
 
 		// アイテムを消す
 		Uninit();

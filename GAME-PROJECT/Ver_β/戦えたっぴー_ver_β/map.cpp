@@ -14,6 +14,7 @@
 #include "modelcreate.h"
 #include "light.h"
 #include "lightManager.h"
+#include "characterManager.h"
 #include "block.h"
 #include "river.h"
 #include "icefield.h"
@@ -22,6 +23,10 @@
 #include "respawn.h"
 #include "headquarters.h"
 #include "meshfield.h"
+#include "object.h"
+#include "billboardObject.h"
+#include "emitter.h"
+#include "effectManager.h"
 #include "basemode.h"
 #include "sky.h"
 #include "scene.h"
@@ -118,6 +123,10 @@
 #define ICESET "ICESET"
 #define END_ICESET "END_ICESET"
 
+// 配置物情報
+#define NUM_OBJECT_DATA "NUM_OBJECT_DATA = "
+#define OBJECT_FILENAME "OBJECT_FILENAME = "
+
 // 配置モデル情報
 #define MODELSET "MODELSET"
 #define END_MODELSET "END_MODELSET"
@@ -125,6 +134,9 @@
 // 配置ビルボード情報
 #define BILLBOARDSET "BILLBOARDSET"
 #define END_BILLBOARDSET "END_BILLBOARDSET"
+#define COL "COL = "
+#define LIGHTING "LIGHTING = "
+#define DRAW_ADDTIVE "DRAW_ADDTIVE = "
 
 // 配置エフェクト情報
 #define EFFECTSET "EFFECTSET"
@@ -166,6 +178,7 @@ CMap::CMap()
 	m_pTextureManager = NULL;              // テクスチャ管轄クラスへのポインタ
 	m_pModelCreate = NULL;                 // モデル管轄クラスへのポインタ
 	m_pLightManager = NULL;                // ライト管轄クラスへのポインタ
+	m_pObjectManager = NULL;               // オブジェクトデータ管轄クラスへのポインタ
 }
 
 //=============================================================================
@@ -248,6 +261,9 @@ void CMap::Uninit(void)
 
 	// モデル管轄クラスの破棄
 	ReleaseModelManager();
+
+	// 配置物管轄クラスの破棄
+	ReleaseObjectManager();
 }
 
 //=============================================================================
@@ -1366,10 +1382,52 @@ HRESULT CMap::LoadObject(char *pObjectName, char *pStr)
 //=============================================================================
 HRESULT CMap::LoadObjectInfo(char *pStr, CFileLoader *pFileLoader)
 {
+	int nCntObjData = 0;
+
+	// エフェクト管轄クラスを見つけておく
+	CEffectManager *pEffectManager = NULL;
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_EFFECTMANAGER)
+			{// エフェクト管轄クラスだったクラスだった
+				pEffectManager = (CEffectManager*)pScene;
+				break;
+			}
+			pScene = pSceneNext;
+		}
+	}
+
 	while (1)
 	{// 抜けるまでループ
 		strcpy(pStr, pFileLoader->GetString(pStr));
-		if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		if (CFunctionLib::Memcmp(pStr, NUM_OBJECT_DATA) == 0)
+		{// オブジェクトデータの数情報だった
+			LoadNumObjectData(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, OBJECT_FILENAME) == 0)
+		{// オブジェクトデータのファイル名だった
+			LoadObjectData(pStr, pFileLoader, nCntObjData);
+			nCntObjData++;
+		}
+		else if (CFunctionLib::Memcmp(pStr, MODELSET) == 0)
+		{// 配置物情報だった
+			LoadObjModel(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, BILLBOARDSET) == 0)
+		{// 配置ビルボード情報だった
+			LoadObjBill(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, EFFECTSET) == 0)
+		{// 配置エフェクト情報だった
+			LoadObjEffect(pStr, pFileLoader, pEffectManager);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
 		{// スクリプト情報読み込み終了の合図があった
 			break;
 		}
@@ -1379,11 +1437,73 @@ HRESULT CMap::LoadObjectInfo(char *pStr, CFileLoader *pFileLoader)
 }
 
 //=============================================================================
+//    配置物データの数情報読み込み処理
+//=============================================================================
+void CMap::LoadNumObjectData(char *pStr, CFileLoader *pFileLoader)
+{
+	// データの数を読み込む
+	m_nNumObjectData = CFunctionLib::ReadInt(pStr, NUM_OBJECT_DATA);
+	if (m_nNumObjectData <= 0)return;
+
+	// メモリを確保する
+	m_pObjectManager = new CCharacterManager*[m_nNumObjectData];
+	if (m_pObjectManager == NULL)return;
+
+	// メモリの中身をクリアしておく
+	for (int nCntObject = 0; nCntObject < m_nNumObjectData; nCntObject++)
+	{
+		m_pObjectManager[nCntObject] = NULL;
+	}
+}
+
+//=============================================================================
+//    配置物データ読み込み処理
+//=============================================================================
+void CMap::LoadObjectData(char *pStr, CFileLoader *pFileLoader, int nCntObjData)
+{
+	// ファイル名を読み込む
+	char aObjFileName[256] = "\0";
+	strcpy(aObjFileName, CFunctionLib::ReadString(pStr, aObjFileName, OBJECT_FILENAME));
+
+	// 配置物のデータを読み込む
+	if (m_pObjectManager == NULL)return;
+	m_pObjectManager[nCntObjData] = CCharacterManager::Create(aObjFileName);
+}
+
+//=============================================================================
 //    配置モデル情報読み込み処理
 //=============================================================================
 void CMap::LoadObjModel(char *pStr, CFileLoader *pFileLoader)
 {
+	int nObjModelType = 0;
+	D3DXVECTOR3 ObjModelPos = INITIALIZE_D3DXVECTOR3;
+	D3DXVECTOR3 ObjModelRot = INITIALIZE_D3DXVECTOR3;
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TYPE) == 0)
+		{// 使用するオブジェクトデータの種類情報だった
+			nObjModelType = CFunctionLib::ReadInt(pStr, TYPE);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標だった
+			ObjModelPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROT) == 0)
+		{// 向きだった
+			ObjModelRot = CFunctionLib::ReadVector3(pStr, ROT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_MODELSET) == 0)
+		{// 配置モデル情報終了の合図だった
+			break;
+		}
+	}
 
+	// モデルを配置する
+	if (m_pObjectManager != NULL)
+	{
+		m_pObjectManager[nObjModelType]->SetObject(ObjModelPos, ObjModelRot, nObjModelType);
+	}
 }
 
 //=============================================================================
@@ -1391,15 +1511,95 @@ void CMap::LoadObjModel(char *pStr, CFileLoader *pFileLoader)
 //=============================================================================
 void CMap::LoadObjBill(char *pStr, CFileLoader *pFileLoader)
 {
+	int nObjBillTexIdx = 0;
+	D3DXVECTOR3 ObjBillPos = INITIALIZE_D3DXVECTOR3;
+	D3DXCOLOR ObjBillCol = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	float fObjBillRot = 0.0f;
+	float fObjBillWidth = 0.0f;
+	float fObjBillHeight = 0.0f;
+	bool bObjBillLighting = false;
+	bool bObjBillDrawAddtive = false;
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TEX_IDX) == 0)
+		{// 使用するテクスチャの番号情報だった
+			nObjBillTexIdx = CFunctionLib::ReadInt(pStr, TEX_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標だった
+			ObjBillPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, COL) == 0)
+		{// 色だった
+			ObjBillCol = CFunctionLib::ReadVector4(pStr, COL);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROT) == 0)
+		{// 向きだった
+			fObjBillRot = CFunctionLib::ReadFloat(pStr, ROT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, WIDTH) == 0)
+		{// 幅だった
+			fObjBillWidth = CFunctionLib::ReadFloat(pStr, WIDTH);
+		}
+		else if (CFunctionLib::Memcmp(pStr, HEIGHT) == 0)
+		{// 高さだった
+			fObjBillHeight = CFunctionLib::ReadFloat(pStr, HEIGHT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, LIGHTING) == 0)
+		{// ライティングするかどうかだった
+			bObjBillLighting = CFunctionLib::ReadBool(pStr, LIGHTING);
+		}
+		else if (CFunctionLib::Memcmp(pStr, DRAW_ADDTIVE) == 0)
+		{// 加算合成で描画するかするかどうかだった
+			bObjBillDrawAddtive = CFunctionLib::ReadBool(pStr, DRAW_ADDTIVE);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_BILLBOARDSET) == 0)
+		{// 配置ビルボード情報終了の合図だった
+			break;
+		}
+	}
 
+	// ビルボードを配置する
+	CBillboardObject *pObjBill = CBillboardObject::Create(ObjBillPos, ObjBillCol, fObjBillWidth, fObjBillWidth,
+		fObjBillRot, bObjBillLighting, bObjBillDrawAddtive, nObjBillTexIdx);
+	if (pObjBill != NULL && m_pTextureManager != NULL)
+	{
+		pObjBill->BindTexture(m_pTextureManager->GetTexture(nObjBillTexIdx));
+	}
 }
 
 //=============================================================================
 //    配置エフェクト情報読み込み処理
 //=============================================================================
-void CMap::LoadObjEffect(char *pStr, CFileLoader *pFileLoader)
+void CMap::LoadObjEffect(char *pStr, CFileLoader *pFileLoader, CEffectManager *pEffectManager)
 {
+	int nObjEffectType = 0;
+	D3DXVECTOR3 ObjEffectPos = INITIALIZE_D3DXVECTOR3;
+	D3DXVECTOR3 ObjEffectRot = INITIALIZE_D3DXVECTOR3;
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TYPE) == 0)
+		{// 使用するオブジェクトデータの種類情報だった
+			nObjEffectType = CFunctionLib::ReadInt(pStr, TYPE);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標だった
+			ObjEffectPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROT) == 0)
+		{// 向きだった
+			ObjEffectRot = CFunctionLib::ReadVector3(pStr, ROT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_EFFECTSET) == 0)
+		{// 配置エフェクト情報終了の合図だった
+			break;
+		}
+	}
 
+	// エフェクトを配置する
+	pEffectManager->SetEffect(ObjEffectPos, ObjEffectRot, nObjEffectType);
 }
 
 //=============================================================================
@@ -2192,7 +2392,7 @@ HRESULT CMap::SaveObject(char *pObjectName)
 	pFileSaver = CFileSaver::Create(strcat(aSaveFileName, pObjectName));
 	if (pFileSaver != NULL)
 	{// ファイルが読み込めた
-	    // ファイルの冒頭分を書き込み
+	 // ファイルの冒頭分を書き込み
 		pFileSaver->Print("#==============================================================================\n");
 		pFileSaver->Print("#\n");
 		pFileSaver->Print("# 配置物情報スクリプトファイル [%s]\n", pObjectName);
@@ -2200,6 +2400,23 @@ HRESULT CMap::SaveObject(char *pObjectName)
 		pFileSaver->Print("#\n");
 		pFileSaver->Print("#==============================================================================\n");
 		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
+		pFileSaver->Print("\n");
+
+		// 配置物データの数を書き込み
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("# 読み込むオブジェクトデータの数\n");
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("%s%d\n", NUM_OBJECT_DATA, m_nNumObjectData);
+		pFileSaver->Print("\n");
+
+		// 配置物データのファイル名を書き込み
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("# 読み込むオブジェクトデータのファイル名\n");
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		for (int nCntObject = 0; nCntObject < m_nNumObjectData; nCntObject++)
+		{
+			pFileSaver->Print("%s%s\n", OBJECT_FILENAME, m_pObjectManager[nCntObject]->GetFileName());
+		}
 		pFileSaver->Print("\n");
 
 		// 配置物情報を書き込み
@@ -2235,7 +2452,7 @@ void CMap::SaveObjectInfo(CFileSaver *pFileSaver)
 }
 
 //=============================================================================
-//    配置モデル情報保存処理
+//    配置モデル保存処理
 //=============================================================================
 void CMap::SaveObjModel(CFileSaver *pFileSaver)
 {
@@ -2245,12 +2462,44 @@ void CMap::SaveObjModel(CFileSaver *pFileSaver)
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
 	// 配置モデル情報を書き込み
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_OBJECT)
+			{// 配置物クラスだった
+				SaveObjModelInfo((CObject*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
 
+//=============================================================================
+//    配置モデル情報保存処理
+//=============================================================================
+void CMap::SaveObjModelInfo(CObject *pObject, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nObjModelType = pObject->GetType();
+	D3DXVECTOR3 ObjModelPos = pObject->GetPos();
+	D3DXVECTOR3 ObjModelRot = pObject->GetRot();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", MODELSET);
+	pFileSaver->Print("	%s%d					# 種類\n", TYPE, nObjModelType);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, ObjModelPos.x, ObjModelPos.y, ObjModelPos.z);
+	pFileSaver->Print("	%s%.2f %.2f %.2f		# 向き\n", ROT, ObjModelRot.x, ObjModelRot.y, ObjModelRot.z);
+	pFileSaver->Print("%s\n", END_MODELSET);
 	pFileSaver->Print("\n");
 }
 
 //=============================================================================
-//    配置ビルボード情報保存処理
+//    配置ビルボード保存処理
 //=============================================================================
 void CMap::SaveObjBill(CFileSaver *pFileSaver)
 {
@@ -2260,12 +2509,54 @@ void CMap::SaveObjBill(CFileSaver *pFileSaver)
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
 	// 配置ビルボード情報を書き込み
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_OBJBILLBOARD)
+			{// 配置ビルボードクラスだった
+				SaveObjBillInfo((CBillboardObject*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
 
+//=============================================================================
+//    配置ビルボード情報保存処理
+//=============================================================================
+void CMap::SaveObjBillInfo(CBillboardObject *pBillObj, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nObjBillTexIdx = pBillObj->GetTexIdx();
+	D3DXVECTOR3 ObjBillPos = pBillObj->GetPos();
+	D3DXCOLOR ObjBillCol = pBillObj->GetCol();
+	float fObjBillRot = pBillObj->GetRot();
+	float fObjBillWidth = pBillObj->GetWidth();
+	float fObjBillHeight = pBillObj->GetHeight();
+	bool bObjBillLighting = pBillObj->GetLighting();
+	bool bObjBillDrawAddtive = pBillObj->GetDrawAddtive();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", BILLBOARDSET);
+	pFileSaver->Print("	%s%d					# 使用するテクスチャの番号\n", TEX_IDX, nObjBillTexIdx);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, ObjBillPos.x, ObjBillPos.y, ObjBillPos.z);
+	pFileSaver->Print("	%s%.1f %.1f %.1f %.1f		# 色\n", COL, ObjBillCol.r, ObjBillCol.g, ObjBillCol.b, ObjBillCol.a);
+	pFileSaver->Print("	%s%.1f					# 向き\n", ROT, fObjBillRot);
+	pFileSaver->Print("	%s%.1f				# 幅\n", WIDTH, fObjBillWidth);
+	pFileSaver->Print("	%s%.1f				# 高さ\n", HEIGHT, fObjBillHeight);
+	pFileSaver->Print("	%s%d				# ライティングするかどうか\n", LIGHTING, (int)bObjBillLighting);
+	pFileSaver->Print("	%s%d			# 加算合成で描画するかどうか\n", DRAW_ADDTIVE, (int)bObjBillDrawAddtive);
+	pFileSaver->Print("%s\n", END_BILLBOARDSET);
 	pFileSaver->Print("\n");
 }
 
 //=============================================================================
-//    配置エフェクト情報保存処理
+//    配置エフェクト保存処理
 //=============================================================================
 void CMap::SaveObjEffect(CFileSaver *pFileSaver)
 {
@@ -2275,7 +2566,39 @@ void CMap::SaveObjEffect(CFileSaver *pFileSaver)
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
 	// 配置エフェクト情報を書き込み
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER)
+			{// エミッタクラスだった
+				SaveObjEffectInfo((CEmitter*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
 
+//=============================================================================
+//    配置エフェクト情報保存処理
+//=============================================================================
+void CMap::SaveObjEffectInfo(CEmitter *pEmitter, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nObjEffectType = pEmitter->GetType();
+	D3DXVECTOR3 ObjEffectPos = pEmitter->GetPos();
+	D3DXVECTOR3 ObjEffectRot = pEmitter->GetRot();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", EFFECTSET);
+	pFileSaver->Print("	%s%d					# 種類\n", TYPE, nObjEffectType);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, ObjEffectPos.x, ObjEffectPos.y, ObjEffectPos.z);
+	pFileSaver->Print("	%s%.2f %.2f %.2f		# 向き\n", ROT, ObjEffectRot.x, ObjEffectRot.y, ObjEffectRot.z);
+	pFileSaver->Print("%s\n", END_EFFECTSET);
 	pFileSaver->Print("\n");
 }
 
@@ -2412,6 +2735,9 @@ void CMap::DeleteMap(void)
 	// 敵の生成情報を破棄
 	ReleaseEnemyListData();
 
+	// キャラクター情報を破棄
+	ReleaseObjectManager();
+
 	// ライトを破棄
 	DeleteLight();
 
@@ -2517,6 +2843,18 @@ void CMap::DeleteObject(void)
 		while (pScene != NULL)
 		{// ポインタが空になるまで
 			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_OBJECT)
+			{// ブロッククラスだった
+				DeleteObjModel((CObject*)pScene);
+			}
+			else if (pScene->GetObjType() == CScene::OBJTYPE_OBJBILLBOARD)
+			{// ビルボードクラスだった
+				DeleteObjBillboard((CBillboardObject*)pScene);
+			}
+			else if (pScene->GetObjType() == CScene::OBJTYPE_EMITTER || pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER)
+			{// エミッタクラスだった
+				DeleteObjEffect((CEmitter*)pScene);
+			}
 			pScene = pSceneNext;
 		}
 	}
@@ -2525,25 +2863,28 @@ void CMap::DeleteObject(void)
 //=============================================================================
 //    配置モデルを破棄する処理
 //=============================================================================
-void CMap::DeleteObjModel(void)
+void CMap::DeleteObjModel(CObject *pObject)
 {
-
+	pObject->Uninit();
+	pObject = NULL;
 }
 
 //=============================================================================
 //    配置ビルボードを破棄する処理
 //=============================================================================
-void CMap::DeleteObjBillboard(void)
+void CMap::DeleteObjBillboard(CBillboardObject *pBillboard)
 {
-
+	pBillboard->Uninit();
+	pBillboard = NULL;
 }
 
 //=============================================================================
 //    配置エフェクトを破棄する処理
 //=============================================================================
-void CMap::DeleteObjEffect(void)
+void CMap::DeleteObjEffect(CEmitter *pEmitter)
 {
-
+	pEmitter->Uninit();
+	pEmitter = NULL;
 }
 
 //=============================================================================
@@ -2604,6 +2945,27 @@ void CMap::ReleaseLightManager(void)
 		m_pLightManager->Uninit();
 		delete m_pLightManager;
 		m_pLightManager = NULL;
+	}
+}
+
+//=============================================================================
+//    配置物のデータ管轄クラスを開放する処理
+//=============================================================================
+void CMap::ReleaseObjectManager(void)
+{
+	if (m_pObjectManager != NULL)
+	{
+		for (int nCntObject = 0; nCntObject < m_nNumObjectData; nCntObject++)
+		{
+			if (m_pObjectManager[nCntObject] != NULL)
+			{
+				m_pObjectManager[nCntObject]->Uninit();
+				delete m_pObjectManager[nCntObject];
+				m_pObjectManager[nCntObject] = NULL;
+			}
+		}
+		delete[] m_pObjectManager;
+		m_pObjectManager = NULL;
 	}
 }
 
@@ -2764,6 +3126,18 @@ char *CMap::GetLightFileName(void)
 }
 
 //=============================================================================
+//    配置物データ管轄クラスへのポインタを取得する
+//=============================================================================
+CCharacterManager **CMap::GetObjectManager(void)
+{
+	return m_pObjectManager;
+}
+CCharacterManager *CMap::GetObjectManager(int nIdx)
+{
+	return m_pObjectManager[nIdx];
+}
+
+//=============================================================================
 //    読み込むゲームフィールド情報のスクリプトファイル名を取得する
 //=============================================================================
 char *CMap::GetGameFieldFileName(void)
@@ -2868,6 +3242,18 @@ void CMap::SetLightManager(CLightManager *pLightManager)
 }
 
 //=============================================================================
+//    配置物データ管轄クラスへのポインタを設定する
+//=============================================================================
+void CMap::SetObjectManager(CCharacterManager **pObjectManager)
+{
+	m_pObjectManager = pObjectManager;
+}
+void CMap::SetObjectManager(CCharacterManager *pObjectManager, int nIdx)
+{
+	m_pObjectManager[nIdx] = pObjectManager;
+}
+
+//=============================================================================
 //    読み込むモデルリスト情報のスクリプトファイル名を設定する
 //=============================================================================
 void CMap::SetModelListFileName(char *pFileName)
@@ -2953,6 +3339,14 @@ void CMap::SetEnemyListData(CEnemy_ListData EnemyData, int nIdx)
 void CMap::SetNumEnemyListData(const int nNumEnemyData)
 {
 	m_nNumEnemyListData = nNumEnemyData;
+}
+
+//=============================================================================
+//    オブジェクトデータの総数を設定する
+//=============================================================================
+void CMap::SetNumObjectData(const int nObjectData)
+{
+	m_nNumObjectData = nObjectData;
 }
 
 

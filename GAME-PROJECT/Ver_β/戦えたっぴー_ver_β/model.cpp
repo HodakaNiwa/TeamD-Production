@@ -84,7 +84,7 @@ HRESULT CModel::Init(D3DXVECTOR3 pos, D3DXVECTOR3 rot, LPD3DXMESH pMesh, LPD3DXB
 		LPDIRECT3DDEVICE9 pDevice = pRenderer->GetDevice();  	// デバイスの取得
 		if (pDevice != NULL)
 		{// デバイスが取得できた
-	        // 各種値の設定
+		 // 各種値の設定
 			m_Pos = pos;           // 座標
 			m_Rot = rot;           // 向き
 			m_Scale = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
@@ -139,14 +139,14 @@ void CModel::Draw(void)
 	D3DMATERIAL9 matDef;   // 現在のマテリアル保存用
 	D3DXMATERIAL *pMat;    // マテリアルデータへのポインタ
 
-	// レンダリングクラスの取得
+						   // レンダリングクラスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
 	if (pRenderer != NULL)
 	{// レンダリングクラスが取得できた
 		LPDIRECT3DDEVICE9 pDevice = pRenderer->GetDevice();  	// デバイスの取得
 		if (pDevice != NULL)
 		{// デバイスが取得できた
-		    // ワールドマトリックス設定処理
+		 // ワールドマトリックス設定処理
 			SetMtxWorld(pDevice);
 
 			// 法線情報を正規化する(スケーリング時に法線情報がいじられるので)
@@ -157,22 +157,22 @@ void CModel::Draw(void)
 
 			if (m_pBuffMat != NULL && m_pMesh != NULL)
 			{// Xファイルからモデルデータが読み込めている
-			    // マテリアルデータへのポインタを取得
+			 // マテリアルデータへのポインタを取得
 				pMat = (D3DXMATERIAL*)m_pBuffMat->GetBufferPointer();
 
 				for (int nCntMat = 0; nCntMat < (int)m_nNumMat; nCntMat++)
 				{// 設定されていたマテリアルの数だけ繰り返し
-					// マテリアルの設定
+				 // マテリアルの設定
 					pDevice->SetMaterial(&pMat[nCntMat].MatD3D);
 
 					if (m_pTexture != NULL)
 					{// テクスチャ情報が引き出せている
-						// テクスチャの設定
+					 // テクスチャの設定
 						pDevice->SetTexture(0, m_pTexture[nCntMat]);
 					}
 					else
 					{// テクスチャ情報が引き出せていない
-						// テクスチャの設定
+					 // テクスチャの設定
 						pDevice->SetTexture(0, NULL);
 					}
 
@@ -197,7 +197,7 @@ void CModel::SetMtxWorld(const LPDIRECT3DDEVICE9 pDevice)
 {
 	D3DXMATRIX mtxRot, mtxTrans, mtxScale, mtxParent; // 計算用マトリックス
 
-	// ワールドマトリックスの初期化
+													  // ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_MtxWorld);
 
 	// 大きさを反映
@@ -254,6 +254,23 @@ void CModel::BindModel(const LPD3DXMESH pMesh, const LPD3DXBUFFER pBuffMat, cons
 }
 
 //=============================================================================
+//    モデルの値をコピーする
+//=============================================================================
+void CModel::Cpy(CModel *pModel)
+{
+	if (pModel == NULL) return;
+
+	SetPos(pModel->GetPos());
+	SetRot(pModel->GetRot());
+	SetScale(pModel->GetScale());
+	SetAddPos(pModel->GetAddPos());
+	SetMtxWorld(pModel->GetMtxWorld());
+	SetParent(pModel->GetParent());
+	BindModel(pModel->GetMesh(), pModel->GetBuffMat(), pModel->GetNumMat(),
+		pModel->GetVtxMax(), pModel->GetVtxMin(), pModel->GetTexture());
+}
+
+//=============================================================================
 //    モデルの透明度設定処理
 //=============================================================================
 void CModel::SetAlpha(float fAlpha)
@@ -264,7 +281,7 @@ void CModel::SetAlpha(float fAlpha)
 
 	if (pBuffMat != NULL)
 	{// マテリアル情報へのポインタが取得できた
-	    // マテリアルデータへのポインタを取得
+	 // マテリアルデータへのポインタを取得
 		pMat = (D3DXMATERIAL*)pBuffMat->GetBufferPointer();
 
 		for (int nCntMat = 0; nCntMat < (int)nNumMat; nCntMat++)

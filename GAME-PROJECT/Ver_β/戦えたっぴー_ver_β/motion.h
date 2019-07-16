@@ -171,9 +171,9 @@ private:   // このクラスだけがアクセス可能
 class CMotion
 {
 public:    // 誰でもアクセス可能
-		   //------------------------
-		   //  モーションの状態
-		   //------------------------
+	//------------------------
+	//  モーションの状態
+	//------------------------
 	typedef enum
 	{
 		STATE_NORMAL = 0,  // 通常状態
@@ -189,6 +189,7 @@ public:    // 誰でもアクセス可能
 	HRESULT Init(int nNumModel, int nNumKey, float fBlendMag, bool bLoop, int *pPlaybackKey);
 	void Uninit(int nNumModel);
 	void Update(CModel **pModel, int nNumModel, int *pKey, int *pCounter, int *pBlendCounter, int *pAllCounter);
+	void ReleaseKeyframe(int nNumModel);
 
 	CMotionAttack *GetAttack(void);
 	CMotionCollision **GetCollision(void);

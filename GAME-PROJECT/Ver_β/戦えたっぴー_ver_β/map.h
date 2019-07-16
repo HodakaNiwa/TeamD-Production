@@ -34,6 +34,8 @@ class CFileSaver;
 class CTextureManager;
 class CModelCreate;
 class CLightManager;
+class CCharacterManager;
+class CEffectManager;
 class CBlock;
 class CRiver;
 class CIceField;
@@ -44,6 +46,9 @@ class CMeshField;
 class CRespawn;
 class CHeadQuarters;
 class CSky;
+class CObject;
+class CBillboardObject;
+class CEmitter;
 
 //*****************************************************************************
 //    敵の生成情報データクラスの定義
@@ -145,6 +150,8 @@ public:    // 誰でもアクセス可能
 	CTextureManager *GetTextureManager(void);
 	CModelCreate *GetModelCreate(void);
 	CLightManager *GetLightManager(void);
+	CCharacterManager **GetObjectManager(void);
+	CCharacterManager *GetObjectManager(int nIdx);
 	char *GetModelListFileName(void);
 	char *GetTexListFileName(void);
 	char *GetLightFileName(void);
@@ -162,6 +169,8 @@ public:    // 誰でもアクセス可能
 	void SetTextureManager(CTextureManager *pTextureManager);
 	void SetModelCreate(CModelCreate *pModelCreate);
 	void SetLightManager(CLightManager *pLightManager);
+	void SetObjectManager(CCharacterManager **pObjectManager);
+	void SetObjectManager(CCharacterManager *pObjectManager, int nIdx);
 	void SetModelListFileName(char *pFileName);
 	void SetTexListFileName(char *pFileName);
 	void SetLightFileName(char *pFileName);
@@ -173,6 +182,7 @@ public:    // 誰でもアクセス可能
 	void SetEnemyRespawn(CRespawn *pRespawn, int nIdx);
 	void SetEnemyListData(CEnemy_ListData EnemyData, int nIdx);
 	void SetNumEnemyListData(const int nNumEnemyData);
+	void SetNumObjectData(const int nObjectData);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 
@@ -182,9 +192,11 @@ private:   // このクラスだけがアクセス可能
 	void LoadCollision(char *pStr, CFileLoader *pFileLoader, float *pWidth, float *pHeight, float *pDepth);
 	void LoadRiver(char *pStr, CFileLoader *pFileLoader);
 	void LoadIce(char *pStr, CFileLoader *pFileLoader);
+	void LoadNumObjectData(char *pStr, CFileLoader *pFileLoader);
+	void LoadObjectData(char *pStr, CFileLoader *pFileLoader, int nCntObjData);
 	void LoadObjModel(char *pStr, CFileLoader *pFileLoader);
 	void LoadObjBill(char *pStr, CFileLoader *pFileLoader);
-	void LoadObjEffect(char *pStr, CFileLoader *pFileLoader);
+	void LoadObjEffect(char *pStr, CFileLoader *pFileLoader, CEffectManager *pEffectManager);
 	void LoadItem(char *pStr, CFileLoader *pFileLoader, int nCntEnemyList);
 
 	void FieldDown(D3DXVECTOR3 pos, int nXBlock, int nZBlock, float fFieldDown);
@@ -205,8 +217,11 @@ private:   // このクラスだけがアクセス可能
 	void SaveSpotLight(CSpotLight *pSpotLight, CFileSaver *pFileSaver);
 	void SaveObjectInfo(CFileSaver *pFileSaver);
 	void SaveObjModel(CFileSaver *pFileSaver);
+	void SaveObjModelInfo(CObject *pObject, CFileSaver *pFileSaver);
 	void SaveObjBill(CFileSaver *pFileSaver);
+	void SaveObjBillInfo(CBillboardObject *pBillObj, CFileSaver *pFileSaver);
 	void SaveObjEffect(CFileSaver *pFileSaver);
+	void SaveObjEffectInfo(CEmitter *pEmitter, CFileSaver *pFileSaver);
 	void SaveEnemyListInfo(CFileSaver *pFileSaver);
 
 	void CreateEnemyListData(void);
@@ -214,13 +229,14 @@ private:   // このクラスだけがアクセス可能
 	void DeleteBlock(CBlock *pBlock);
 	void DeleteRiver(CRiver *pRiver);
 	void DeleteIce(CIceField *pIceField);
-	void DeleteObjModel(void);
-	void DeleteObjBillboard(void);
-	void DeleteObjEffect(void);
+	void DeleteObjModel(CObject *pObject);
+	void DeleteObjBillboard(CBillboardObject *pBillboard);
+	void DeleteObjEffect(CEmitter *pEmitter);
 
 	void ReleaseTextureManager(void);
 	void ReleaseModelManager(void);
 	void ReleaseLightManager(void);
+	void ReleaseObjectManager(void);
 	void ReleaseMeshField(void);
 	void ReleaseSky(void);
 	void ReleaseHeadQuarters(void);
@@ -228,25 +244,27 @@ private:   // このクラスだけがアクセス可能
 	void ReleaseEnemyRespawn(void);
 	void ReleaseEnemyListData(void);
 
-	int             m_nFieldTexIdx;                        // 地面に張り付けるテクスチャの番号
-	char            m_aFileName[256];                      // 読み込むマップデータのスクリプトファイル名
-	char            m_aModelListFileName[256];             // 読み込むモデルリスト情報スクリプトファイル名
-	char            m_aTexListFileName[256];               // 読み込むテクスチャリスト情報のスクリプトファイル名
-	char            m_aLightFileName[256];                 // 読み込むライト情報のスクリプトファイル名
-	char            m_aGameFieldFileName[256];             // 読み込むゲームフィールド情報のスクリプトファイル名
-	char            m_aObjectFileName[256];                // 読み込む配置物情報のスクリプトファイル名
-	char            m_aEnemyListFileName[256];             // 読み込む敵の生成情報のスクリプトファイル名
+	int             m_nFieldTexIdx;                          // 地面に張り付けるテクスチャの番号
+	char            m_aFileName[256];                        // 読み込むマップデータのスクリプトファイル名
+	char            m_aModelListFileName[256];               // 読み込むモデルリスト情報スクリプトファイル名
+	char            m_aTexListFileName[256];                 // 読み込むテクスチャリスト情報のスクリプトファイル名
+	char            m_aLightFileName[256];                   // 読み込むライト情報のスクリプトファイル名
+	char            m_aGameFieldFileName[256];               // 読み込むゲームフィールド情報のスクリプトファイル名
+	char            m_aObjectFileName[256];                  // 読み込む配置物情報のスクリプトファイル名
+	char            m_aEnemyListFileName[256];               // 読み込む敵の生成情報のスクリプトファイル名
 
-	CMeshField      *m_pMeshField;                         // 地面クラスへのポインタ
-	CSky            *m_pSky;                               // 空クラスへのポインタ
-	CHeadQuarters   *m_pHeadQuarters;                      // 司令部クラス型のポインタ
-	CRespawn        *m_pPlayerRespawn[MAX_PLAYER_RESPAWN]; // プレイヤーのリスポーン位置(2人分)
-	CRespawn        *m_pEnemyRespawn[MAX_ENEMY_RESPAWN];   // 敵のリスポーン位置(3箇所分)
-	CTextureManager *m_pTextureManager;                    // テクスチャ管轄クラスへのポインタ
-	CModelCreate    *m_pModelCreate;                       // モデル管轄クラスへのポインタ
-	CLightManager   *m_pLightManager;                      // ライト管轄クラスへのポインタ
-	CEnemy_ListData **m_pEnemyListData;                    // 敵の生成情報クラスへのポインタ
-	int             m_nNumEnemyListData;                   // 敵の生成情報の数
+	CMeshField        *m_pMeshField;                         // 地面クラスへのポインタ
+	CSky              *m_pSky;                               // 空クラスへのポインタ
+	CHeadQuarters     *m_pHeadQuarters;                      // 司令部クラス型のポインタ
+	CRespawn          *m_pPlayerRespawn[MAX_PLAYER_RESPAWN]; // プレイヤーのリスポーン位置(2人分)
+	CRespawn          *m_pEnemyRespawn[MAX_ENEMY_RESPAWN];   // 敵のリスポーン位置(3箇所分)
+	CTextureManager   *m_pTextureManager;                    // テクスチャ管轄クラスへのポインタ
+	CModelCreate      *m_pModelCreate;                       // モデル管轄クラスへのポインタ
+	CLightManager     *m_pLightManager;                      // ライト管轄クラスへのポインタ
+	CCharacterManager **m_pObjectManager;                    // 配置物のデータ管轄クラスへのポインタ
+	int               m_nNumObjectData;                      // 配置物のデータの数
+	CEnemy_ListData   **m_pEnemyListData;                    // 敵の生成情報クラスへのポインタ
+	int               m_nNumEnemyListData;                   // 敵の生成情報の数
 };
 
 #endif

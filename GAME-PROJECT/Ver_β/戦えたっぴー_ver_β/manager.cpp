@@ -34,7 +34,7 @@
 //=============================================================================
 // 静的メンバ変数宣言
 //=============================================================================
-CManager::MODE	CManager::m_mode = MODE::MODE_CHARASELECT;  		// モードの情報
+CManager::MODE	CManager::m_mode = MODE::MODE_GAME;  		// モードの情報
 CRenderer		*CManager::m_pRenderer = NULL;				// レンダリングのポインタ
 CInputKeyboard	*CManager::m_pInputKeyboard = NULL;			// キーボードのポインタ
 CInputMouse     *CManager::m_pMouse = NULL;                 // マウスのポインタ
@@ -187,6 +187,12 @@ void CManager::Uninit(void)
 //=============================================================================
 void CManager::Update(void)
 {
+	// デバッグコマンド
+	if (m_pInputKeyboard->GetTrigger(DIK_F1) == true)
+	{
+		m_pDebugproc->SwitchDisp();
+	}
+
 	// キーボードの更新処理
 	if (m_pInputKeyboard != NULL)
 	{

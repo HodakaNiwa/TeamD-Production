@@ -25,6 +25,7 @@ public:	//誰からもアクセス可能
 	{
 		OBJTYPE_NONE = 0,
 		OBJTYPE_SCENE2D,		// オブジェクト2D
+		OBJTYPE_BLOSSOMS,       // 花びら
 		OBJTYPE_SCENE3D,		// オブジェクト3D
 		OBJTYPE_SCENEX,			// オブジェクトX
 		OBJTYPE_FADE,			// フェード
@@ -40,6 +41,7 @@ public:	//誰からもアクセス可能
 		OBJTYPE_RIVER,          // 川
 		OBJTYPE_ICEFIELD,       // 氷の地面
 		OBJTYPE_SPLASH,         // 飛沫
+		OBJTYPE_OBJBILLBOARD,   // ビルボードオブジェクト
 		OBJTYPE_HEADQUARTERS,   // 司令部
 		OBJTYPE_MESHSPHERE,     // メッシュスフィア
 		OBJTYPE_MESHRING,       // メッシュリング

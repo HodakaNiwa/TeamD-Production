@@ -685,3 +685,11 @@ char *CClient::GetReceiveMessage(void)
 {
 	return m_aReceiveMessage;
 }
+
+//=============================================================================
+//    受信バイト数を取得する処理
+//=============================================================================
+int CClient::GetLengthData(void)
+{
+	return m_nLengthData;
+}
