@@ -1,7 +1,7 @@
 //=============================================================================
 //
 // カメラ処理 [camera.cpp]
-// Author : Jukiya Hayakawa
+// Author : Hodaka Niwa
 //
 //=============================================================================
 #include "camera.h"
@@ -10,10 +10,6 @@
 #include "manager.h"
 #include "renderer.h"
 #include "debugproc.h"
-#include "imgui.h"
-
-
-#include "editor.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -28,6 +24,7 @@
 #define CAMERA_ROT_INI         (D3DXVECTOR3(-1.2f,0.0f,0.0f))    // カメラの向き(初期値)
 #define TOPVIEW_CAMERA_ROT_INI (D3DXVECTOR3(-1.57f,0.0f,0.0f))   // トップビューカメラの向き(初期値)
 #define CAMERA_MOVE            (3.0f)                            // カメラの動くスピード
+#define CAMERA_POS_X           (175.0f)
 
 //*****************************************************************************
 // 静的メンバ変数宣言
@@ -73,17 +70,17 @@ CCamera *CCamera::Create(void)
 HRESULT CCamera::Init(void)
 {
 	// カメラの初期情報を設定
-	m_vecU = D3DXVECTOR3(0.0f, 1.0f, 0.0f);  // カメラの上方向ベクトル
-	m_posR = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // カメラの注視点
-	m_rot = CAMERA_ROT_INI;                  // カメラの現在の向き
-	m_rotDest = m_rot;                       // カメラの目的の向き
-	m_rotDiff = INITIALIZE_D3DXVECTOR3;      // 現在の向きと目的の向きの差分
-	m_fLength = CAMERA_LENGTH_INI;           // 視点注視点間の距離
-	m_bMouseMove = true;                     // マウスで動かせるかどうか
-	m_bChengeLength = true;                  // 視点注視点間の距離を変更できるかどうか
+	m_vecU = D3DXVECTOR3(0.0f, 1.0f, 0.0f);          // カメラの上方向ベクトル
+	m_posR = D3DXVECTOR3(CAMERA_POS_X, 0.0f, 0.0f);  // カメラの注視点
+	m_rot = CAMERA_ROT_INI;                          // カメラの現在の向き
+	m_rotDest = m_rot;                               // カメラの目的の向き
+	m_rotDiff = INITIALIZE_D3DXVECTOR3;              // 現在の向きと目的の向きの差分
+	m_fLength = CAMERA_LENGTH_INI;                   // 視点注視点間の距離
+	m_bMouseMove = true;                             // マウスで動かせるかどうか
+	m_bChengeLength = true;                          // 視点注視点間の距離を変更できるかどうか
 
-	// カメラの視点注視点の位置を計算
-	m_posV = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	// カメラの視点の位置を計算
+	m_posV = D3DXVECTOR3(CAMERA_POS_X, 0.0f, 0.0f);
 	m_posV.y = m_posR.y - sinf(m_rot.x) * m_fLength;
 	m_posV.z = m_posR.z - cosf(m_rot.x) * m_fLength;
 
@@ -145,7 +142,7 @@ void CCamera::SetCamera(void)
 		D3DXToRadian(45.0f),						//画角
 		(float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,	//画面比率
 		10.0f,										//手前
-		10000.0f);									//奥行き
+		20000.0f);									//奥行き
 
 	// プロジェクションマトリックスの設定
 	pDevice->SetTransform(D3DTS_PROJECTION, &m_mtxProjection);
@@ -410,7 +407,7 @@ void CEditorCamera::MouseMove(void)
 				PosV.z = PosR.z - cosf(Rot.y) * fLength;
 			}
 		}
-		else if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) == TRUE)
+		else if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) == TRUE && CManager::GetKeyboard()->GetPress(DIK_LALT) == false)
 		{// マウスの左クリックのみが押された
 		    // 向きをマウスの速度に合わせて回転させる
 		    // 縦軸
@@ -555,8 +552,8 @@ void CTopViewCamera::Reset(void)
 	fLength = CAMERA_LENGTH_INI;
 
 	// 視点注視点の位置を設定
-	PosR = INITIALIZE_D3DXVECTOR3 + D3DXVECTOR3(0.0f,0.0f,1.0f);
-	PosV.x = 0.0f;
+	PosR = INITIALIZE_D3DXVECTOR3 + D3DXVECTOR3(CAMERA_POS_X,0.0f,1.0f);
+	PosV.x = CAMERA_POS_X;
 	PosV.y = PosR.y - sinf(Rot.x) * fLength;
 	PosV.z = PosR.z - cosf(Rot.x) * fLength;
 

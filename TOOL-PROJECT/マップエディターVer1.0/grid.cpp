@@ -11,7 +11,8 @@
 //*****************************************************************************
 //     マクロ定義
 //*****************************************************************************
-#define GRID_LINEWIDTH (2.0f)    // 線の幅
+#define GRID_LINECOLOR (D3DXCOLOR(1.0f,0.0f,0.0f,1.0f)) // 線の色
+#define GRID_LINEWIDTH (2.0f)                           // 線の幅
 
 //*****************************************************************************
 //     静的メンバ変数
@@ -170,19 +171,19 @@ void CGrid::Draw(void)
 				{
 					Vec[0] = m_pVecPos[m_pIndex[nIdx]];
 					Vec[1] = m_pVecPos[m_pIndex[nIdx + 1]];
-					m_pLine->DrawTransform(Vec, 2, &mtxWorld, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+					m_pLine->DrawTransform(Vec, 2, &mtxWorld, GRID_LINECOLOR);
 
 					Vec[0] = m_pVecPos[m_pIndex[nIdx + 2]];
 					Vec[1] = m_pVecPos[m_pIndex[nIdx + 3]];
-					m_pLine->DrawTransform(Vec, 2, &mtxWorld, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+					m_pLine->DrawTransform(Vec, 2, &mtxWorld, GRID_LINECOLOR);
 
 					Vec[0] = m_pVecPos[m_pIndex[nIdx + 4]];
 					Vec[1] = m_pVecPos[m_pIndex[nIdx + 5]];
-					m_pLine->DrawTransform(Vec, 2, &mtxWorld, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+					m_pLine->DrawTransform(Vec, 2, &mtxWorld, GRID_LINECOLOR);
 
 					Vec[0] = m_pVecPos[m_pIndex[nIdx + 6]];
 					Vec[1] = m_pVecPos[m_pIndex[nIdx + 7]];
-					m_pLine->DrawTransform(Vec, 2, &mtxWorld, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+					m_pLine->DrawTransform(Vec, 2, &mtxWorld, GRID_LINECOLOR);
 
 					nIdx += 8;
 				}

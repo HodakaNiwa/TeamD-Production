@@ -8,6 +8,9 @@
 #include "map.h"
 #include "cameraManager.h"
 #include "modelcreate.h"
+#include "textureManager.h"
+#include "effectManager.h"
+#include "scene.h"
 
 //*****************************************************************************
 //    マクロ定義
@@ -26,6 +29,8 @@ CBasemode::CBasemode()
 	m_pMap = NULL;             // マップクラスへのポインタ
 	m_pCameraManager = NULL;   // カメラ管轄クラスへのポインタ
 	m_pModelCreate = NULL;     // モデル管轄クラスへのポインタ
+	m_pTextureManager = NULL;  // テクスチャ管轄クラスへのポインタ
+	m_pEffectManager = NULL;   // エフェクト管轄クラスへのポインタ
 }
 
 //=============================================================================
@@ -64,8 +69,25 @@ void CBasemode::Uninit(void)
 		delete m_pModelCreate;
 		m_pModelCreate = NULL;
 	}
-}
 
+	// テクスチャ管轄クラスの破棄
+	if (m_pTextureManager != NULL)
+	{
+		m_pTextureManager->Uninit();
+		delete m_pTextureManager;
+		m_pTextureManager = NULL;
+	}
+
+	// エフェクト管轄クラスの破棄
+	if (m_pEffectManager != NULL)
+	{
+		m_pEffectManager->Uninit();
+		m_pEffectManager = NULL;
+	}
+
+	// 全てのオブジェクトの開放処理
+	CScene::ReleaseAll();
+}
 
 //=============================================================================
 //    マップクラスへのポインタを設定する
@@ -92,6 +114,22 @@ void CBasemode::SetModelCreate(CModelCreate *pModelCreate)
 }
 
 //=============================================================================
+//    テクスチャ管轄クラスへのポインタを設定する
+//=============================================================================
+void CBasemode::SetTextureManager(CTextureManager *pTextureManager)
+{
+	m_pTextureManager = pTextureManager;
+}
+
+//=============================================================================
+//    エフェクト管轄クラスへのポインタを設定する
+//=============================================================================
+void CBasemode::SetEffectManager(CEffectManager *pEffectManager)
+{
+	m_pEffectManager = pEffectManager;
+}
+
+//=============================================================================
 //    マップクラスへのポインタを取得する
 //=============================================================================
 CMap *CBasemode::GetMap(void)
@@ -113,4 +151,20 @@ CCameraManager *CBasemode::GetCameraManager(void)
 CModelCreate *CBasemode::GetModelCreate(void)
 {
 	return m_pModelCreate;
+}
+
+//=============================================================================
+//    テクスチャ管轄クラスへのポインタを取得する
+//=============================================================================
+CTextureManager *CBasemode::GetTextureManager(void)
+{
+	return m_pTextureManager;
+}
+
+//=============================================================================
+//    エフェクト管轄クラスへのポインタを取得する
+//=============================================================================
+CEffectManager *CBasemode::GetEffectManager(void)
+{
+	return m_pEffectManager;
 }

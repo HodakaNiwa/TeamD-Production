@@ -14,12 +14,20 @@
 #include "modelcreate.h"
 #include "light.h"
 #include "lightManager.h"
+#include "characterManager.h"
 #include "block.h"
+#include "river.h"
+#include "icefield.h"
 #include "boxCollider.h"
 #include "object3D.h"
 #include "respawn.h"
 #include "headquarters.h"
 #include "meshfield.h"
+#include "sky.h"
+#include "object.h"
+#include "billboardObject.h"
+#include "emitter.h"
+#include "effectManager.h"
 #include "basemode.h"
 #include "scene.h"
 
@@ -34,6 +42,7 @@
 #define AUTOSAVEFILENAME_TEXLIST   "autosave_texlist.txt"       // テクスチャリスト情報オートセーブ用のファイル名
 #define AUTOSAVEFILENAME_LIGHT     "autosave_light.txt"         // ライト情報オートセーブ用のファイル名
 #define AUTOSAVEFILENAME_OBJECT    "autosave_object.txt"        // 配置物情報オートセーブ用のファイル名
+#define AUTOSAVEFILENAME_ENEMYLIST "autosave_enemylist.txt"     // 敵の生成情報オートセーブ用のファイル名
 
 // スクリプト読み込み用
 #define BASE_POS "BASE_POS = "
@@ -46,6 +55,7 @@
 #define LIGHT_FILENAME "LIGHT_FILENAME = "
 #define GAMEFIELD_FILENAME "GAMEFIELD_FILENAME = "
 #define OBJECT_FILENAME "OBJECT_FILENAME = "
+#define ENEMYLIST_FILENAME "ENEMYLIST_FILENAME = "
 
 // 共通情報
 #define POS "POS = "
@@ -58,6 +68,13 @@
 // テクスチャリスト情報
 #define NUM_TEXTURE "NUM_TEXTURE = "
 #define TEXTURE_FILENAME "TEXTURE_FILENAME = "
+
+// 空情報
+#define SKYSET "SKYSET"
+#define END_SKYSET "END_SKYSET"
+#define ROLLSPEED "ROLLSPEED = "
+#define YBLOCK "YBLOCK = "
+#define RADIUS "RADIUS = "
 
 // ライト情報
 #define NUM_LIGHT "NUM_LIGHT = "
@@ -106,6 +123,10 @@
 #define ICESET "ICESET"
 #define END_ICESET "END_ICESET"
 
+// 配置物情報
+#define NUM_OBJECT_DATA "NUM_OBJECT_DATA = "
+#define OBJECT_FILENAME "OBJECT_FILENAME = "
+
 // 配置モデル情報
 #define MODELSET "MODELSET"
 #define END_MODELSET "END_MODELSET"
@@ -113,16 +134,32 @@
 // 配置ビルボード情報
 #define BILLBOARDSET "BILLBOARDSET"
 #define END_BILLBOARDSET "END_BILLBOARDSET"
+#define COL "COL = "
+#define LIGHTING "LIGHTING = "
+#define DRAW_ADDTIVE "DRAW_ADDTIVE = "
 
 // 配置エフェクト情報
 #define EFFECTSET "EFFECTSET"
 #define END_EFFECTSET "END_EFFECTSET"
+
+// 敵の生成情報
+#define NUM_ENEMYLIST "NUM_ENEMYLIST = "
+#define ENEMYLISTSET "ENEMYLISTSET"
+#define END_ENEMYLISTSET "END_ENEMYLISTSET"
+#define RESPAWN "RESPAWN = "
+#define TYPE "TYPE = "
+#define TIME "TIME = "
+#define ITEM "ITEM"
+#define END_ITEM "END_ITEM"
 
 //*****************************************************************************
 //    静的メンバ変数宣言
 //*****************************************************************************
 
 
+//*****************************************************************************
+//    CMapの処理
+//*****************************************************************************
 //=============================================================================
 //    コンストラクタ
 //=============================================================================
@@ -135,9 +172,13 @@ CMap::CMap()
 	strcpy(m_aLightFileName, "\0");        // 読み込むライト情報のファイル名
 	strcpy(m_aGameFieldFileName, "\0");    // 読み込むゲームフィールド情報のファイル名
 	strcpy(m_aObjectFileName, "\0");       // 読み込む配置物情報のファイル名
+	strcpy(m_aEnemyListFileName, "\0");    // 読み込む敵の生成情報のファイル名
+	m_pMeshField = NULL;                   // 地面クラスへのポインタ
+	m_pSky = NULL;                         // 空クラスへのポインタ
 	m_pTextureManager = NULL;              // テクスチャ管轄クラスへのポインタ
 	m_pModelCreate = NULL;                 // モデル管轄クラスへのポインタ
 	m_pLightManager = NULL;                // ライト管轄クラスへのポインタ
+	m_pObjectManager = NULL;               // オブジェクトデータ管轄クラスへのポインタ
 }
 
 //=============================================================================
@@ -206,28 +247,23 @@ void CMap::Uninit(void)
 	strcpy(m_aTexListFileName, AUTOSAVEFILENAME_TEXLIST);
 	strcpy(m_aLightFileName, AUTOSAVEFILENAME_LIGHT);
 	strcpy(m_aObjectFileName, AUTOSAVEFILENAME_OBJECT);
+	strcpy(m_aEnemyListFileName, AUTOSAVEFILENAME_ENEMYLIST);
 
 	// データを保存する
 	Save(AUTOSAVEFILENAME_MAP);
 #endif
 
-	// 司令部を開放する
-	ReleaseHeadQuarters();
+	// マップを削除する
+	DeleteMap();
 
-	// プレイヤーのリスポーン位置を開放する
-	ReleasePlayerRespawn();
-
-	// 敵のリスポーン位置を開放する
-	ReleaseEnemyRespawn();
-
-	// テクスチャ管轄クラスを開放する
+	// テクスチャ管轄クラスの破棄
 	ReleaseTextureManager();
 
-	// モデル管轄クラスを開放する
+	// モデル管轄クラスの破棄
 	ReleaseModelManager();
 
-	// ライト管轄クラスを開放する
-	ReleaseLightManager();
+	// 配置物管轄クラスの破棄
+	ReleaseObjectManager();
 }
 
 //=============================================================================
@@ -297,6 +333,9 @@ HRESULT CMap::Save(char *pSaveFileName)
 		// 敵のリスポーン位置を保存
 		SaveEnemyRespawn(pFileSaver);
 
+		// 空情報保存
+		SaveSky(pFileSaver);
+
 		// マップ情報を保存
 		SaveMap(pFileSaver);
 
@@ -325,6 +364,9 @@ HRESULT CMap::Save(char *pSaveFileName)
 
 		// 配置物情報を保存
 		SaveObject(m_aObjectFileName);
+
+		// 敵の生成情報を保存
+		SaveEnemyList(m_aEnemyListFileName);
 	}
 	else
 	{
@@ -399,6 +441,10 @@ HRESULT CMap::LoadScript(char *pStr, CFileLoader *pFileLoader)
 		{// 敵のリスポーン位置情報だった
 			LoadEnemyRespawn(pStr, nCntLoadEnemyRes);
 			nCntLoadEnemyRes++;
+		}
+		else if (CFunctionLib::Memcmp(pStr, SKYSET) == 0)
+		{// 空情報だった
+			LoadSky(pStr, pFileLoader);
 		}
 		else if (CFunctionLib::Memcmp(pStr, MAPSET) == 0)
 		{// マップセット情報だった
@@ -627,7 +673,63 @@ HRESULT CMap::LoadEnemyRespawn(char *pStr, int nCntEnemyRes)
 }
 
 //=============================================================================
-//    マップ情報読み込み処処理
+//    空情報読み込み処理
+//=============================================================================
+HRESULT CMap::LoadSky(char *pStr, CFileLoader *pFileLoader)
+{
+	int nSkyTexIdx = 0;
+	D3DXVECTOR3 SkyPos = INITIALIZE_D3DXVECTOR3;
+	D3DXVECTOR3 SkyRot = INITIALIZE_D3DXVECTOR3;
+	float fSkyRollSpeed = 0.0f;
+	int nSkyXBlock = 0;
+	int nSkyYBlock = 0;
+	float fSkyRadius = 0.0f;
+
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TEX_IDX) == 0)
+		{// 座標情報だった
+			nSkyTexIdx = CFunctionLib::ReadInt(pStr, TEX_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標情報だった
+			SkyPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROT) == 0)
+		{// 向き情報だった
+			SkyRot = CFunctionLib::ReadVector3(pStr, ROT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROLLSPEED) == 0)
+		{// 回転スピード情報だった
+			fSkyRollSpeed = CFunctionLib::ReadFloat(pStr, ROLLSPEED);
+		}
+		else if (CFunctionLib::Memcmp(pStr, XBLOCK) == 0)
+		{// 横の分割数情報だった
+			nSkyXBlock = CFunctionLib::ReadInt(pStr, YBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, YBLOCK) == 0)
+		{// 縦の分割数情報だった
+			nSkyYBlock = CFunctionLib::ReadInt(pStr, YBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, RADIUS) == 0)
+		{// 半径情報だった
+			fSkyRadius = CFunctionLib::ReadFloat(pStr, RADIUS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SKYSET) == 0)
+		{// 空情報終了の合図があった
+			m_pSky = CSky::Create(SkyPos, SkyRot, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), fSkyRadius, nSkyXBlock, nSkyYBlock,
+				nSkyTexIdx, fSkyRollSpeed);
+			if (m_pSky != NULL) m_pSky->BindTexture(m_pTextureManager->GetTexture(nSkyTexIdx));
+			break;
+		}
+	}
+
+	return S_OK;
+}
+
+//=============================================================================
+//    マップ情報読み込み処理
 //=============================================================================
 HRESULT CMap::LoadMap(char *pStr, CFileLoader *pFileLoader)
 {
@@ -646,6 +748,10 @@ HRESULT CMap::LoadMap(char *pStr, CFileLoader *pFileLoader)
 		else if (CFunctionLib::Memcmp(pStr, OBJECT_FILENAME) == 0)
 		{// 配置物情報だった
 			LoadObject(CFunctionLib::ReadString(pStr, aStr, OBJECT_FILENAME), pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ENEMYLIST_FILENAME) == 0)
+		{// 敵の生成情報だった
+			LoadEnemyList(CFunctionLib::ReadString(pStr, aStr, ENEMYLIST_FILENAME), pStr);
 		}
 		else if (CFunctionLib::Memcmp(pStr, END_MAPSET) == 0)
 		{// マップセット情報終了の合図があった
@@ -959,6 +1065,14 @@ HRESULT CMap::LoadGameFieldInfo(char *pStr, CFileLoader *pFileLoader)
 		{// ブロック情報だった
 			LoadBlock(pStr, pFileLoader);
 		}
+		else if (CFunctionLib::Memcmp(pStr, RIVERSET) == 0)
+		{// 川情報だった
+			LoadRiver(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ICESET) == 0)
+		{// 氷情報だった
+			LoadIce(pStr, pFileLoader);
+		}
 		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
 		{// スクリプト終了の合図があった
 			break;
@@ -1020,7 +1134,6 @@ void CMap::LoadBlock(char *pStr, CFileLoader *pFileLoader)
 	int nBlockModelIdx = 0;
 	D3DXVECTOR3 BlockPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	D3DXVECTOR3 BlockRot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	bool bBlockBreak = true;
 	float fBlockColWidth = 0.0f;
 	float fBlockColHeight = 0.0f;
 	float fBlockColDepth = 0.0f;
@@ -1030,7 +1143,7 @@ void CMap::LoadBlock(char *pStr, CFileLoader *pFileLoader)
 		strcpy(pStr, pFileLoader->GetString(pStr));
 		if (CFunctionLib::Memcmp(pStr, BLOCKTYPE) == 0)
 		{// 種類番号情報だった
-			nBlockModelIdx = CFunctionLib::ReadInt(pStr, BLOCKTYPE);
+			nBlockType = CFunctionLib::ReadInt(pStr, BLOCKTYPE);
 		}
 		else if (CFunctionLib::Memcmp(pStr, MODELIDX) == 0)
 		{// 使用するモデルの番号情報だった
@@ -1044,17 +1157,13 @@ void CMap::LoadBlock(char *pStr, CFileLoader *pFileLoader)
 		{// 向き情報だった
 			BlockRot = CFunctionLib::ReadVector3(pStr, ROT);
 		}
-		else if (CFunctionLib::Memcmp(pStr, BREAK) == 0)
-		{// 壊せるかどうか情報だった
-			bBlockBreak = CFunctionLib::ReadBool(pStr, BREAK);
-		}
 		else if (CFunctionLib::Memcmp(pStr, COLLISION) == 0)
 		{// 当たり判定情報情報だった
 			LoadCollision(pStr, pFileLoader, &fBlockColWidth, &fBlockColHeight, &fBlockColDepth);
 		}
 		else if (CFunctionLib::Memcmp(pStr, END_BLOCKSET) == 0)
 		{// ブロック情報終了の合図があった
-			CBlock::Create(BlockPos, BlockRot, (CBlock::TYPE)nBlockType, nBlockModelIdx, bBlockBreak,
+			CreateBlock(BlockPos, BlockRot, nBlockType, nBlockModelIdx,
 				m_pModelCreate->GetMesh(nBlockModelIdx), m_pModelCreate->GetBuffMat(nBlockModelIdx),
 				m_pModelCreate->GetNumMat(nBlockModelIdx), m_pModelCreate->GetTexture(nBlockModelIdx),
 				fBlockColWidth, fBlockColHeight, fBlockColDepth);
@@ -1091,23 +1200,155 @@ void CMap::LoadCollision(char *pStr, CFileLoader *pFileLoader, float *pWidth, fl
 }
 
 //=============================================================================
-//    氷情報読み込み処理
-//=============================================================================
-void CMap::LoadIce(char *pStr, CFileLoader *pFileLoader)
-{
-
-}
-
-//=============================================================================
 //    川情報読み込み処理
 //=============================================================================
 void CMap::LoadRiver(char *pStr, CFileLoader *pFileLoader)
 {
+	int nRiverTexIdx = 0;
+	D3DXVECTOR3 RiverPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	int nRiverXBlock = 0;
+	int nRiverZBlock = 0;
+	float fRiverColWidth = 0.0f;
+	float fRiverColHeight = 0.0f;
+	float fRiverColDepth = 0.0f;
 
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TEX_IDX) == 0)
+		{// 使用するテクスチャの番号情報だった
+			nRiverTexIdx = CFunctionLib::ReadInt(pStr, TEX_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標情報だった
+			RiverPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, XBLOCK) == 0)
+		{// 横の分割数情報だった
+			nRiverXBlock = CFunctionLib::ReadInt(pStr, XBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ZBLOCK) == 0)
+		{// 奥行の分割数情報だった
+			nRiverZBlock = CFunctionLib::ReadInt(pStr, ZBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, COLLISION) == 0)
+		{// 当たり判定情報だった
+			LoadCollision(pStr, pFileLoader, &fRiverColWidth, &fRiverColHeight, &fRiverColDepth);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_RIVERSET) == 0)
+		{// 川情報終了の合図があった
+			SetRiver(nRiverTexIdx, RiverPos, nRiverXBlock, nRiverZBlock, fRiverColWidth, fRiverColHeight, fRiverColDepth);
+			break;
+		}
+	}
 }
 
 //=============================================================================
-//    配置物情報読み込み処理
+//    氷情報読み込み処理
+//=============================================================================
+void CMap::LoadIce(char *pStr, CFileLoader *pFileLoader)
+{
+	int nIceTexIdx = 0;
+	D3DXVECTOR3 IcePos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	int nIceXBlock = 0;
+	int nIceZBlock = 0;
+	float fIceColWidth = 0.0f;
+	float fIceColHeight = 0.0f;
+	float fIceColDepth = 0.0f;
+
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TEX_IDX) == 0)
+		{// 使用するテクスチャの番号情報だった
+			nIceTexIdx = CFunctionLib::ReadInt(pStr, TEX_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標情報だった
+			IcePos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, XBLOCK) == 0)
+		{// 横の分割数情報だった
+			nIceXBlock = CFunctionLib::ReadInt(pStr, XBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ZBLOCK) == 0)
+		{// 奥行の分割数情報だった
+			nIceZBlock = CFunctionLib::ReadInt(pStr, ZBLOCK);
+		}
+		else if (CFunctionLib::Memcmp(pStr, COLLISION) == 0)
+		{// 当たり判定情報だった
+			LoadCollision(pStr, pFileLoader, &fIceColWidth, &fIceColHeight, &fIceColDepth);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_ICESET) == 0)
+		{// 氷情報終了の合図があった
+			SetIce(nIceTexIdx, IcePos, nIceXBlock, nIceZBlock, fIceColWidth, fIceColHeight, fIceColDepth);
+			break;
+		}
+	}
+}
+
+//=============================================================================
+//    地面を下げる処理
+//=============================================================================
+void CMap::FieldDown(D3DXVECTOR3 pos, int nXBlock, int nZBlock, float fFieldDown)
+{
+	// 川の座標からどのエリアに川があるかを取得
+	int nXArea = (int)((pos.x + (MASS_SIZE_X * MASS_BLOCK_X / 2)) / MASS_SIZE_X) + 1;
+	int nZArea = (int)((-pos.z + (MASS_SIZE_Z * MASS_BLOCK_Z / 2)) / MASS_SIZE_Z) + 1;
+	int nStartLeftVertex = (nXArea - 1) + ((MASS_BLOCK_X + 1) * (nZArea - 1));
+
+	// 分割数を考慮して戻す
+	nStartLeftVertex -= (nXBlock / 2);
+	nStartLeftVertex -= ((nZBlock / 2)) * (MASS_BLOCK_X + 1);
+
+	// 頂点バッファの取得
+	VERTEX_3D *pVtx;
+	LPDIRECT3DVERTEXBUFFER9 pVtxBuff = m_pMeshField->GetVtxBuff();
+
+	// 頂点バッファをロックし,頂点データへのポインタを取得
+	pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	for (int nCntZ = 0; nCntZ < nZBlock + 1; nCntZ++)
+	{// 縦の分割数+1分繰り返し
+		for (int nCntX = 0; nCntX < nXBlock + 1; nCntX++)
+		{// 横の分割数+1分繰り返し
+			pVtx[nStartLeftVertex + nCntX].pos.y = fFieldDown;
+		}
+		nStartLeftVertex += (MASS_BLOCK_X + 1);
+	}
+
+	// 頂点バッファをアンロックする
+	pVtxBuff->Unlock();
+}
+
+//=============================================================================
+//    川配置処理
+//=============================================================================
+void CMap::SetRiver(int nTexIdx, D3DXVECTOR3 pos, int nXBlock, int nZBlock, float fBoxColWidth, float fBoxColHeight, float fBoxColDepth)
+{
+	// 川の座標から地面の頂点を下げる
+	FieldDown(pos, nXBlock, nZBlock, RIVER_DOWN_FIELD);
+
+	// 川を配置
+	CRiver::Create(pos, INITIALIZE_D3DXVECTOR3, m_pTextureManager->GetTexture(nTexIdx),
+		fBoxColWidth, fBoxColHeight, fBoxColDepth, nXBlock, nZBlock, nTexIdx);
+}
+
+//=============================================================================
+//    氷配置処理
+//=============================================================================
+void CMap::SetIce(int nTexIdx, D3DXVECTOR3 pos, int nXBlock, int nZBlock, float fBoxColWidth, float fBoxColHeight, float fBoxColDepth)
+{
+	// 氷の座標から地面の頂点を下げる
+	FieldDown(pos, nXBlock, nZBlock, RIVER_DOWN_FIELD);
+
+	// 氷を配置
+	CIceField::Create(pos, INITIALIZE_D3DXVECTOR3, m_pTextureManager->GetTexture(nTexIdx),
+		fBoxColWidth, fBoxColHeight, fBoxColDepth, nXBlock, nZBlock, nTexIdx);
+}
+
+//=============================================================================
+//    配置物読み込み処理
 //=============================================================================
 HRESULT CMap::LoadObject(char *pObjectName, char *pStr)
 {
@@ -1137,14 +1378,56 @@ HRESULT CMap::LoadObject(char *pObjectName, char *pStr)
 }
 
 //=============================================================================
-//    配置物読み込み処理
+//    配置物情報読み込み処理
 //=============================================================================
 HRESULT CMap::LoadObjectInfo(char *pStr, CFileLoader *pFileLoader)
 {
+	int nCntObjData = 0;
+
+	// エフェクト管轄クラスを見つけておく
+	CEffectManager *pEffectManager = NULL;
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_EFFECTMANAGER)
+			{// エフェクト管轄クラスだったクラスだった
+				pEffectManager = (CEffectManager*)pScene;
+				break;
+			}
+			pScene = pSceneNext;
+		}
+	}
+
 	while (1)
 	{// 抜けるまでループ
 		strcpy(pStr, pFileLoader->GetString(pStr));
-		if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		if (CFunctionLib::Memcmp(pStr, NUM_OBJECT_DATA) == 0)
+		{// オブジェクトデータの数情報だった
+			LoadNumObjectData(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, OBJECT_FILENAME) == 0)
+		{// オブジェクトデータのファイル名だった
+			LoadObjectData(pStr, pFileLoader, nCntObjData);
+			nCntObjData++;
+		}
+		else if (CFunctionLib::Memcmp(pStr, MODELSET) == 0)
+		{// 配置物情報だった
+			LoadObjModel(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, BILLBOARDSET) == 0)
+		{// 配置ビルボード情報だった
+			LoadObjBill(pStr, pFileLoader);
+		}
+		else if (CFunctionLib::Memcmp(pStr, EFFECTSET) == 0)
+		{// 配置エフェクト情報だった
+			LoadObjEffect(pStr, pFileLoader, pEffectManager);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
 		{// スクリプト情報読み込み終了の合図があった
 			break;
 		}
@@ -1154,11 +1437,73 @@ HRESULT CMap::LoadObjectInfo(char *pStr, CFileLoader *pFileLoader)
 }
 
 //=============================================================================
+//    配置物データの数情報読み込み処理
+//=============================================================================
+void CMap::LoadNumObjectData(char *pStr, CFileLoader *pFileLoader)
+{
+	// データの数を読み込む
+	m_nNumObjectData = CFunctionLib::ReadInt(pStr, NUM_OBJECT_DATA);
+	if (m_nNumObjectData <= 0)return;
+
+	// メモリを確保する
+	m_pObjectManager = new CCharacterManager*[m_nNumObjectData];
+	if (m_pObjectManager == NULL)return;
+
+	// メモリの中身をクリアしておく
+	for (int nCntObject = 0; nCntObject < m_nNumObjectData; nCntObject++)
+	{
+		m_pObjectManager[nCntObject] = NULL;
+	}
+}
+
+//=============================================================================
+//    配置物データ読み込み処理
+//=============================================================================
+void CMap::LoadObjectData(char *pStr, CFileLoader *pFileLoader, int nCntObjData)
+{
+	// ファイル名を読み込む
+	char aObjFileName[256] = "\0";
+	strcpy(aObjFileName, CFunctionLib::ReadString(pStr, aObjFileName, OBJECT_FILENAME));
+
+	// 配置物のデータを読み込む
+	if (m_pObjectManager == NULL)return;
+	m_pObjectManager[nCntObjData] = CCharacterManager::Create(aObjFileName);
+}
+
+//=============================================================================
 //    配置モデル情報読み込み処理
 //=============================================================================
 void CMap::LoadObjModel(char *pStr, CFileLoader *pFileLoader)
 {
+	int nObjModelType = 0;
+	D3DXVECTOR3 ObjModelPos = INITIALIZE_D3DXVECTOR3;
+	D3DXVECTOR3 ObjModelRot = INITIALIZE_D3DXVECTOR3;
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TYPE) == 0)
+		{// 使用するオブジェクトデータの種類情報だった
+			nObjModelType = CFunctionLib::ReadInt(pStr, TYPE);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標だった
+			ObjModelPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROT) == 0)
+		{// 向きだった
+			ObjModelRot = CFunctionLib::ReadVector3(pStr, ROT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_MODELSET) == 0)
+		{// 配置モデル情報終了の合図だった
+			break;
+		}
+	}
 
+	// モデルを配置する
+	if (m_pObjectManager != NULL)
+	{
+		m_pObjectManager[nObjModelType]->SetObject(ObjModelPos, ObjModelRot, nObjModelType);
+	}
 }
 
 //=============================================================================
@@ -1166,15 +1511,198 @@ void CMap::LoadObjModel(char *pStr, CFileLoader *pFileLoader)
 //=============================================================================
 void CMap::LoadObjBill(char *pStr, CFileLoader *pFileLoader)
 {
+	int nObjBillTexIdx = 0;
+	D3DXVECTOR3 ObjBillPos = INITIALIZE_D3DXVECTOR3;
+	D3DXCOLOR ObjBillCol = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	float fObjBillRot = 0.0f;
+	float fObjBillWidth = 0.0f;
+	float fObjBillHeight = 0.0f;
+	bool bObjBillLighting = false;
+	bool bObjBillDrawAddtive = false;
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TEX_IDX) == 0)
+		{// 使用するテクスチャの番号情報だった
+			nObjBillTexIdx = CFunctionLib::ReadInt(pStr, TEX_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標だった
+			ObjBillPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, COL) == 0)
+		{// 色だった
+			ObjBillCol = CFunctionLib::ReadVector4(pStr, COL);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROT) == 0)
+		{// 向きだった
+			fObjBillRot = CFunctionLib::ReadFloat(pStr, ROT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, WIDTH) == 0)
+		{// 幅だった
+			fObjBillWidth = CFunctionLib::ReadFloat(pStr, WIDTH);
+		}
+		else if (CFunctionLib::Memcmp(pStr, HEIGHT) == 0)
+		{// 高さだった
+			fObjBillHeight = CFunctionLib::ReadFloat(pStr, HEIGHT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, LIGHTING) == 0)
+		{// ライティングするかどうかだった
+			bObjBillLighting = CFunctionLib::ReadBool(pStr, LIGHTING);
+		}
+		else if (CFunctionLib::Memcmp(pStr, DRAW_ADDTIVE) == 0)
+		{// 加算合成で描画するかするかどうかだった
+			bObjBillDrawAddtive = CFunctionLib::ReadBool(pStr, DRAW_ADDTIVE);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_BILLBOARDSET) == 0)
+		{// 配置ビルボード情報終了の合図だった
+			break;
+		}
+	}
 
+	// ビルボードを配置する
+	CBillboardObject *pObjBill = CBillboardObject::Create(ObjBillPos, ObjBillCol, fObjBillWidth, fObjBillWidth,
+		fObjBillRot, bObjBillLighting, bObjBillDrawAddtive, nObjBillTexIdx);
+	if (pObjBill != NULL && m_pTextureManager != NULL)
+	{
+		pObjBill->BindTexture(m_pTextureManager->GetTexture(nObjBillTexIdx));
+	}
 }
 
 //=============================================================================
 //    配置エフェクト情報読み込み処理
 //=============================================================================
-void CMap::LoadObjEffect(char *pStr, CFileLoader *pFileLoader)
+void CMap::LoadObjEffect(char *pStr, CFileLoader *pFileLoader, CEffectManager *pEffectManager)
 {
+	int nObjEffectType = 0;
+	D3DXVECTOR3 ObjEffectPos = INITIALIZE_D3DXVECTOR3;
+	D3DXVECTOR3 ObjEffectRot = INITIALIZE_D3DXVECTOR3;
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TYPE) == 0)
+		{// 使用するオブジェクトデータの種類情報だった
+			nObjEffectType = CFunctionLib::ReadInt(pStr, TYPE);
+		}
+		else if (CFunctionLib::Memcmp(pStr, POS) == 0)
+		{// 座標だった
+			ObjEffectPos = CFunctionLib::ReadVector3(pStr, POS);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROT) == 0)
+		{// 向きだった
+			ObjEffectRot = CFunctionLib::ReadVector3(pStr, ROT);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_EFFECTSET) == 0)
+		{// 配置エフェクト情報終了の合図だった
+			break;
+		}
+	}
 
+	// エフェクトを配置する
+	pEffectManager->SetEffect(ObjEffectPos, ObjEffectRot, nObjEffectType);
+}
+
+//=============================================================================
+//    敵の生成情報読み込みのためのファイルオープン処理
+//=============================================================================
+HRESULT CMap::LoadEnemyList(char *pEnemylistName, char *pStr)
+{
+	int nCntEnemyList = 0;            // 敵の生成情報を読み込んだ回数
+	CFileLoader *pFileLoader = NULL;  // ファイル読み込み用クラスへのポインタ
+
+	// ファイルオープン
+	pFileLoader = CFileLoader::Create(pEnemylistName);
+	if (pFileLoader == NULL) return E_FAIL;
+
+	// ファイル読み込み開始
+	strcpy(pStr, pFileLoader->GetString(pStr));
+	if (CFunctionLib::Memcmp(pStr, SCRIPT) == 0)
+	{// スクリプト読み込み開始の合図があった
+		while (1)
+		{// 抜けるまでループ
+			strcpy(pStr, pFileLoader->GetString(pStr));
+			if (CFunctionLib::Memcmp(pStr, NUM_ENEMYLIST) == 0)
+			{// 敵の生成情報の総数情報だった
+				m_nNumEnemyListData = CFunctionLib::ReadInt(pStr, NUM_ENEMYLIST);
+				CreateEnemyListData();
+			}
+			else if (CFunctionLib::Memcmp(pStr, ENEMYLISTSET) == 0)
+			{// 敵の生成情報だった
+				LoadEnemyListInfo(pStr, pFileLoader, nCntEnemyList);
+				nCntEnemyList++;
+			}
+			else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+			{// スクリプト情報読み込み終了の合図があった
+				break;
+			}
+		}
+	}
+
+	// メモリの開放
+	if (pFileLoader != NULL)
+	{
+		pFileLoader->Uninit();
+		delete pFileLoader;
+		pFileLoader = NULL;
+	}
+
+	// ファイル名をコピーしておく
+	strcpy(m_aEnemyListFileName, pEnemylistName);
+
+	return S_OK;
+}
+
+//=============================================================================
+//    敵の生成情報読み込み処理
+//=============================================================================
+HRESULT CMap::LoadEnemyListInfo(char *pStr, CFileLoader *pFileLoader, int nCntEnemyList)
+{
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, RESPAWN) == 0)
+		{// リスポーン位置の番号情報だった
+			m_pEnemyListData[nCntEnemyList]->SetRespawnIdx(CFunctionLib::ReadInt(pStr, RESPAWN));
+		}
+		else if (CFunctionLib::Memcmp(pStr, TYPE) == 0)
+		{// 敵の種類の番号情報だった
+			m_pEnemyListData[nCntEnemyList]->SetEnemyType(CFunctionLib::ReadInt(pStr, TYPE));
+		}
+		else if (CFunctionLib::Memcmp(pStr, TIME) == 0)
+		{// 敵を出現させるタイミング情報だった
+			m_pEnemyListData[nCntEnemyList]->SetRespawnTime(CFunctionLib::ReadInt(pStr, TIME));
+		}
+		else if (CFunctionLib::Memcmp(pStr, ITEM) == 0)
+		{// アイテム情報だった
+			m_pEnemyListData[nCntEnemyList]->SetItemType(true);
+			LoadItem(pStr, pFileLoader, nCntEnemyList);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_ENEMYLISTSET) == 0)
+		{// 敵の生成情報読み込み終了の合図だった
+			break;
+		}
+	}
+
+	return S_OK;
+}
+
+//=============================================================================
+//    敵のアイテム生成情報読み込み処理
+//=============================================================================
+void CMap::LoadItem(char *pStr, CFileLoader *pFileLoader, int nCntEnemyList)
+{
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TYPE) == 0)
+		{// 出現させるアイテムの種類番号だった
+			m_pEnemyListData[nCntEnemyList]->SetItemType(CFunctionLib::ReadInt(pStr, TYPE));
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_ITEM) == 0)
+		{// 敵のアイテム生成情報読み込み終了の合図があった
+			break;
+		}
+	}
 }
 
 //=============================================================================
@@ -1270,6 +1798,40 @@ HRESULT CMap::SaveEnemyRespawn(CFileSaver *pFileSaver)
 }
 
 //=============================================================================
+//    空保存処理
+//=============================================================================
+HRESULT CMap::SaveSky(CFileSaver *pFileSaver)
+{
+	if (m_pSky == NULL) return E_FAIL;
+
+	// コメント部分を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 空情報\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+
+	int nSkyTexIdx = m_pSky->GetTexIdx();
+	D3DXVECTOR3 SkyPos = m_pSky->GetPos();
+	D3DXVECTOR3 SkyRot = m_pSky->GetRot();
+	float fSkyRollSpeed = m_pSky->GetRollSpeed();
+	int nSkyXBlock = m_pSky->GetXBlock();
+	int nSkyYBlock = m_pSky->GetYBlock();
+	float fSkyRadius = m_pSky->GetRadius();
+
+	pFileSaver->Print("%s\n", SKYSET);
+	pFileSaver->Print("	%s%d						# 種類\n", TEX_IDX, nSkyTexIdx);
+	pFileSaver->Print("	%s%.1f %.1f %.1f	# 座標\n", POS, SkyPos.x, SkyPos.y, SkyPos.z);
+	pFileSaver->Print("	%s%.1f %.1f %.1f				# 向き\n", ROT, SkyRot.x, SkyRot.y, SkyRot.z);
+	pFileSaver->Print("	%s%f			# 回転スピード\n", ROLLSPEED, fSkyRollSpeed);
+	pFileSaver->Print("	%s%d						# 横の分割数\n", XBLOCK, nSkyXBlock);
+	pFileSaver->Print("	%s%d						# 縦の分割数\n", YBLOCK, nSkyYBlock);
+	pFileSaver->Print("	%s%.1f				# 半径\n", RADIUS, fSkyRadius);
+	pFileSaver->Print("%s\n", END_SKYSET);
+	pFileSaver->Print("\n");
+
+	return S_OK;
+}
+
+//=============================================================================
 //    マップセット情報保存処理
 //=============================================================================
 HRESULT CMap::SaveMap(CFileSaver *pFileSaver)
@@ -1282,13 +1844,16 @@ HRESULT CMap::SaveMap(CFileSaver *pFileSaver)
 	char aSaveLightFileName[256];
 	char aSaveGameFieldFileName[256];
 	char aSaveObjectFileName[256];
+	char aSaveEnemyListFileName[256];
 	strcpy(aSaveLightFileName, SAVEFILENAME_LIGHT);
 	strcpy(aSaveGameFieldFileName, SAVEFILENAME_GAMEFIELD);
 	strcpy(aSaveObjectFileName, SAVEFILENAME_OBJECT);
+	strcpy(aSaveEnemyListFileName, SAVEFILENAME_ENEMYLIST);
 	pFileSaver->Print("%s\n", MAPSET);      // マップセット情報読み込み開始の合図を書き込み
 	pFileSaver->Print("	%s%s				# ライト情報のスクリプトファイル名\n", LIGHT_FILENAME, strcat(aSaveLightFileName, m_aLightFileName));
 	pFileSaver->Print("	%s%s	# ゲームフィールド情報のスクリプトファイル名\n", GAMEFIELD_FILENAME, strcat(aSaveGameFieldFileName, m_aGameFieldFileName));
 	pFileSaver->Print("	%s%s			# 配置物情報のスクリプトファイル名\n", OBJECT_FILENAME, strcat(aSaveObjectFileName, m_aObjectFileName));
+	pFileSaver->Print("	%s%s	# 敵の生成情報情報のスクリプトファイル名\n", ENEMYLIST_FILENAME, strcat(aSaveEnemyListFileName, m_aEnemyListFileName));
 	pFileSaver->Print("%s\n", END_MAPSET);  // マップセット情報読み込み終了の合図を書き込み
 
 	return S_OK;
@@ -1657,7 +2222,6 @@ void CMap::SaveBlock(CFileSaver *pFileSaver)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	CBlock *pBlock = NULL;
 	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
@@ -1686,7 +2250,6 @@ void CMap::SaveBlockInfo(CBlock *pBlock, CFileSaver *pFileSaver)
 	int nBlockModelIdx = pBlock->GetModelIdx();
 	D3DXVECTOR3 BlockPos = pBlock->GetPos();
 	D3DXVECTOR3 BlockRot = D3DXToDegree(pBlock->GetRot());
-	bool bBlockBreak = pBlock->GetBreak();
 	float fBlockColWidth = pBlock->GetBoxCollider()->GetWidth();
 	float fBlockColHeight = pBlock->GetBoxCollider()->GetHeight();
 	float fBlockColDepth = pBlock->GetBoxCollider()->GetDepth();
@@ -1697,7 +2260,6 @@ void CMap::SaveBlockInfo(CBlock *pBlock, CFileSaver *pFileSaver)
 	pFileSaver->Print("	%s%d			# 使用するモデルの番号\n", MODELIDX, nBlockModelIdx);
 	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, BlockPos.x, BlockPos.y, BlockPos.z);
 	pFileSaver->Print("	%s%.1f %.1f %.1f		# 向き\n", ROT, BlockRot.x, BlockRot.y, BlockRot.z);
-	pFileSaver->Print("	%s%d				# 壊せるかどうか\n", BREAK, (int)bBlockBreak);
 	pFileSaver->Print("	%s\n", COLLISION);
 	pFileSaver->Print("		%s%.1f		# 当たり判定の幅\n", WIDTH, fBlockColWidth);
 	pFileSaver->Print("		%s%.1f		# 当たり判定の高さ\n", HEIGHT, fBlockColHeight);
@@ -1708,7 +2270,7 @@ void CMap::SaveBlockInfo(CBlock *pBlock, CFileSaver *pFileSaver)
 }
 
 //=============================================================================
-//    川情報保存処理
+//    川保存処理
 //=============================================================================
 void CMap::SaveRiver(CFileSaver *pFileSaver)
 {
@@ -1717,12 +2279,54 @@ void CMap::SaveRiver(CFileSaver *pFileSaver)
 	pFileSaver->Print("# 川配置情報\n");
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
-	// 可読性のため改行
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_RIVER)
+			{// 川クラスだった
+				SaveRiverInfo((CRiver*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
+
+//=============================================================================
+//    川情報保存処理
+//=============================================================================
+void CMap::SaveRiverInfo(CRiver *pRiver, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nRiverTexIdx = pRiver->GetTexIdx();
+	D3DXVECTOR3 RiverPos = pRiver->GetPos();
+	int nRiverXBlock = pRiver->GetMeshField()->GetXBlock();
+	int nRiverZBlock = pRiver->GetMeshField()->GetZBlock();
+	float fRiverColWidth = pRiver->GetBoxCollider()->GetWidth();
+	float fRiverColHeight = pRiver->GetBoxCollider()->GetHeight();
+	float fRiverColDepth = pRiver->GetBoxCollider()->GetDepth();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", RIVERSET);
+	pFileSaver->Print("	%s%d					# 使用するテクスチャの番号\n", TEX_IDX, nRiverTexIdx);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, RiverPos.x, RiverPos.y, RiverPos.z);
+	pFileSaver->Print("	%s%d					# 横の分割数\n", XBLOCK, nRiverXBlock);
+	pFileSaver->Print("	%s%d					# 奥行の分割数\n", ZBLOCK, nRiverZBlock);
+	pFileSaver->Print("	%s\n", COLLISION);
+	pFileSaver->Print("		%s%.1f			# 当たり判定の幅\n", WIDTH, fRiverColWidth);
+	pFileSaver->Print("		%s%.1f			# 当たり判定の高さ\n", HEIGHT, fRiverColHeight);
+	pFileSaver->Print("		%s%.1f			# 当たり判定の奥行\n", DEPTH, fRiverColDepth);
+	pFileSaver->Print("	%s\n", END_COLLISION);
+	pFileSaver->Print("%s\n", END_RIVERSET);
 	pFileSaver->Print("\n");
 }
 
 //=============================================================================
-//    氷情報保存処理
+//    氷保存処理
 //=============================================================================
 void CMap::SaveIce(CFileSaver *pFileSaver)
 {
@@ -1731,7 +2335,49 @@ void CMap::SaveIce(CFileSaver *pFileSaver)
 	pFileSaver->Print("# 氷配置情報\n");
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
-	// 可読性のため改行
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ICEFIELD)
+			{// 氷クラスだった
+				SaveIceInfo((CIceField*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
+
+//=============================================================================
+//    氷情報保存処理
+//=============================================================================
+void CMap::SaveIceInfo(CIceField *pIce, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nIceTexIdx = pIce->GetTexIdx();
+	D3DXVECTOR3 IcePos = pIce->GetPos();
+	int nIceXBlock = pIce->GetMeshField()->GetXBlock();
+	int nIceZBlock = pIce->GetMeshField()->GetZBlock();
+	float fIceColWidth = pIce->GetBoxCollider()->GetWidth();
+	float fIceColHeight = pIce->GetBoxCollider()->GetHeight();
+	float fIceColDepth = pIce->GetBoxCollider()->GetDepth();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", ICESET);
+	pFileSaver->Print("	%s%d					# 使用するテクスチャの番号\n", TEX_IDX, nIceTexIdx);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, IcePos.x, IcePos.y, IcePos.z);
+	pFileSaver->Print("	%s%d					# 横の分割数\n", XBLOCK, nIceXBlock);
+	pFileSaver->Print("	%s%d					# 奥行の分割数\n", ZBLOCK, nIceZBlock);
+	pFileSaver->Print("	%s\n", COLLISION);
+	pFileSaver->Print("		%s%.1f			# 当たり判定の幅\n", WIDTH, fIceColWidth);
+	pFileSaver->Print("		%s%.1f			# 当たり判定の高さ\n", HEIGHT, fIceColHeight);
+	pFileSaver->Print("		%s%.1f			# 当たり判定の奥行\n", DEPTH, fIceColDepth);
+	pFileSaver->Print("	%s\n", END_COLLISION);
+	pFileSaver->Print("%s\n", END_ICESET);
 	pFileSaver->Print("\n");
 }
 
@@ -1753,6 +2399,23 @@ HRESULT CMap::SaveObject(char *pObjectName)
 		pFileSaver->Print("#\n");
 		pFileSaver->Print("#==============================================================================\n");
 		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
+		pFileSaver->Print("\n");
+
+		// 配置物データの数を書き込み
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("# 読み込むオブジェクトデータの数\n");
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("%s%d\n", NUM_OBJECT_DATA, m_nNumObjectData);
+		pFileSaver->Print("\n");
+
+		// 配置物データのファイル名を書き込み
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("# 読み込むオブジェクトデータのファイル名\n");
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		for (int nCntObject = 0; nCntObject < m_nNumObjectData; nCntObject++)
+		{
+			pFileSaver->Print("%s%s\n", OBJECT_FILENAME, m_pObjectManager[nCntObject]->GetFileName());
+		}
 		pFileSaver->Print("\n");
 
 		// 配置物情報を書き込み
@@ -1788,7 +2451,7 @@ void CMap::SaveObjectInfo(CFileSaver *pFileSaver)
 }
 
 //=============================================================================
-//    配置モデル情報保存処理
+//    配置モデル保存処理
 //=============================================================================
 void CMap::SaveObjModel(CFileSaver *pFileSaver)
 {
@@ -1798,12 +2461,44 @@ void CMap::SaveObjModel(CFileSaver *pFileSaver)
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
 	// 配置モデル情報を書き込み
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_OBJECT)
+			{// 配置物クラスだった
+				SaveObjModelInfo((CObject*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
 
+//=============================================================================
+//    配置モデル情報保存処理
+//=============================================================================
+void CMap::SaveObjModelInfo(CObject *pObject, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nObjModelType = pObject->GetType();
+	D3DXVECTOR3 ObjModelPos = pObject->GetPos();
+	D3DXVECTOR3 ObjModelRot = pObject->GetRot();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", MODELSET);
+	pFileSaver->Print("	%s%d					# 種類\n", TYPE, nObjModelType);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, ObjModelPos.x, ObjModelPos.y, ObjModelPos.z);
+	pFileSaver->Print("	%s%.2f %.2f %.2f		# 向き\n", ROT, ObjModelRot.x, ObjModelRot.y, ObjModelRot.z);
+	pFileSaver->Print("%s\n", END_MODELSET);
 	pFileSaver->Print("\n");
 }
 
 //=============================================================================
-//    配置ビルボード情報保存処理
+//    配置ビルボード保存処理
 //=============================================================================
 void CMap::SaveObjBill(CFileSaver *pFileSaver)
 {
@@ -1813,12 +2508,54 @@ void CMap::SaveObjBill(CFileSaver *pFileSaver)
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
 	// 配置ビルボード情報を書き込み
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_OBJBILLBOARD)
+			{// 配置ビルボードクラスだった
+				SaveObjBillInfo((CBillboardObject*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
 
+//=============================================================================
+//    配置ビルボード情報保存処理
+//=============================================================================
+void CMap::SaveObjBillInfo(CBillboardObject *pBillObj, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nObjBillTexIdx = pBillObj->GetTexIdx();
+	D3DXVECTOR3 ObjBillPos = pBillObj->GetPos();
+	D3DXCOLOR ObjBillCol = pBillObj->GetCol();
+	float fObjBillRot = pBillObj->GetRot();
+	float fObjBillWidth = pBillObj->GetWidth();
+	float fObjBillHeight = pBillObj->GetHeight();
+	bool bObjBillLighting = pBillObj->GetLighting();
+	bool bObjBillDrawAddtive = pBillObj->GetDrawAddtive();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", BILLBOARDSET);
+	pFileSaver->Print("	%s%d					# 使用するテクスチャの番号\n", TEX_IDX, nObjBillTexIdx);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, ObjBillPos.x, ObjBillPos.y, ObjBillPos.z);
+	pFileSaver->Print("	%s%.1f %.1f %.1f %.1f		# 色\n", COL, ObjBillCol.r, ObjBillCol.g, ObjBillCol.b, ObjBillCol.a);
+	pFileSaver->Print("	%s%.1f					# 向き\n", ROT, fObjBillRot);
+	pFileSaver->Print("	%s%.1f				# 幅\n", WIDTH, fObjBillWidth);
+	pFileSaver->Print("	%s%.1f				# 高さ\n", HEIGHT, fObjBillHeight);
+	pFileSaver->Print("	%s%d				# ライティングするかどうか\n", LIGHTING, (int)bObjBillLighting);
+	pFileSaver->Print("	%s%d			# 加算合成で描画するかどうか\n", DRAW_ADDTIVE, (int)bObjBillDrawAddtive);
+	pFileSaver->Print("%s\n", END_BILLBOARDSET);
 	pFileSaver->Print("\n");
 }
 
 //=============================================================================
-//    配置エフェクト情報保存処理
+//    配置エフェクト保存処理
 //=============================================================================
 void CMap::SaveObjEffect(CFileSaver *pFileSaver)
 {
@@ -1828,8 +2565,189 @@ void CMap::SaveObjEffect(CFileSaver *pFileSaver)
 	pFileSaver->Print("#------------------------------------------------------------------------------\n");
 
 	// 配置エフェクト情報を書き込み
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER)
+			{// エミッタクラスだった
+				SaveObjEffectInfo((CEmitter*)pScene, pFileSaver);
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
+
+//=============================================================================
+//    配置エフェクト情報保存処理
+//=============================================================================
+void CMap::SaveObjEffectInfo(CEmitter *pEmitter, CFileSaver *pFileSaver)
+{
+	// 各種情報を取得
+	int nObjEffectType = pEmitter->GetType();
+	D3DXVECTOR3 ObjEffectPos = pEmitter->GetPos();
+	D3DXVECTOR3 ObjEffectRot = pEmitter->GetRot();
+
+	// 各種情報をテキストファイルに保存
+	pFileSaver->Print("%s\n", EFFECTSET);
+	pFileSaver->Print("	%s%d					# 種類\n", TYPE, nObjEffectType);
+	pFileSaver->Print("	%s%.1f %.1f %.1f		# 座標\n", POS, ObjEffectPos.x, ObjEffectPos.y, ObjEffectPos.z);
+	pFileSaver->Print("	%s%.2f %.2f %.2f		# 向き\n", ROT, ObjEffectRot.x, ObjEffectRot.y, ObjEffectRot.z);
+	pFileSaver->Print("%s\n", END_EFFECTSET);
+	pFileSaver->Print("\n");
+}
+
+//=============================================================================
+//    敵の生成情報を保存する
+//=============================================================================
+HRESULT CMap::SaveEnemyList(char *pEnemyListName)
+{
+	char aSaveFileName[256] = SAVEFILENAME_ENEMYLIST;
+	CFileSaver *pFileSaver = NULL;  // ファイル保存用クラスへのポインタ
+	pFileSaver = CFileSaver::Create(strcat(aSaveFileName, pEnemyListName));
+	if (pFileSaver != NULL)
+	{// ファイルが読み込めた
+	    // ファイルの冒頭分を書き込み
+		pFileSaver->Print("#==============================================================================\n");
+		pFileSaver->Print("#\n");
+		pFileSaver->Print("# 敵の生成情報スクリプトファイル [%s]\n", pEnemyListName);
+		pFileSaver->Print("# Author : Hodaka Niwa\n");
+		pFileSaver->Print("#\n");
+		pFileSaver->Print("#==============================================================================\n");
+		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
+		pFileSaver->Print("\n");
+
+		// 敵の生成情報を書き込み
+		SaveEnemyListInfo(pFileSaver);
+
+		// スクリプト読み込み終了の合図を書き込み
+		pFileSaver->Print("%s		# この行は絶対消さないこと！\n", END_SCRIPT);
+
+		// メモリの開放
+		if (pFileSaver != NULL)
+		{
+			pFileSaver->Uninit();
+			delete pFileSaver;
+			pFileSaver = NULL;
+		}
+	}
+	return S_OK;
+}
+
+//=============================================================================
+//    敵の生成情報をファイルに保存する
+//=============================================================================
+void CMap::SaveEnemyListInfo(CFileSaver *pFileSaver)
+{
+	if (m_pEnemyListData == NULL)return;
+
+	// 生成する敵の数を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 生成する敵の数\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("%s%d\n", NUM_ENEMYLIST, m_nNumEnemyListData);
+	pFileSaver->Print("\n");
+
+	// 敵の生成情報を書き込み
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+	pFileSaver->Print("# 敵の生成情報\n");
+	pFileSaver->Print("#------------------------------------------------------------------------------\n");
+
+	for (int nCnt = 0; nCnt < m_nNumEnemyListData; nCnt++)
+	{// 生成する敵の数分繰り返し
+		pFileSaver->Print("%s\n", ENEMYLISTSET);
+		pFileSaver->Print("	%s%d			# リスポーン位置の番号\n", RESPAWN, m_pEnemyListData[nCnt]->GetRespawnIdx());
+		pFileSaver->Print("	%s%d			# 種類\n", TYPE, m_pEnemyListData[nCnt]->GetEnemyType());
+		pFileSaver->Print("	%s%d			# 出現させる時間\n", TIME, m_pEnemyListData[nCnt]->GetRespawnTime());
+		if (m_pEnemyListData[nCnt]->GetItem() == true)
+		{// アイテムを出現させるなら
+			pFileSaver->Print("	%s\n", ITEM);
+			pFileSaver->Print("		%s%d		# 出現させるアイテムの種類\n", TYPE, m_pEnemyListData[nCnt]->GetItemType());
+			pFileSaver->Print("	%s\n", END_ITEM);
+		}
+		pFileSaver->Print("%s\n", END_ENEMYLISTSET);
+		pFileSaver->Print("\n");
+	}
 
 	pFileSaver->Print("\n");
+}
+
+//=============================================================================
+//    ブロックを生成する処理
+//=============================================================================
+void CMap::CreateBlock(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nModelIdx, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxColWidth, float fBoxColHeight, float fBoxColDepth)
+{
+	switch (nType)
+	{// 種類によって処理わけ
+	case CBlock::TYPE_BREAK_BULLET_NOT_DIRTY:
+		CBlockType0::Create(pos, rot, nType, nModelIdx, pMesh, pBuffMat, nNumMat, pTexture, fBoxColWidth, fBoxColHeight, fBoxColDepth);
+		break;
+	case CBlock::TYPE_BREAK_TANK_DIRTY:
+		CBlockType1::Create(pos, rot, nType, nModelIdx, pMesh, pBuffMat, nNumMat, pTexture, fBoxColWidth, fBoxColHeight, fBoxColDepth);
+		break;
+	case CBlock::TYPE_NOT_BREAK_NOT_DIRTY:
+		CBlockType2::Create(pos, rot, nType, nModelIdx, pMesh, pBuffMat, nNumMat, pTexture, fBoxColWidth, fBoxColHeight, fBoxColDepth);
+		break;
+	case CBlock::TYPE_NOT_BREAK_TANK_DIRTY:
+		CBlockType3::Create(pos, rot, nType, nModelIdx, pMesh, pBuffMat, nNumMat, pTexture, fBoxColWidth, fBoxColHeight, fBoxColDepth);
+		break;
+	}
+}
+
+//=============================================================================
+//    敵の生成情報クラスを生成する
+//=============================================================================
+void CMap::CreateEnemyListData(void)
+{
+	if (m_nNumEnemyListData > 0)
+	{// 1個以上生成する
+		m_pEnemyListData = new CEnemy_ListData*[m_nNumEnemyListData];
+		for (int nCnt = 0; nCnt < m_nNumEnemyListData; nCnt++)
+		{
+			m_pEnemyListData[nCnt] = new CEnemy_ListData;
+		}
+	}
+}
+
+//=============================================================================
+//    敵の生成情報クラスを再生成する
+//=============================================================================
+void CMap::ReCreateEnemyData(int nNumEnemyData)
+{
+	CEnemy_ListData **pEnemyListData;   // 新しいデータの入れ子用
+	pEnemyListData = new CEnemy_ListData*[nNumEnemyData];
+	for (int nCnt = 0; nCnt < nNumEnemyData; nCnt++)
+	{
+		pEnemyListData[nCnt] = new CEnemy_ListData;
+	}
+
+	// データをコピーする
+	CEnemy_ListData EnemyData;
+	int nNum = 0;
+	if (m_nNumEnemyListData < nNumEnemyData)
+	{// 現在のデータ数が新しいデータ数より小さい
+		nNum = m_nNumEnemyListData;
+	}
+	else if (m_nNumEnemyListData >= nNumEnemyData)
+	{// 現在のデータ数が新しいデータ数より大きい
+		nNum = nNumEnemyData;
+	}
+	for (int nCnt = 0; nCnt < nNum; nCnt++)
+	{
+		EnemyData.Cpy(m_pEnemyListData[nCnt]);
+		pEnemyListData[nCnt]->Cpy(&EnemyData);
+	}
+
+	// 敵の生成情報を破棄
+	ReleaseEnemyListData();
+
+	// 新しいデータにすり替え
+	m_pEnemyListData = pEnemyListData;
+	m_nNumEnemyListData = nNumEnemyData;
 }
 
 //=============================================================================
@@ -1840,6 +2758,9 @@ void CMap::DeleteMap(void)
 	// 地面を破棄
 	ReleaseMeshField();
 
+	// 空を破棄
+	ReleaseSky();
+
 	// 司令部を破棄
 	ReleaseHeadQuarters();
 
@@ -1849,11 +2770,23 @@ void CMap::DeleteMap(void)
 	// 敵のリスポーン位置を破棄
 	ReleaseEnemyRespawn();
 
+	// 敵の生成情報を破棄
+	ReleaseEnemyListData();
+
+	// キャラクター情報を破棄
+	ReleaseObjectManager();
+
 	// ライトを破棄
 	DeleteLight();
 
 	// ゲームフィールドオブジェクトを破棄
 	DeleteGameField();
+
+	// 配置物を破棄
+	DeleteObject();
+
+	// 敵を破棄
+	DeleteEnemy();
 }
 
 //=============================================================================
@@ -1881,7 +2814,6 @@ void CMap::DeleteGameField(void)
 {
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	CBlock *pBlock = NULL;
 	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
@@ -1891,6 +2823,14 @@ void CMap::DeleteGameField(void)
 			if (pScene->GetObjType() == CScene::OBJTYPE_BLOCK)
 			{// ブロッククラスだった
 				DeleteBlock((CBlock*)pScene);
+			}
+			else if (pScene->GetObjType() == CScene::OBJTYPE_RIVER)
+			{// 川クラスだった
+				DeleteRiver((CRiver*)pScene);
+			}
+			else if (pScene->GetObjType() == CScene::OBJTYPE_ICEFIELD)
+			{// 氷クラスだった
+				DeleteIce((CIceField*)pScene);
 			}
 			pScene = pSceneNext;
 		}
@@ -1907,6 +2847,24 @@ void CMap::DeleteBlock(CBlock *pBlock)
 }
 
 //=============================================================================
+//    川を破棄する処理
+//=============================================================================
+void CMap::DeleteRiver(CRiver *pRiver)
+{
+	pRiver->Uninit();
+	pRiver = NULL;
+}
+
+//=============================================================================
+//    氷を破棄する処理
+//=============================================================================
+void CMap::DeleteIce(CIceField *pIceField)
+{
+	pIceField->Uninit();
+	pIceField = NULL;
+}
+
+//=============================================================================
 //    配置物に必要なオブジェクトを破棄する処理
 //=============================================================================
 void CMap::DeleteObject(void)
@@ -1920,10 +2878,18 @@ void CMap::DeleteObject(void)
 		while (pScene != NULL)
 		{// ポインタが空になるまで
 			pSceneNext = pScene->GetNext();
-			//if (pScene->GetObjType() == CScene::OBJTYPE_BLOCK)
-			//{// ブロッククラスだった
-			//	DeleteBlock((CBlock*)pScene);
-			//}
+			if (pScene->GetObjType() == CScene::OBJTYPE_OBJECT)
+			{// ブロッククラスだった
+				DeleteObjModel((CObject*)pScene);
+			}
+			else if (pScene->GetObjType() == CScene::OBJTYPE_OBJBILLBOARD)
+			{// ビルボードクラスだった
+				DeleteObjBillboard((CBillboardObject*)pScene);
+			}
+			else if (pScene->GetObjType() == CScene::OBJTYPE_EMITTER || pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER)
+			{// エミッタクラスだった
+				DeleteObjEffect((CEmitter*)pScene);
+			}
 			pScene = pSceneNext;
 		}
 	}
@@ -1932,25 +2898,50 @@ void CMap::DeleteObject(void)
 //=============================================================================
 //    配置モデルを破棄する処理
 //=============================================================================
-void CMap::DeleteObjModel(void)
+void CMap::DeleteObjModel(CObject *pObject)
 {
-
+	pObject->Uninit();
+	pObject = NULL;
 }
 
 //=============================================================================
 //    配置ビルボードを破棄する処理
 //=============================================================================
-void CMap::DeleteObjBillboard(void)
+void CMap::DeleteObjBillboard(CBillboardObject *pBillboard)
 {
-
+	pBillboard->Uninit();
+	pBillboard = NULL;
 }
 
 //=============================================================================
 //    配置エフェクトを破棄する処理
 //=============================================================================
-void CMap::DeleteObjEffect(void)
+void CMap::DeleteObjEffect(CEmitter *pEmitter)
 {
+	pEmitter->Uninit();
+	pEmitter = NULL;
+}
 
+//=============================================================================
+//    敵を破棄する処理
+//=============================================================================
+void CMap::DeleteEnemy(void)
+{
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ENEMY)
+			{// 敵クラスだった
+				pScene->Uninit();
+			}
+			pScene = pSceneNext;
+		}
+	}
 }
 
 //=============================================================================
@@ -1993,6 +2984,27 @@ void CMap::ReleaseLightManager(void)
 }
 
 //=============================================================================
+//    配置物のデータ管轄クラスを開放する処理
+//=============================================================================
+void CMap::ReleaseObjectManager(void)
+{
+	if (m_pObjectManager != NULL)
+	{
+		for (int nCntObject = 0; nCntObject < m_nNumObjectData; nCntObject++)
+		{
+			if (m_pObjectManager[nCntObject] != NULL)
+			{
+				m_pObjectManager[nCntObject]->Uninit();
+				delete m_pObjectManager[nCntObject];
+				m_pObjectManager[nCntObject] = NULL;
+			}
+		}
+		delete[] m_pObjectManager;
+		m_pObjectManager = NULL;
+	}
+}
+
+//=============================================================================
 //    地面を開放する
 //=============================================================================
 void CMap::ReleaseMeshField(void)
@@ -2001,6 +3013,18 @@ void CMap::ReleaseMeshField(void)
 	{
 		m_pMeshField->Uninit();
 		m_pMeshField = NULL;
+	}
+}
+
+//=============================================================================
+//    空を開放する
+//=============================================================================
+void CMap::ReleaseSky(void)
+{
+	if (m_pSky != NULL)
+	{
+		m_pSky->Uninit();
+		m_pSky = NULL;
 	}
 }
 
@@ -2047,6 +3071,24 @@ void CMap::ReleaseEnemyRespawn(void)
 }
 
 //=============================================================================
+//    敵の生成情報を開放する
+//=============================================================================
+void CMap::ReleaseEnemyListData(void)
+{
+	if (m_pEnemyListData != NULL)
+	{
+		for (int nCnt = 0; nCnt < m_nNumEnemyListData; nCnt++)
+		{
+			delete m_pEnemyListData[nCnt];
+			m_pEnemyListData[nCnt] = NULL;
+		}
+
+		delete[] m_pEnemyListData;
+		m_pEnemyListData = NULL;
+	}
+}
+
+//=============================================================================
 //    地面に張り付けるテクスチャの番号を取得する
 //=============================================================================
 int CMap::GetFieldTexIdx(void)
@@ -2060,6 +3102,14 @@ int CMap::GetFieldTexIdx(void)
 CMeshField *CMap::GetMeshField(void)
 {
 	return m_pMeshField;
+}
+
+//=============================================================================
+//    空クラスへのポインタを取得する
+//=============================================================================
+CSky *CMap::GetSky(void)
+{
+	return m_pSky;
 }
 
 //=============================================================================
@@ -2084,6 +3134,18 @@ CModelCreate *CMap::GetModelCreate(void)
 CLightManager *CMap::GetLightManager(void)
 {
 	return m_pLightManager;
+}
+
+//=============================================================================
+//    配置物データ管轄クラスへのポインタを取得する
+//=============================================================================
+CCharacterManager **CMap::GetObjectManager(void)
+{
+	return m_pObjectManager;
+}
+CCharacterManager *CMap::GetObjectManager(int nIdx)
+{
+	return m_pObjectManager[nIdx];
 }
 
 //=============================================================================
@@ -2151,6 +3213,34 @@ CRespawn *CMap::GetEnemyRespawn(int nIdx)
 }
 
 //=============================================================================
+//    敵の生成情報データクラスへのポインタを取得する
+//=============================================================================
+CEnemy_ListData **CMap::GetEnemyListData(void)
+{
+	return m_pEnemyListData;
+}
+CEnemy_ListData *CMap::GetEnemyListData(int nIdx)
+{
+	return m_pEnemyListData[nIdx];
+}
+
+//=============================================================================
+//    敵の生成情報の総数を取得する
+//=============================================================================
+int CMap::GetNumEnemyListData(void)
+{
+	return m_nNumEnemyListData;
+}
+
+//=============================================================================
+//    オブジェクトデータの総数を取得する
+//=============================================================================
+int CMap::GetNumObjectData(void)
+{
+	return m_nNumObjectData;
+}
+
+//=============================================================================
 //    地面に張り付けるテクスチャの番号を設定する
 //=============================================================================
 void CMap::SetFieldTexIdx(const int nFieldTexIdx)
@@ -2164,6 +3254,14 @@ void CMap::SetFieldTexIdx(const int nFieldTexIdx)
 void CMap::SetMeshField(CMeshField *pMeshField)
 {
 	m_pMeshField = pMeshField;
+}
+
+//=============================================================================
+//    空クラスへのポインタを設定する
+//=============================================================================
+void CMap::SetSky(CSky *pSky)
+{
+	m_pSky = pSky;
 }
 
 //=============================================================================
@@ -2188,6 +3286,18 @@ void CMap::SetModelCreate(CModelCreate *pModelCreate)
 void CMap::SetLightManager(CLightManager *pLightManager)
 {
 	m_pLightManager = pLightManager;
+}
+
+//=============================================================================
+//    配置物データ管轄クラスへのポインタを設定する
+//=============================================================================
+void CMap::SetObjectManager(CCharacterManager **pObjectManager)
+{
+	m_pObjectManager = pObjectManager;
+}
+void CMap::SetObjectManager(CCharacterManager *pObjectManager, int nIdx)
+{
+	m_pObjectManager[nIdx] = pObjectManager;
 }
 
 //=============================================================================
@@ -2231,6 +3341,14 @@ void CMap::SetObjectFileName(char *pFileName)
 }
 
 //=============================================================================
+//    読み込む敵の生成情報のスクリプトファイル名を設定する
+//=============================================================================
+void CMap::SetEnemyListFileName(char *pFileName)
+{
+	strcpy(m_aEnemyListFileName, pFileName);
+}
+
+//=============================================================================
 //    司令部クラス型のポインタを設定する
 //=============================================================================
 void CMap::SetHeadQuarters(CHeadQuarters *pHeadQuarters)
@@ -2252,4 +3370,144 @@ void CMap::SetPlayerRespawn(CRespawn *pRespawn, int nIdx)
 void CMap::SetEnemyRespawn(CRespawn *pRespawn, int nIdx)
 {
 	m_pEnemyRespawn[nIdx] = pRespawn;
+}
+
+//=============================================================================
+//    敵の生成情報データを設定する
+//=============================================================================
+void CMap::SetEnemyListData(CEnemy_ListData EnemyData, int nIdx)
+{
+	m_pEnemyListData[nIdx]->Cpy(&EnemyData);
+}
+
+//=============================================================================
+//    敵の生成情報の総数を設定する
+//=============================================================================
+void CMap::SetNumEnemyListData(const int nNumEnemyData)
+{
+	m_nNumEnemyListData = nNumEnemyData;
+}
+
+//=============================================================================
+//    オブジェクトデータの総数を設定する
+//=============================================================================
+void CMap::SetNumObjectData(const int nObjectData)
+{
+	m_nNumObjectData = nObjectData;
+}
+
+
+//*****************************************************************************
+//    CEnemy_ListDataの処理
+//*****************************************************************************
+//=============================================================================
+//    コンストラクタ
+//=============================================================================
+CEnemy_ListData::CEnemy_ListData()
+{
+	m_nRespawnIdx = 0;
+	m_nEnemyType = 0;
+	m_nRespawnTime = 0;
+	m_bItem = false;
+	m_nItemType = 0;
+}
+
+//=============================================================================
+//    デストラクタ
+//=============================================================================
+CEnemy_ListData::~CEnemy_ListData()
+{
+
+}
+
+//=============================================================================
+//    データをコピーする処理
+//=============================================================================
+void CEnemy_ListData::Cpy(CEnemy_ListData *pEnemyData)
+{
+	m_nRespawnIdx = pEnemyData->GetRespawnIdx();
+	m_nEnemyType = pEnemyData->GetEnemyType();
+	m_nRespawnTime = pEnemyData->GetRespawnTime();
+	m_bItem = pEnemyData->GetItem();
+	m_nItemType = pEnemyData->GetItemType();
+}
+
+//=============================================================================
+//    敵のリスポーン位置の番号を設定する
+//=============================================================================
+void CEnemy_ListData::SetRespawnIdx(const int nRespawnIdx)
+{
+	m_nRespawnIdx = nRespawnIdx;
+}
+
+//=============================================================================
+//    敵の種類番号を設定する
+//=============================================================================
+void CEnemy_ListData::SetEnemyType(const int nEnemyType)
+{
+	m_nEnemyType = nEnemyType;
+}
+
+//=============================================================================
+//    敵を出現させるタイミングを設定する
+//=============================================================================
+void CEnemy_ListData::SetRespawnTime(const int nRespawnTime)
+{
+	m_nRespawnTime = nRespawnTime;
+}
+
+//=============================================================================
+//    倒した時にアイテムを出現させるかどうか設定する
+//=============================================================================
+void CEnemy_ListData::SetItem(const bool bItem)
+{
+	m_bItem = bItem;
+}
+
+//=============================================================================
+//    出現させるアイテムの種類番号を設定する
+//=============================================================================
+void CEnemy_ListData::SetItemType(const int nItemType)
+{
+	m_nItemType = nItemType;
+}
+
+//=============================================================================
+//    敵のリスポーン位置の番号を取得する
+//=============================================================================
+int CEnemy_ListData::GetRespawnIdx(void)
+{
+	return m_nRespawnIdx;
+}
+
+//=============================================================================
+//    敵の種類番号を取得する
+//=============================================================================
+int CEnemy_ListData::GetEnemyType(void)
+{
+	return m_nEnemyType;
+}
+
+//=============================================================================
+//    敵を出現させるタイミングを取得する
+//=============================================================================
+int CEnemy_ListData::GetRespawnTime(void)
+{
+	return m_nRespawnTime;
+}
+
+//=============================================================================
+//    倒した時にアイテムを出現させるかどうか取得する
+//=============================================================================
+bool CEnemy_ListData::GetItem(void)
+{
+	return m_bItem;
+}
+
+//=============================================================================
+//    出現させるアイテムの種類番号を取得する
+//=============================================================================
+int CEnemy_ListData::GetItemType(void)
+{
+	return m_nItemType;
 }

@@ -92,7 +92,7 @@ CMotionOrbit::CMotionOrbit()
 	m_OffSetPos2 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);              // 軌跡を出すモデルからのオフセット距離(2番目)
 	D3DXVECTOR3 m_OffSetAmp1 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 軌跡のオフセット増幅値(1番目)
 	D3DXVECTOR3 m_OffSetAmp2 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 軌跡のオフセット増幅値(2番目)
-	m_ColUp = D3DXCOLOR(0.0f,0.0f,0.0f,0.0f);                  // 軌跡の頂点上側の色
+	m_ColUp = D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);                  // 軌跡の頂点上側の色
 	m_ColDown = D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);             // 軌跡の頂点下側の色
 	m_fAlphaDecayUp = 0.0f;                                    // 軌跡の頂点上側の透明度減衰値
 	m_fAlphaDecayDown = 0.0f;                                  // 軌跡の頂点上側の透明度減衰値
@@ -205,7 +205,7 @@ void CMotionManager::Uninit(void)
 		{// モーションの総数分繰り返し
 			if (m_pMotion[nCntMotion] != NULL)
 			{// メモリが確保されている
-				// モーションの終了処理
+			 // モーションの終了処理
 				m_pMotion[nCntMotion]->Uninit(m_nNumModel);
 
 				// メモリの開放
@@ -226,7 +226,7 @@ void CMotionManager::Update(CModel**pModel)
 {
 	if (m_pMotion[m_nNumber] != NULL)
 	{// メモリが確保されている
-		// モーションの更新処理
+	 // モーションの更新処理
 		m_pMotion[m_nNumber]->Update(pModel, m_nNumModel, &m_nKey, &m_nCounter, &m_nBlendCounter, &m_nAllCounter);
 	}
 }
@@ -240,7 +240,7 @@ void CMotionManager::SwitchMotion(CModel **pModel, int nNumber)
 	m_nBlendCounter = 0; // ブレンドカウンターを戻す
 	m_nAllCounter = 0;   // 総再生フレーム数を戻す
 
-	// 前回のモーション番号を記憶し状態を戻す
+						 // 前回のモーション番号を記憶し状態を戻す
 	m_pMotion[m_nNumberOld]->SetState(CMotion::STATE_NORMAL);
 	m_nNumberOld = m_nNumber;
 
@@ -254,7 +254,7 @@ void CMotionManager::SwitchMotion(CModel **pModel, int nNumber)
 		D3DXVECTOR3 DiffRot;  // 差分の向き
 		D3DXVECTOR3 DestPos;  // 目的の位置
 
-		// モーションのオフセット目的の位置を計算
+							  // モーションのオフセット目的の位置を計算
 		DestPos.x = m_pMotion[m_nNumber]->GetKeyframe()[m_nKey][nCntModel]->GetAddPos().x - pModel[nCntModel]->GetAddPos().x;
 		DestPos.y = m_pMotion[m_nNumber]->GetKeyframe()[m_nKey][nCntModel]->GetAddPos().y - pModel[nCntModel]->GetAddPos().y;
 		DestPos.z = m_pMotion[m_nNumber]->GetKeyframe()[m_nKey][nCntModel]->GetAddPos().z - pModel[nCntModel]->GetAddPos().z;
@@ -300,11 +300,172 @@ void CMotionManager::SwitchMotion(CModel **pModel, int nNumber)
 }
 
 //=============================================================================
-//    モーションクラスへのポインタを設定
+//    モーションデータをコピーする
 //=============================================================================
-void CMotionManager::SetMotion(CMotion *pMotion, int nIdx)
+void CMotionManager::CpyMotion(CMotion *pMotion, int nIdx)
 {
-	m_pMotion[nIdx] = pMotion;
+	// メモリが確保されているなら開放
+	if (m_pMotion[nIdx] != NULL)
+	{
+		m_pMotion[nIdx]->Uninit(m_nNumModel);
+		delete m_pMotion[nIdx];
+		m_pMotion[nIdx] = NULL;
+	}
+
+	// メモリを確保
+	m_pMotion[nIdx] = CMotion::Create(m_nNumModel, pMotion->GetNumKey(),
+		pMotion->GetBlendMag(), pMotion->GetLoop(), pMotion->GetPlayBackKey());
+	if (m_pMotion[nIdx] == NULL)return;
+
+	// 各種データをコピーする
+	m_pMotion[nIdx]->SetAllPlayBackKey(pMotion->GetAllPlayBackKey());
+	m_pMotion[nIdx]->SetNumColData(pMotion->GetNumColData());
+	m_pMotion[nIdx]->SetNumOrbitData(pMotion->GetNumOrbitData());
+	m_pMotion[nIdx]->SetState(pMotion->GetState());
+
+	// ポインタからデータを取得し設定する
+	// 攻撃モーションデータ
+	if (pMotion->GetAttack() != NULL)
+		CpyAttack(nIdx, pMotion->GetAttack());
+
+	// 当たり判定データ
+	if (pMotion->GetCollision() != NULL)
+		CpyCollision(nIdx, pMotion->GetCollision(), pMotion->GetNumColData());
+
+	// 軌跡データ
+	if (pMotion->GetOrbit() != NULL)
+		CpyOrbit(nIdx, pMotion->GetOrbit(), pMotion->GetNumOrbitData());
+
+	// キーフレームデータ
+	if (pMotion->GetKeyframe() != NULL)
+		CpyKeyframe(nIdx, pMotion->GetKeyframe(), pMotion->GetNumKey());
+}
+
+//=============================================================================
+//    攻撃モーションデータをコピーする
+//=============================================================================
+void CMotionManager::CpyAttack(int nIdx, CMotionAttack *pAttackCpy)
+{
+	CMotionAttack *pMotionAttack = NULL;
+
+	// 必要なメモリを確保
+	pMotionAttack = new CMotionAttack;
+	if (pMotionAttack == NULL)return;
+
+	// データコピー
+	pMotionAttack->SetFinishTiming(pAttackCpy->GetFinishTiming());
+	pMotionAttack->SetNextMotionIdx(pAttackCpy->GetNextMotionIdx());
+	pMotionAttack->SetStartTiming(pAttackCpy->GetStartTiming());
+
+	// ポインタを設定
+	m_pMotion[nIdx]->SetAttack(pMotionAttack);
+}
+
+//=============================================================================
+//    当たり判定データをコピーする
+//=============================================================================
+void CMotionManager::CpyCollision(int nIdx, CMotionCollision **apCollisionCpy, int nNumColData)
+{
+	CMotionCollision **apMotionCollision = NULL;
+
+	apMotionCollision = new CMotionCollision*[nNumColData];
+	if (apMotionCollision == NULL)return;
+
+	// データコピー
+	for (int nCntCol = 0; nCntCol < nNumColData; nCntCol++)
+	{
+		apMotionCollision[nCntCol] = NULL;
+		apMotionCollision[nCntCol] = new CMotionCollision;
+		if (apMotionCollision[nCntCol] == NULL) return;
+		apMotionCollision[nCntCol]->SetDamage(apCollisionCpy[nCntCol]->GetDamage());
+		apMotionCollision[nCntCol]->SetFinishTiming(apCollisionCpy[nCntCol]->GetDamage());
+		apMotionCollision[nCntCol]->SetModelIdx(apCollisionCpy[nCntCol]->GetModelIdx());
+		apMotionCollision[nCntCol]->SetOffsetPos(apCollisionCpy[nCntCol]->GetOffsetPos());
+		apMotionCollision[nCntCol]->SetRange(apCollisionCpy[nCntCol]->GetRange());
+		apMotionCollision[nCntCol]->SetStartTiming(apCollisionCpy[nCntCol]->GetStartTiming());
+	}
+
+	// ポインタを設定
+	m_pMotion[nIdx]->SetCollision(apMotionCollision);
+}
+
+//=============================================================================
+//    軌跡データをコピーする
+//=============================================================================
+void CMotionManager::CpyOrbit(int nIdx, CMotionOrbit **apOrbitCpy, int nNumOrbitData)
+{
+	CMotionOrbit **apOrbit = NULL;
+
+	// 必要なメモリを確保
+	apOrbit = new CMotionOrbit*[nNumOrbitData];
+	if (apOrbit == NULL)return;
+
+	// データコピー
+	for (int nCntOrbit = 0; nCntOrbit < nNumOrbitData; nCntOrbit++)
+	{
+		apOrbit[nCntOrbit] = NULL;
+		apOrbit[nCntOrbit] = new CMotionOrbit;
+		if (apOrbit[nCntOrbit] == NULL) return;
+		apOrbit[nCntOrbit]->SetAlphaDecayDown(apOrbitCpy[nCntOrbit]->GetAlphaDecayDown());
+		apOrbit[nCntOrbit]->SetAlphaDecayUp(apOrbitCpy[nCntOrbit]->GetAlphaDecayUp());
+		apOrbit[nCntOrbit]->SetColDown(apOrbitCpy[nCntOrbit]->GetColDown());
+		apOrbit[nCntOrbit]->SetColUp(apOrbitCpy[nCntOrbit]->GetColUp());
+		apOrbit[nCntOrbit]->SetFinishTiming(apOrbitCpy[nCntOrbit]->GetFinishTiming());
+		apOrbit[nCntOrbit]->SetModelIdx(apOrbitCpy[nCntOrbit]->GetModelIdx());
+		apOrbit[nCntOrbit]->SetOffsetAmp1(apOrbitCpy[nCntOrbit]->GetOffsetAmp1());
+		apOrbit[nCntOrbit]->SetOffsetAmp2(apOrbitCpy[nCntOrbit]->GetOffsetAmp2());
+		apOrbit[nCntOrbit]->SetOffsetPos1(apOrbitCpy[nCntOrbit]->GetOffsetPos1());
+		apOrbit[nCntOrbit]->SetOffsetPos2(apOrbitCpy[nCntOrbit]->GetOffsetPos2());
+		apOrbit[nCntOrbit]->SetStartTiming(apOrbitCpy[nCntOrbit]->GetStartTiming());
+		apOrbit[nCntOrbit]->SetTexIdx(apOrbitCpy[nCntOrbit]->GetTexIdx());
+		apOrbit[nCntOrbit]->SetXBlock(apOrbitCpy[nCntOrbit]->GetXBlock());
+		apOrbit[nCntOrbit]->SetYBlock(apOrbitCpy[nCntOrbit]->GetYBlock());
+	}
+
+	// ポインタを設定
+	m_pMotion[nIdx]->SetOrbit(apOrbit);
+}
+
+//=============================================================================
+//    キーフレームデータをコピーする
+//=============================================================================
+void CMotionManager::CpyKeyframe(int nIdx, CKeyframe ***apKeyframeCpy, int nNumKey)
+{
+	CKeyframe ***apKeyframe = NULL;
+
+	// 必要なメモリを確保
+	apKeyframe = new CKeyframe**[nNumKey];
+	if (apKeyframe == NULL)return;
+
+	// データコピー
+	for (int nCntKey = 0; nCntKey < nNumKey; nCntKey++)
+	{
+		apKeyframe[nCntKey] = NULL;
+		apKeyframe[nCntKey] = new CKeyframe*[m_nNumModel];
+		if (apKeyframe[nCntKey] == NULL)return;
+		for (int nCntModel = 0; nCntModel < m_nNumModel; nCntModel++)
+		{
+			apKeyframe[nCntKey][nCntModel] = NULL;
+			apKeyframe[nCntKey][nCntModel] = new CKeyframe;
+			if (apKeyframe[nCntKey][nCntModel] == NULL)return;
+			CpyKey(apKeyframe[nCntKey][nCntModel], apKeyframeCpy[nCntKey][nCntModel]);
+		}
+	}
+
+	// ポインタを設定
+	m_pMotion[nIdx]->ReleaseKeyframe(m_nNumModel);
+	m_pMotion[nIdx]->SetKeyFrame(apKeyframe);
+}
+
+//=============================================================================
+//    キーデータをコピーする
+//=============================================================================
+void CMotionManager::CpyKey(CKeyframe *pKeyframe, CKeyframe *pKeyframeCpy)
+{
+	pKeyframe->SetAddPos(pKeyframeCpy->GetAddPos());
+	pKeyframe->SetDestPos(pKeyframeCpy->GetDestPos());
+	pKeyframe->SetDestRot(pKeyframeCpy->GetDestRot());
+	pKeyframe->SetDiffRot(pKeyframeCpy->GetDiffRot());
 }
 
 //=============================================================================
@@ -407,12 +568,12 @@ void CMotionManager::Save(void)
 
 			for (int nCntKey = 0; nCntKey < m_pMotion[m_nNumber]->GetNumKey(); nCntKey++)
 			{// キーフレームの総数分繰り返し
-			    // キーフレームの情報を保存する
+			 // キーフレームの情報を保存する
 				fprintf(pFile, "\n	%s			# --- << KEY : %d / %d >> ---\n", KEYSET, nCntKey, m_pMotion[m_nNumber]->GetNumKey());
 				fprintf(pFile, "		%s = %d\n", FRAME, m_pMotion[m_nNumber]->GetPlayBackKey(nCntKey));
 				for (int nCntModel = 0; nCntModel < m_nNumModel; nCntModel++)
 				{// モデルの数だけ繰り返し
-					// モデルごとのオフセット情報を保存
+				 // モデルごとのオフセット情報を保存
 					fprintf(pFile, "		%s # ----- [ %d ] -----\n", KEY, nCntModel);
 					fprintf(pFile, "			%s = %.2f %.2f %.2f\n", POS, m_pMotion[m_nNumber]->GetKeyframe()[nCntKey][nCntModel]->GetAddPos().x, m_pMotion[m_nNumber]->GetKeyframe()[nCntKey][nCntModel]->GetAddPos().y, m_pMotion[m_nNumber]->GetKeyframe()[nCntKey][nCntModel]->GetAddPos().z);
 					fprintf(pFile, "			%s = %.2f %.2f %.2f\n", ROT, m_pMotion[m_nNumber]->GetKeyframe()[nCntKey][nCntModel]->GetDestRot().x, m_pMotion[m_nNumber]->GetKeyframe()[nCntKey][nCntModel]->GetDestRot().y, m_pMotion[m_nNumber]->GetKeyframe()[nCntKey][nCntModel]->GetDestRot().z);
@@ -511,7 +672,7 @@ HRESULT CMotion::Init(int nNumModel, int nNumKey, float fBlendMag, bool bLoop, i
 							m_pKeyframe[nCntKey][nCntModel] = new CKeyframe; // キーフレームの情報のインスタンスを生成
 							if (m_pKeyframe[nCntKey][nCntModel] != NULL)
 							{// メモリが確保できた
-								// キーフレームの情報を初期化する
+							 // キーフレームの情報を初期化する
 								m_pKeyframe[nCntKey][nCntModel]->Init();
 							}
 						}
@@ -549,35 +710,13 @@ void CMotion::Uninit(int nNumModel)
 	// キーフレームクラスの開放
 	if (m_pKeyframe != NULL)
 	{// メモリが確保されている
-		for (int nCntKey = 0; nCntKey < m_nNumKey; nCntKey++)
-		{// キーフレームの数だけ繰り返し
-			if (m_pKeyframe[nCntKey] != NULL)
-			{// メモリが確保されている
-				for (int nCntModel = 0; nCntModel < nNumModel; nCntModel++)
-				{// モデルの数だけ繰り返し
-					if (m_pKeyframe[nCntKey][nCntModel] != NULL)
-					{// メモリが空になっていない
-						// 終了処理
-						m_pKeyframe[nCntKey][nCntModel]->Uninit();
+		ReleaseKeyframe(nNumModel);
+	}
 
-						// メモリの開放
-						delete m_pKeyframe[nCntKey][nCntModel];
-						m_pKeyframe[nCntKey][nCntModel] = NULL;
-					}
-				}
-				// メモリの開放
-				delete[] m_pKeyframe[nCntKey];
-				m_pKeyframe[nCntKey] = NULL;
-			}
-			if (m_pPlaybackKey!= NULL)
-			{// メモリが確保されている
-				delete[] m_pPlaybackKey;
-				m_pPlaybackKey = NULL;
-			}
-		}
-		// メモリの開放
-		delete[] m_pKeyframe;
-		m_pKeyframe = NULL;
+	if (m_pPlaybackKey != NULL)
+	{// メモリが確保されている
+		delete[] m_pPlaybackKey;
+		m_pPlaybackKey = NULL;
 	}
 
 	// 攻撃モーションデータの開放
@@ -663,7 +802,7 @@ void CMotion::Update(CModel **pModel, int nNumModel, int *pKey, int *pCounter, i
 					ModelRot = pModel[nCntModel]->GetRot();        // モデルの現在の向きを取得
 					ModelAddPos = pModel[nCntModel]->GetAddPos();  // モデルのオフセットに加える位置を取得
 
-					// モデルのオフセットに加える値を動かす
+																   // モデルのオフセットに加える値を動かす
 					ModelAddPos.x += m_pKeyframe[*pKey][nCntModel]->GetDestPos().x / m_pPlaybackKey[*pKey];
 					ModelAddPos.y += m_pKeyframe[*pKey][nCntModel]->GetDestPos().y / m_pPlaybackKey[*pKey];
 					ModelAddPos.z += m_pKeyframe[*pKey][nCntModel]->GetDestPos().z / m_pPlaybackKey[*pKey];
@@ -708,7 +847,7 @@ void CMotion::Update(CModel **pModel, int nNumModel, int *pKey, int *pCounter, i
 			}
 		}
 	}
-	else if(m_State == STATE_SWITCH)
+	else if (m_State == STATE_SWITCH)
 	{// 切り替え状態ならば
 		*pBlendCounter = *pBlendCounter + 1;  // モーションカウンターを進める
 		*pAllCounter += 1;
@@ -719,7 +858,7 @@ void CMotion::Update(CModel **pModel, int nNumModel, int *pKey, int *pCounter, i
 				ModelRot = pModel[nCntModel]->GetRot();        // モデルの現在の向きを取得
 				ModelAddPos = pModel[nCntModel]->GetAddPos();  // モデルの現在の位置を取得
 
-				// モデルのオフセット位置を動かす
+															   // モデルのオフセット位置を動かす
 				ModelAddPos.x += m_pKeyframe[*pKey][nCntModel]->GetDestPos().x / (m_pPlaybackKey[*pKey] * m_fBlendMag);
 				ModelAddPos.y += m_pKeyframe[*pKey][nCntModel]->GetDestPos().y / (m_pPlaybackKey[*pKey] * m_fBlendMag);
 				ModelAddPos.z += m_pKeyframe[*pKey][nCntModel]->GetDestPos().z / (m_pPlaybackKey[*pKey] * m_fBlendMag);
@@ -780,10 +919,37 @@ void CMotion::Update(CModel **pModel, int nNumModel, int *pKey, int *pCounter, i
 			}
 			m_State = STATE_NORMAL; // 通常状態に戻す
 
-			// キーフレームの切り替え
+									// キーフレームの切り替え
 			SwitchKey(pModel, nNumModel, *pKey);
 		}
 	}
+}
+
+//=============================================================================
+//    モーションのキーフレームデータクラスを開放する
+//=============================================================================
+void CMotion::ReleaseKeyframe(int nNumModel)
+{
+	for (int nCntKey = 0; nCntKey < m_nNumKey; nCntKey++)
+	{// キーフレームの数だけ繰り返し
+		if (m_pKeyframe[nCntKey] != NULL)
+		{// メモリが確保されている
+			for (int nCntModel = 0; nCntModel < nNumModel; nCntModel++)
+			{// モデルの数だけ繰り返し
+				if (m_pKeyframe[nCntKey][nCntModel] != NULL)
+				{// メモリが空になっていない
+					m_pKeyframe[nCntKey][nCntModel]->Uninit();
+					delete m_pKeyframe[nCntKey][nCntModel];
+					m_pKeyframe[nCntKey][nCntModel] = NULL;
+				}
+			}
+			delete[] m_pKeyframe[nCntKey];
+			m_pKeyframe[nCntKey] = NULL;
+		}
+	}
+	// メモリの開放
+	delete[] m_pKeyframe;
+	m_pKeyframe = NULL;
 }
 
 //=============================================================================
@@ -933,6 +1099,14 @@ void CMotion::SetNumOrbitData(const int nNumOrbitData)
 //=============================================================================
 //    キーフレーム情報を設定する
 //=============================================================================
+void CMotion::SetKeyFrame(CKeyframe ***apKeyFrame)
+{
+	m_pKeyframe = apKeyFrame;
+}
+void CMotion::SetKeyFrame(const int nIdxKey, CKeyframe **apKeyFrame)
+{
+	m_pKeyframe[nIdxKey] = apKeyFrame;
+}
 void CMotion::SetKeyFrame(const int nIdxModel, const int nIdxKey, CKeyframe *pKeyFrame)
 {
 	m_pKeyframe[nIdxKey][nIdxModel] = pKeyFrame;
@@ -1004,7 +1178,7 @@ void CMotion::SwitchKey(CModel **pModel, int nNumModel, int nKey)
 		D3DXVECTOR3 DiffRot;  // 差分の向き
 		D3DXVECTOR3 DestPos;  // 目的の位置
 
-		// モーションのオフセット目的の位置を計算
+							  // モーションのオフセット目的の位置を計算
 		DestPos.x = m_pKeyframe[nKey][nCntModel]->GetAddPos().x - pModel[nCntModel]->GetAddPos().x;
 		DestPos.y = m_pKeyframe[nKey][nCntModel]->GetAddPos().y - pModel[nCntModel]->GetAddPos().y;
 		DestPos.z = m_pKeyframe[nKey][nCntModel]->GetAddPos().z - pModel[nCntModel]->GetAddPos().z;

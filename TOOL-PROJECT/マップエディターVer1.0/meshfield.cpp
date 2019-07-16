@@ -624,7 +624,7 @@ void CMeshField::SetXBlock(const int nXBlock)
 		DIRECT_RELEASE(m_pVtxBuff);
 
 		// インデックスバッファの破棄
-		DIRECT_RELEASE(m_pVtxBuff);
+		DIRECT_RELEASE(m_pIdxBuff);
 
 		// レンダリングクラス型のポインタ
 		CRenderer *pRenderer = CManager::GetRenderer();
@@ -713,7 +713,7 @@ void CMeshField::SetZBlock(const int nZBlock)
 		DIRECT_RELEASE(m_pVtxBuff);
 
 		// インデックスバッファの破棄
-		DIRECT_RELEASE(m_pVtxBuff);
+		DIRECT_RELEASE(m_pIdxBuff);
 
 		// レンダリングクラス型のポインタ
 		CRenderer *pRenderer = CManager::GetRenderer();

@@ -24,20 +24,30 @@ public:	//誰からもアクセス可能
 	typedef enum
 	{
 		OBJTYPE_NONE = 0,
-		OBJTYPE_SCENE2D,		//オブジェクト2D
-		OBJTYPE_SCENE3D,		//オブジェクト3D
-		OBJTYPE_SCENEX,			//オブジェクトX
-		OBJTYPE_FADE,			//フェード
-		OBJTYPE_MESHFIELD,		//メッシュフィールド
-		OBJTYPE_BILLBOARD,		//ビルボード
-		OBJTYPE_GIMMIC,			//ギミック
-		OBJTYPE_OBJECT,			//オブジェクト
+		OBJTYPE_SCENE2D,		// オブジェクト2D
+		OBJTYPE_SCENE3D,		// オブジェクト3D
+		OBJTYPE_SCENEX,			// オブジェクトX
+		OBJTYPE_FADE,			// フェード
+		OBJTYPE_MESHFIELD,		// メッシュフィールド
+		OBJTYPE_BILLBOARD,		// ビルボード
+		OBJTYPE_OBJECT,			// オブジェクト
 		OBJTYPE_3D,             // 3Dオブジェクト
 		OBJTYPE_BLOCK,          // ブロック
 		OBJTYPE_CHARACTER,      // キャラクター
-		OBJTYPE_PLAYER,			//プレイヤー
+		OBJTYPE_PLAYER,			// プレイヤー
 		OBJTYPE_BULLET,         // 弾
 		OBJTYPE_ENEMY,          // 敵
+		OBJTYPE_RIVER,          // 川
+		OBJTYPE_ICEFIELD,       // 氷の地面
+		OBJTYPE_SPLASH,         // 飛沫
+		OBJTYPE_MESHSPHERE,     // メッシュスフィア
+		OBJTYPE_MESHRING,       // メッシュリング
+		OBJTYPE_EFFECTMANAGER,  // エフェクト管轄クラス
+		OBJTYPE_EMITTER,        // エミッター
+		OBJTYPE_PAREMITTER,     // パーティクルエミッター
+		OBJTYPE_RINGEMITTER,    // リングエフェクトエミッター
+		OBJTYPE_PARTICLE,       // パーティクル
+		OBJTYPE_OBJBILLBOARD,   // ビルボードオブジェクト
 		OBJTYPE_MAX,
 	} OBJTYPE;
 

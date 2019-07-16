@@ -143,8 +143,8 @@ void CRespawn::SetArea(int nAreaX, int nAreaZ)
 
 	// ÉGÉäÉAÇ©ÇÁç¿ïWÇãÅÇﬂÇÈ
 	D3DXVECTOR3 pos = INITIALIZE_D3DXVECTOR3;
-	pos.x = -((MASU_SIZE_X * MASU_BLOCK_X) / 2) + (MASU_SIZE_X * m_nAreaX) - MASU_SIZE_X_HALF;
-	pos.z = ((MASU_SIZE_Z * MASU_BLOCK_Z) / 2) - (MASU_SIZE_Z * m_nAreaZ) + MASU_SIZE_Z_HALF;
+	pos.x = -((MASS_SIZE_X * MASS_BLOCK_X) / 2) + (MASS_SIZE_X * m_nAreaX) - MASS_SIZE_X_HALF;
+	pos.z = ((MASS_SIZE_Z * MASS_BLOCK_Z) / 2) - (MASS_SIZE_Z * m_nAreaZ) + MASS_SIZE_Z_HALF;
 	SetPos(pos);
 }
 

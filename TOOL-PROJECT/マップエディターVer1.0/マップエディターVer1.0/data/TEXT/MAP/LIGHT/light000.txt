@@ -44,7 +44,7 @@ SPOTLIGHTSET
 	RANGE = 300.000							# ライトの範囲
 	FALLOFF = 1.000							# ライトのフォールオフ
 	THETA = 1.571							# ライトの内部コーンの角度
-	PHI = 6.283							# ライトの外部コーンの角度
+	PHI = 6.283								# ライトの外部コーンの角度
 END_SPOTLIGHTSET
 
 SPOTLIGHTSET
@@ -59,7 +59,7 @@ SPOTLIGHTSET
 	RANGE = 300.000							# ライトの範囲
 	FALLOFF = 1.000							# ライトのフォールオフ
 	THETA = 1.571							# ライトの内部コーンの角度
-	PHI = 6.283							# ライトの外部コーンの角度
+	PHI = 6.283								# ライトの外部コーンの角度
 END_SPOTLIGHTSET
 
 DIRECTIONALLIGHTSET

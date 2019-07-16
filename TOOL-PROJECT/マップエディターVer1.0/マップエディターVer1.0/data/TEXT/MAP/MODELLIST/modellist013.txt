@@ -1,0 +1,35 @@
+#==============================================================================
+#
+# モデルリスト情報スクリプトファイル [modellist013.txt]
+# Author : Hodaka Niwa
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# 読み込むモデル数
+#------------------------------------------------------------------------------
+NUM_MODEL = 17
+
+#------------------------------------------------------------------------------
+# 読み込むモデルのファイル名
+#------------------------------------------------------------------------------
+MODEL_FILENAME = data/MODEL/flag.x
+MODEL_FILENAME = data/MODEL/test000.x
+MODEL_FILENAME = data/MODEL/Choco01.x
+MODEL_FILENAME = data/MODEL/Choco02.x
+MODEL_FILENAME = data/MODEL/Choco03.x
+MODEL_FILENAME = data/MODEL/Choco04.x
+MODEL_FILENAME = data/MODEL/ChocoTira.x
+MODEL_FILENAME = data/MODEL/GreenTira.x
+MODEL_FILENAME = data/MODEL/FruitMochi.x
+MODEL_FILENAME = data/MODEL/HotCake01.x
+MODEL_FILENAME = data/MODEL/HotCake02.x
+MODEL_FILENAME = data/MODEL/HotCake03.x
+MODEL_FILENAME = data/MODEL/Hugashi01.x
+MODEL_FILENAME = data/MODEL/Hugashi02.x
+MODEL_FILENAME = data/MODEL/Mochi01.x
+MODEL_FILENAME = data/MODEL/Mochi02.x
+MODEL_FILENAME = data/MODEL/whip.x
+
+END_SCRIPT		# この行は絶対消さないこと！

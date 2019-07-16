@@ -349,7 +349,7 @@ void CBullet::Collision(void)
 							 //I—¹ˆ—
 							 //Uninit();
 							 //“G‚ÌI—¹ˆ—
-								pBlock->Hit(m_pScene);
+								pBlock->Hit(this);
 								Destroy();
 							};
 						}
@@ -409,7 +409,7 @@ void CBullet::Collision(void)
 							    //I—¹ˆ—
 							    //Uninit();
 							    //“G‚ÌI—¹ˆ—
-								pBlock->Hit(m_pScene);
+								pBlock->Hit(this);
 								Destroy();
 							};
 						}

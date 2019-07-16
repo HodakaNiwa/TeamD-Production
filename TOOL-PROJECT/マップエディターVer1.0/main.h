@@ -54,12 +54,12 @@ int GetFPS(void);
 //*****************************************************************************
 #define SCREEN_WIDTH	 (1280)		           // ウインドウの幅
 #define SCREEN_HEIGHT	 (720)		           // ウインドウの高さ
-#define MASU_BLOCK_X     (19)                  // マスの分割数(横)
-#define MASU_BLOCK_Z     (15)                  // マスの分割数(縦)
-#define MASU_SIZE_X      (75.0f)               // マスのサイズ(横)
-#define MASU_SIZE_Z      (75.0f)               // マスのサイズ(縦)
-#define MASU_SIZE_X_HALF (MASU_SIZE_X / 2.0f)  // マスのサイズの半分(横)
-#define MASU_SIZE_Z_HALF (MASU_SIZE_Z / 2.0f)  // マスのサイズの半分(縦)
+#define MASS_BLOCK_X     (19)                  // マスの分割数(横)
+#define MASS_BLOCK_Z     (15)                  // マスの分割数(縦)
+#define MASS_SIZE_X      (75.0f)               // マスのサイズ(横)
+#define MASS_SIZE_Z      (75.0f)               // マスのサイズ(縦)
+#define MASS_SIZE_X_HALF (MASS_SIZE_X / 2.0f)  // マスのサイズの半分(横)
+#define MASS_SIZE_Z_HALF (MASS_SIZE_Z / 2.0f)  // マスのサイズの半分(縦)
 #define INITIALIZE_D3DXVECTOR3 (D3DXVECTOR3(0.0f,0.0f,0.0f))
 
 // 2Dポリゴン用頂点フォーマット( 頂点座標[2D] / 頂点カラー / テクスチャ座標 )

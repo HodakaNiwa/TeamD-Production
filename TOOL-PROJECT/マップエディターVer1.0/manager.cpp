@@ -17,17 +17,24 @@
 #include "fade.h"
 
 //=============================================================================
+// マクロ定義
+//=============================================================================
+#define MANAGER_LOAD_MAPFILENAME_DEF "data/TEXT/MAP/map.txt"
+
+//=============================================================================
 // 静的メンバ変数宣言
 //=============================================================================
-CManager::MODE	CManager::m_mode = MODE::MODE_EDITOR;		//モードの情報
-CRenderer		*CManager::m_pRenderer = NULL;				//レンダリングポインタ
-CInputKeyboard	*CManager::m_pInputKeyboard = NULL;			//キーボードポインタ
-CInputMouse     *CManager::m_pMouse = NULL;                 // マウスクラス型のポインタ
-CInputJoyStick	*CManager::m_pInputJoypad = NULL;			//ジョイパッドポインタ
-CSound			*CManager::m_pSound = NULL;					//サウンドのポインタ
-CDebugProc		*CManager::m_pDebugproc = NULL;				//デバッグのポインタ
-CBasemode		*CManager::m_pBasemode = NULL;				//ベースモードのポインタ
-CFade			*CManager::m_pFade = NULL;					//フェードのポインタ
+CManager::MODE	CManager::m_mode = MODE::MODE_EDITOR;		            // モードの情報
+CRenderer		*CManager::m_pRenderer = NULL;				            // レンダリングポインタ
+CInputKeyboard	*CManager::m_pInputKeyboard = NULL;			            // キーボードポインタ
+CInputMouse     *CManager::m_pMouse = NULL;                             // マウスクラス型のポインタ
+CInputJoyStick	*CManager::m_pInputJoypad = NULL;			            // ジョイパッドポインタ
+CSound			*CManager::m_pSound = NULL;					            // サウンドのポインタ
+CDebugProc		*CManager::m_pDebugproc = NULL;				            // デバッグのポインタ
+CBasemode		*CManager::m_pBasemode = NULL;				            // ベースモードのポインタ
+CFade			*CManager::m_pFade = NULL;					            // フェードのポインタ
+bool            CManager::m_bStartUp = false;                           // 起動したかどうか
+char CManager::m_aLoadMapFileName[256] = MANAGER_LOAD_MAPFILENAME_DEF;  // 読み込むマップのファイル名
 
 //=============================================================================
 // マネージャのコンストラクタ
@@ -50,13 +57,13 @@ CManager::~CManager()
 //=============================================================================
 HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 {
-	//レンダリングの動的確保
+	// レンダリングの動的確保
 	if (m_pRenderer == NULL)
 	{
 		m_pRenderer = new CRenderer;			//レンダリングの動的確保
 	}
 
-	//キーボードの動的確保
+	// キーボードの動的確保
 	if (m_pInputKeyboard == NULL)
 	{
 		m_pInputKeyboard = new CInputKeyboard;	//キーボードの動的確保
@@ -82,49 +89,46 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 		}
 	}
 
-	//サウンドの動的確保
+	// サウンドの動的確保
 	//if (m_pSound == NULL)
 	//{
 	//	m_pSound = new CSound;					//サウンドの動的確保
 	//}
 
-	//デバッグの動的確保
+	// デバッグの動的確保
 	if (m_pDebugproc == NULL)
 	{
 		m_pDebugproc = new CDebugProc;
 	}
 
-	//レンダリングの初期化処理
+	// レンダリングの初期化処理
 	if (m_pRenderer != NULL)
 	{
 		m_pRenderer->Init(hWnd, TRUE);
 	}
 
-	//キーボードの初期化処理
+	// キーボードの初期化処理
 	if (m_pInputKeyboard != NULL)
 	{
 		m_pInputKeyboard->Init(hInstance,hWnd);
 	}
 
-	//サウンドの初期化処理
+	// サウンドの初期化処理
 	/*if (m_pSound != NULL)
 	{
 		m_pSound->InitSound(hWnd);
 	}*/
 
-	//デバッグの初期化処理
+	// デバッグの初期化処理
 	if (m_pDebugproc != NULL)
 	{
 		m_pDebugproc->Init();
 	}
 
-	//フェードの生成
+	// フェードの生成
 	m_pFade = CFade::Create();
-	//フェードの設置処理
+	// フェードの設置処理
 	m_pFade->SetFade(m_mode, m_pFade->FADE_IN);
-
-	//モードの設置
-	//SetMode(m_mode);
 
 	return S_OK;
 }
@@ -134,7 +138,15 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 //=============================================================================
 void CManager::Uninit(void)
 {
-	//キーボードの終了処理
+	// ベースモードの終了処理
+	if (m_pBasemode != NULL)
+	{
+		m_pBasemode->Uninit();
+		delete m_pBasemode;
+		m_pBasemode = NULL;
+	}
+
+	// キーボードの終了処理
 	if (m_pInputKeyboard != NULL)
 	{
 		m_pInputKeyboard->Uninit();
@@ -150,7 +162,7 @@ void CManager::Uninit(void)
 		m_pMouse = NULL;
 	}
 
-	//ジョイパッドの終了処理
+	// ジョイパッドの終了処理
 	if (m_pInputJoypad != NULL)
 	{
 		m_pInputJoypad->Uninit();
@@ -158,7 +170,7 @@ void CManager::Uninit(void)
 		m_pInputJoypad = NULL;
 	}
 
-	//レンダリングの終了処理
+	// レンダリングの終了処理
 	if (m_pRenderer != NULL)
 	{
 		m_pRenderer->Uninit();
@@ -166,13 +178,14 @@ void CManager::Uninit(void)
 		m_pRenderer = NULL;
 	}
 
-	//フェードの終了処理
+	// フェードの終了処理
 	if (m_pFade != NULL)
 	{
 		m_pFade->Uninit();
 		delete m_pFade;
 		m_pFade = NULL;
 	}
+
 	//サウンドの終了処理
 	//if (m_pSound != NULL)
 	//{
@@ -181,7 +194,7 @@ void CManager::Uninit(void)
 	//	m_pSound = NULL;
 	//}
 
-	//デバッグの終了処理
+	// デバッグの終了処理
 	if (m_pDebugproc != NULL)
 	{
 		m_pDebugproc->Uninit();
@@ -189,16 +202,7 @@ void CManager::Uninit(void)
 		m_pDebugproc = NULL;
 	}
 
-	if (m_pBasemode != NULL)
-	{
-		// ベースモードの終了処理
-		m_pBasemode->Uninit();
-		// メモリの開放
-		delete m_pBasemode;
-		m_pBasemode = NULL;
-	}
-
-	//全ての開放処理
+	// 全ての開放処理
 	CScene::ReleaseAll();
 }
 
@@ -218,19 +222,19 @@ void CManager::Update(void)
 		m_pMouse->Update();
 	}
 
-	//ジョイパッドの更新処理
+	// ジョイパッドの更新処理
 	if (m_pInputJoypad != NULL)
 	{
 		m_pInputJoypad->Update();
 
 	}
 
-	//フェードの更新処理
+	// フェードの更新処理
 	if (m_pFade != NULL)
 	{
 		m_pFade->Update();
 	}
-	//レンダリングの更新処理
+	// レンダリングの更新処理
 	if (m_pRenderer != NULL)
 	{
 		m_pRenderer->Update();
@@ -248,7 +252,7 @@ void CManager::Update(void)
 //=============================================================================
 void CManager::Draw(void)
 {
-	//レンダリングの描画処理
+	// レンダリングの描画処理
 	if (m_pRenderer != NULL)
 	{
 		m_pRenderer->Draw();
@@ -326,12 +330,37 @@ CManager::MODE CManager::GetMode(void)
 {
 	return m_mode;				//値を返す
 }
+
 //=============================================================================
 // モードの取得
 //=============================================================================
 CFade *CManager::GetFade(void)
 {
 	return m_pFade;				//値を返す
+}
+
+//=============================================================================
+// 起動したかどうか取得
+//=============================================================================
+bool CManager::GetStartUp(void)
+{
+	return m_bStartUp;
+}
+
+//=============================================================================
+// 読み込むマップのファイル名を設定
+//=============================================================================
+void CManager::SetLoadMapFileName(char *pFileName)
+{
+	strcpy(m_aLoadMapFileName, pFileName);
+}
+
+//=============================================================================
+// 読み込むマップのファイル名を取得
+//=============================================================================
+char *CManager::GetLoadMapFileName(void)
+{
+	return m_aLoadMapFileName;
 }
 
 //=============================================================================
@@ -367,4 +396,7 @@ void CManager::SetMode(MODE mode)
 		}
 		break;
 	}
+
+	// 起動した状態にする
+	m_bStartUp = true;
 }

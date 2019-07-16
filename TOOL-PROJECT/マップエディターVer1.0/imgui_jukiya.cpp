@@ -15,6 +15,7 @@
 #include "imstb_truetype.h"
 
 #include "block.h"
+#include "boxCollider.h"
 #include "editor.h"
 #include "input.h"
 #include "map.h"
@@ -29,12 +30,18 @@
 #include "meshfield.h"
 #include "headquarters.h"
 #include "respawn.h"
+#include "fileLoader.h"
+#include "sky.h"
+#include "effectManager.h"
+#include "emitter.h"
+#include "billboardObject.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define IMGUI_SAVE_DISP (60)
-#define IMGUI_LOAD_DISP (60)
+#define IMGUI_SAVE_DISP   (60)
+#define IMGUI_LOAD_DISP   (60)
+#define IMGUI_CREATE_DISP (60)
 
 //=============================================================================
 // ImGuiのコンストラクタ
@@ -115,10 +122,18 @@ void CImGui_Jukiya::Update(void)
 		int nModeOld = nMode;
 		ImGui::RadioButton(u8"エディター", &nMode, CManager::MODE_EDITOR); ImGui::SameLine();
 		ImGui::RadioButton(u8"デモプレイ", &nMode, CManager::MODE_DEMOPLAY);
+
 		if (nModeOld != nMode)
 		{// モードが更新された
-			CFade::SetFade((CManager::MODE)nMode, CFade::FADE_OUT);
+			ChangeModeDebug(nMode);
 		}
+
+		// 読み込むマップのファイル名を設定
+		LoadFileNameDebug();
+		ImGui::Text("");
+
+		// 読み込み成否情報表示
+		m_nLoadModeCounter = LoadDisp(m_nLoadModeCounter, m_bLoadModeDisp);
 	}
 	else
 	{// フェードが使用されている
@@ -146,6 +161,55 @@ void CImGui_Jukiya::Draw(void)
 	// Updateで生成したImGuiを表示する
 	ImGui::Render();
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+}
+
+//=============================================================================
+// ImGuiの読み込むマップのファイル名情報描画処理
+//=============================================================================
+void CImGui_Jukiya::LoadFileNameDebug(void)
+{
+	char m_aFileName[256] = "\0";
+	strcpy(m_aFileName, CManager::GetLoadMapFileName());
+
+	if (CManager::GetMode() == CManager::MODE_EDITOR)
+	{
+		ImGui::InputText(u8"デモプレイが読み込むマップ", m_aFileName, IM_ARRAYSIZE(m_aFileName));
+	}
+	else if (CManager::GetMode() == CManager::MODE_DEMOPLAY)
+	{
+		ImGui::InputText(u8"エディターが読み込むマップ", m_aFileName, IM_ARRAYSIZE(m_aFileName));
+	}
+
+	CManager::SetLoadMapFileName(m_aFileName);
+}
+
+//=============================================================================
+// ImGuiのモード切替情報描画処理
+//=============================================================================
+void CImGui_Jukiya::ChangeModeDebug(int nMode)
+{
+	char m_aFileName[256] = "\0";
+	strcpy(m_aFileName, CManager::GetLoadMapFileName());
+
+	// カウンターセット
+	m_nLoadModeCounter = IMGUI_LOAD_DISP;
+	m_bLoadModeDisp = true;
+
+	// マップを読み込めるかチェック
+	CFileLoader *pFileLoader = CFileLoader::Create(m_aFileName);
+	if (pFileLoader == NULL)
+	{
+		m_bLoadModeDisp = false;
+		return;
+	}
+
+	// 読み込めるならばメモリ開放してモード切替
+	if (pFileLoader != NULL)
+	{
+		delete pFileLoader;
+		pFileLoader = NULL;
+	}
+	CFade::SetFade((CManager::MODE)nMode, CFade::FADE_OUT);
 }
 
 //=============================================================================
@@ -267,13 +331,27 @@ void CImGui_Jukiya::EditerDebug(void)
 		if (ImGui::TreeNode(u8"編集モード"))
 		{
 			int nEditMode = pEditor->GetEditMode();
+			int nEditModeDef = nEditMode;
 			ImGui::RadioButton(u8"ゲームフィールド", &nEditMode, CEditor::EDITMODE_GAMEFIELD); ImGui::SameLine();
 			ImGui::RadioButton(u8"ライト", &nEditMode, CEditor::EDITMODE_LIGHT); ImGui::SameLine();
 			ImGui::RadioButton(u8"配置物", &nEditMode, CEditor::EDITMODE_OBJECT);
 			ImGui::RadioButton(u8"リスポーン", &nEditMode, CEditor::EDITMODE_RESPAWN); ImGui::SameLine();
 			ImGui::RadioButton(u8"司令部", &nEditMode, CEditor::EDITMODE_HEADQUARTERS); ImGui::SameLine();
+			ImGui::RadioButton(u8"敵の生成情報", &nEditMode, CEditor::EDITMODE_ENEMYLIST);
+			ImGui::RadioButton(u8"空", &nEditMode, CEditor::EDITMODE_SKY);
 			pEditor->SetEditMode((CEditor::EDITMODE)nEditMode);
 			ImGui::TreePop();
+
+			// ベースオブジェクトを破棄するかどうかチェック
+			if (nEditModeDef != CEditor::EDITMODE_OBJECT && nEditMode == CEditor::EDITMODE_OBJECT)
+			{
+				pEditor->CreateBaseObject();
+				pEditor->SwitchBaseObject(pEditor->GetObjectMode());
+			}
+			else if(nEditMode != CEditor::EDITMODE_OBJECT)
+			{
+				pEditor->ReleaseBaseObject();
+			}
 		}
 		ImGui::Text("");
 		ImGui::Text("");
@@ -311,6 +389,14 @@ void CImGui_Jukiya::EditerDebug(void)
 	else if (pEditor->GetEditMode() == CEditor::EDITMODE_HEADQUARTERS)
 	{// 司令部情報表示
 		HeadQuartersDebug(pEditor);
+	}
+	else if (pEditor->GetEditMode() == CEditor::EDITMODE_ENEMYLIST)
+	{// 敵の生成情報表示
+		EnemyListDebug(pEditor);
+	}
+	else if (pEditor->GetEditMode() == CEditor::EDITMODE_SKY)
+	{// 空情報表示
+		SkyDebug(pEditor);
 	}
 }
 
@@ -393,18 +479,30 @@ void CImGui_Jukiya::TopViewCameraDebug(CCamera *pCamera)
 void CImGui_Jukiya::FieldDebug(CEditor *pEditor)
 {
 	// ヘッダー生成開始
-	ImGui::CollapsingHeader(u8"地面情報");
+	ImGui::CollapsingHeader(u8"フィールド情報");
 
 	// 地面に張り付けるテクスチャ番号を設定
 	int nNumTex = pEditor->GetMap()->GetTextureManager()->GetNumTexture();
 	int nFieldTexIdx = pEditor->GetMap()->GetFieldTexIdx();
 	ImGui::SliderInt(u8"テクスチャの番号", &nFieldTexIdx, 0, nNumTex - 1);
-	ImGui::Text("");
 	pEditor->GetMap()->SetFieldTexIdx(nFieldTexIdx);
 
 	// 地面にテクスチャを設定
 	CMeshField *pMeshField = pEditor->GetMap()->GetMeshField();
 	pMeshField->BindTexture(pEditor->GetMap()->GetTextureManager()->GetTexture(nFieldTexIdx));
+
+	// グリッド線を描画するかどうか設定
+	bool bGridDisp = pEditor->GetGridDisp();
+	ImGui::Checkbox(u8"グリッド線描画", &bGridDisp);
+	pEditor->SetGridDisp(bGridDisp);
+
+	// 当たり判定の線を描画するかどうか設定
+	bool bColRangeDisp = pEditor->GetColRangeDisp();
+	ImGui::Checkbox(u8"当たり判定の線描画", &bColRangeDisp);
+	pEditor->SetColRangeDisp(bColRangeDisp);
+
+	// 可読性のため改行
+	ImGui::Text("");
 }
 
 //=============================================================================
@@ -492,12 +590,14 @@ void CImGui_Jukiya::SaveMapDebug(CEditor *pEditor, CMap *pMap)
 	char aSaveLightFileName[256];
 	char aSaveGameFieldFileName[256];
 	char aSaveObjectFileName[256];
+	char aSaveEnemyFileName[256];
 	strcpy(aSaveFileName, pEditor->GetMapSaveFileName());
 	strcpy(aSaveModelFileName, pEditor->GetModelListSaveFileName());
 	strcpy(aSaveTexFileName, pEditor->GetTexListSaveFileName());
 	strcpy(aSaveLightFileName, pEditor->GetLightSaveFileName());
 	strcpy(aSaveGameFieldFileName, pEditor->GetGameFieldSaveFileName());
 	strcpy(aSaveObjectFileName, pEditor->GetObjectSaveFileName());
+	strcpy(aSaveEnemyFileName, pEditor->GetEnemyListSaveFileName());
 
 	// 保存するファイル名設定
 	ImGui::InputText(u8"保存するファイル名", aSaveFileName, IM_ARRAYSIZE(aSaveFileName));
@@ -506,12 +606,14 @@ void CImGui_Jukiya::SaveMapDebug(CEditor *pEditor, CMap *pMap)
 	ImGui::InputText(u8"ライト情報保存先", aSaveLightFileName, IM_ARRAYSIZE(aSaveLightFileName));
 	ImGui::InputText(u8"ゲームフィールド情報保存先", aSaveGameFieldFileName, IM_ARRAYSIZE(aSaveGameFieldFileName));
 	ImGui::InputText(u8"配置物情報保存先", aSaveObjectFileName, IM_ARRAYSIZE(aSaveObjectFileName));
+	ImGui::InputText(u8"敵の生成情報保存先", aSaveEnemyFileName, IM_ARRAYSIZE(aSaveEnemyFileName));
 	pEditor->SetMapSaveFileName(aSaveFileName);
 	pEditor->SetModelListSaveFileName(aSaveModelFileName);
 	pEditor->SetTexListSaveFileName(aSaveTexFileName);
 	pEditor->SetLightSaveFileName(aSaveLightFileName);
 	pEditor->SetGameFieldSaveFileName(aSaveGameFieldFileName);
 	pEditor->SetObjectSaveFileName(aSaveObjectFileName);
+	pEditor->SetEnemyListSaveFileName(aSaveEnemyFileName);
 
 	if (ImGui::Button(u8"保存する"))
 	{// ボタン押下
@@ -521,6 +623,7 @@ void CImGui_Jukiya::SaveMapDebug(CEditor *pEditor, CMap *pMap)
 		pMap->SetLightFileName(pEditor->GetLightSaveFileName());
 		pMap->SetGameFieldFileName(pEditor->GetGameFieldSaveFileName());
 		pMap->SetObjectFileName(pEditor->GetObjectSaveFileName());
+		pMap->SetEnemyListFileName(pEditor->GetEnemyListSaveFileName());
 		if (FAILED(pMap->Save(aSaveFileName)))
 		{
 			m_bSaveMapDisp = false;
@@ -557,6 +660,7 @@ void CImGui_Jukiya::LoadMapDebug(CEditor *pEditor, CMap *pMap)
 			m_bLoadMapDisp = true;
 			pEditor->SetRespawnModel();
 			pEditor->SetMeshField(pMap->GetMeshField());
+			pEditor->SetEditBlock(NULL);
 		}
 		m_nLoadMapCounter = IMGUI_LOAD_DISP;
 	}
@@ -846,11 +950,16 @@ void CImGui_Jukiya::GameFieldDebug(CEditor *pEditor)
 
 		// 配置するオブジェクトの種類を設定
 		int nGameFieldMode = pEditor->GetGameFieldMode();
+		int nGameFieldModeDef = nGameFieldMode;
 		ImGui::RadioButton(u8"ブロック", &nGameFieldMode, CEditor::GAMEFIELDMODE_BLOCK); ImGui::SameLine();
 		ImGui::RadioButton(u8"川", &nGameFieldMode, CEditor::GAMEFIELDMODE_RIVER); ImGui::SameLine();
 		ImGui::RadioButton(u8"氷", &nGameFieldMode, CEditor::GAMEFIELDMODE_ICE);
 		pEditor->SetGameFieldMode((CEditor::GAMEFIELDMODE)nGameFieldMode);
 		ImGui::Text("");
+		if (nGameFieldMode != nGameFieldModeDef)
+		{
+			pEditor->ExChangeArea();
+		}
 
 		// 現在のモードによって処理わけ
 		if (nGameFieldMode == CEditor::GAMEFIELDMODE_BLOCK)
@@ -885,7 +994,7 @@ void CImGui_Jukiya::BlockDebug(CEditor *pEditor)
 	// ブロック情報取得
 	int nBlockType = pEditor->GetBlockType();
 	int nBlockModelIdx = pEditor->GetBlockModelIdx();
-	bool bBlockBreak = pEditor->GetBlockBreak();
+	float fBlockRot[3] = { pEditor->GetBlockRot().x,pEditor->GetBlockRot().y ,pEditor->GetBlockRot().z };
 	float fBlockColWidth = pEditor->GetBlockColWidth();
 	float fBlockColHeight = pEditor->GetBlockColHeight();
 	float fBlockColDepth = pEditor->GetBlockColDepth();
@@ -901,10 +1010,11 @@ void CImGui_Jukiya::BlockDebug(CEditor *pEditor)
 	// ブロック情報を表示
 	ImGui::InputInt(u8"種類", &nBlockType);
 	ImGui::InputInt(u8"使用するモデルの番号", &nBlockModelIdx);
-	ImGui::Checkbox(u8"壊せるかどうか", &bBlockBreak);
+	ImGui::InputFloat3(u8"向き", &fBlockRot[0]);
 	ImGui::InputFloat(u8"当たり判定の幅", &fBlockColWidth);
 	ImGui::InputFloat(u8"当たり判定の高さ", &fBlockColHeight);
 	ImGui::InputFloat(u8"当たり判定の奥行", &fBlockColDepth);
+	ImGui::Text("");
 
 	// ブロック情報判定
 	if (nBlockType < 0)
@@ -931,10 +1041,121 @@ void CImGui_Jukiya::BlockDebug(CEditor *pEditor)
 	// ブロック情報設定
 	pEditor->SetBlockType(nBlockType);
 	pEditor->SetBlockModelIdx(nBlockModelIdx);
-	pEditor->SetBlockBreak(bBlockBreak);
+	pEditor->SetBlockRot(D3DXVECTOR3(fBlockRot[0], fBlockRot[1], fBlockRot[2]));
 	pEditor->SetBlockColWidth(fBlockColWidth);
 	pEditor->SetBlockColHeight(fBlockColHeight);
 	pEditor->SetBlockColDepth(fBlockColDepth);
+
+	// 現在マウスがさしているエリアのブロック情報描画
+	AreaBlockDebug(pEditor);
+}
+
+//=============================================================================
+// ImGuiの現在マウスがさしているエリアのブロック情報描画処理
+//=============================================================================
+void CImGui_Jukiya::AreaBlockDebug(CEditor *pEditor)
+{
+	// 情報を表示するブロックを取得
+	CBlock *pEditBlock = pEditor->GetEditBlock();
+	if(pEditBlock != NULL)
+	{
+		// マップクラスを取得
+		CMap *pMap = pEditor->GetMap();
+
+		// モデル管轄クラスを取得
+		CModelCreate *pModelCreate = pMap->GetModelCreate();
+
+		// ブロック情報取得
+		int nEditBlockType = pEditBlock->GetType();
+		int nEditBlockModelIdx = pEditBlock->GetModelIdx();
+		float fEditBlockRot[3] = { pEditBlock->GetRot().x,pEditBlock->GetRot().y ,pEditBlock->GetRot().z };
+		float fEditBlockColWidth = pEditBlock->GetBoxCollider()->GetWidth();
+		float fEditBlockColHeight = pEditBlock->GetBoxCollider()->GetHeight();
+		float fEditBlockColDepth = pEditBlock->GetBoxCollider()->GetDepth();
+		int nEditBlockTypeDef = nEditBlockType;
+		int nEditBlockModelIdxDef = nEditBlockModelIdx;
+		float fEditBlockColWidthDef = fEditBlockColWidth;
+		float fEditBlockColHeightDef = fEditBlockColHeight;
+		float fEditBlockColDepthDef = fEditBlockColDepth;
+		int nEditBlockXBlock = 0;
+		int nEditBlockZBlock = 0;
+		D3DXVECTOR3 EditBlockPos = pEditBlock->GetPos();
+
+		// 現在ブロックがあるエリアを計算
+		nEditBlockXBlock = (int)((EditBlockPos.x + (MASS_SIZE_X_HALF * MASS_BLOCK_X)) / MASS_SIZE_X_HALF);
+		nEditBlockZBlock = (int)((-EditBlockPos.z + (MASS_SIZE_Z_HALF * MASS_BLOCK_Z)) / MASS_SIZE_Z_HALF);
+		nEditBlockXBlock++;
+		nEditBlockZBlock++;
+
+		// ヘッダー生成開始
+		ImGui::CollapsingHeader(u8"エリアにあるブロックの編集");
+
+		// ブロック情報を表示
+		ImGui::SliderInt(u8"横のエリア_編集", &nEditBlockXBlock, 1, MASS_BLOCK_X * 2);
+		ImGui::SliderInt(u8"奥行のエリア_編集", &nEditBlockZBlock, 1, MASS_BLOCK_Z * 2);
+		ImGui::InputInt(u8"種類_編集", &nEditBlockType);
+		ImGui::InputInt(u8"使用するモデルの番号_編集", &nEditBlockModelIdx);
+		ImGui::InputFloat3(u8"向き_編集", &fEditBlockRot[0]);
+		ImGui::InputFloat(u8"当たり判定の幅_編集", &fEditBlockColWidth);
+		ImGui::InputFloat(u8"当たり判定の高さ_編集", &fEditBlockColHeight);
+		ImGui::InputFloat(u8"当たり判定の奥行_編集", &fEditBlockColDepth);
+
+		// ブロック情報判定
+		if (nEditBlockType < 0)
+		{// ブロック種類データが0を下回っている
+			nEditBlockType = nEditBlockTypeDef;
+		}
+		if (nEditBlockModelIdx > pModelCreate->GetNumModel() - 1 || nEditBlockModelIdx < 0)
+		{// 読み込んだモデルの総数を超えて入力されている
+			nEditBlockModelIdx = nEditBlockModelIdxDef;
+		}
+		if (fEditBlockColWidth < 0.0f)
+		{// 当たり判定幅情報が0を下回っている
+			fEditBlockColWidth = fEditBlockColWidthDef;
+		}
+		if (fEditBlockColHeight < 0.0f)
+		{// 当たり判定高さ情報が0を下回っている
+			fEditBlockColHeight = fEditBlockColHeightDef;
+		}
+		if (fEditBlockColDepth < 0.0f)
+		{// 当たり判定奥行情報が0を下回っている
+			fEditBlockColDepth = fEditBlockColDepthDef;
+		}
+
+		// ボックスコライダーを作り直すか判定
+		if (fEditBlockColWidth != fEditBlockColWidthDef || fEditBlockColHeight != fEditBlockColHeightDef || fEditBlockColDepth != fEditBlockColDepthDef)
+		{// 値が変更されている
+			pEditBlock->RemakeBoxCollider(fEditBlockColWidth, fEditBlockColHeight, fEditBlockColDepth);
+		}
+
+		// モデルを作成しなおすか判定
+		if (nEditBlockModelIdx != nEditBlockModelIdxDef)
+		{
+			pEditBlock->BindModel(pModelCreate->GetMesh(nEditBlockModelIdx), pModelCreate->GetBuffMat(nEditBlockModelIdx),
+				pModelCreate->GetNumMat(nEditBlockModelIdx), pModelCreate->GetTexture(nEditBlockModelIdx));
+		}
+
+		// 位置を計算する
+		EditBlockPos.x = ((-MASS_SIZE_X_HALF * MASS_BLOCK_X)) + (MASS_SIZE_X_HALF * (nEditBlockXBlock - 1)) + (MASS_SIZE_X_HALF / 2.0f);
+		EditBlockPos.z = ((MASS_SIZE_Z_HALF * MASS_BLOCK_Z)) - (MASS_SIZE_Z_HALF * (nEditBlockZBlock - 1)) - (MASS_SIZE_Z_HALF / 2.0f);
+
+		// ブロック情報設定
+		pEditBlock->SetPos(EditBlockPos);
+		pEditBlock->SetType(nEditBlockType);
+		pEditBlock->SetModelIdx(nEditBlockModelIdx);
+		pEditBlock->SetRot(D3DXVECTOR3(fEditBlockRot[0], fEditBlockRot[1], fEditBlockRot[2]));
+		pEditBlock->GetBoxCollider()->SetPos(EditBlockPos);
+		pEditBlock->GetBoxCollider()->SetWidth(fEditBlockColWidth);
+		pEditBlock->GetBoxCollider()->SetHeight(fEditBlockColHeight);
+		pEditBlock->GetBoxCollider()->SetDepth(fEditBlockColDepth);
+
+		if (ImGui::Button(u8"削除"))
+		{// ボタン押下
+			pEditBlock->Uninit();
+			pEditBlock = NULL;
+			pEditor->SetEditBlock(NULL);
+		}
+	}
 }
 
 //=============================================================================
@@ -944,6 +1165,12 @@ void CImGui_Jukiya::RiverDebug(CEditor *pEditor)
 {
 	// ヘッダー生成開始
 	ImGui::CollapsingHeader(u8"川の値設定");
+
+	// 川に張り付けるテクスチャ番号を設定
+	int nNumTex = pEditor->GetMap()->GetTextureManager()->GetNumTexture();
+	int nRiverTexIdx = pEditor->GetRiverTexIdx();
+	ImGui::SliderInt(u8"テクスチャの番号", &nRiverTexIdx, 0, nNumTex - 1);
+	pEditor->SetRiverTexIdx(nRiverTexIdx);
 }
 
 //=============================================================================
@@ -953,6 +1180,12 @@ void CImGui_Jukiya::IceDebug(CEditor *pEditor)
 {
 	// ヘッダー生成開始
 	ImGui::CollapsingHeader(u8"氷の値設定");
+
+	// 氷に張り付けるテクスチャ番号を設定
+	int nNumTex = pEditor->GetMap()->GetTextureManager()->GetNumTexture();
+	int nIceTexIdx = pEditor->GetIceTexIdx();
+	ImGui::SliderInt(u8"テクスチャの番号", &nIceTexIdx, 0, nNumTex - 1);
+	pEditor->SetIceTexIdx(nIceTexIdx);
 }
 
 //=============================================================================
@@ -967,11 +1200,17 @@ void CImGui_Jukiya::ObjectDebug(CEditor *pEditor)
 
 		// 配置するオブジェクトの種類を設定
 		int nObjMode = pEditor->GetObjectMode();
+		int nObjModeDef = nObjMode;
 		ImGui::RadioButton(u8"モデル", &nObjMode, CEditor::OBJECTMODE_MODEL); ImGui::SameLine();
 		ImGui::RadioButton(u8"ビルボード", &nObjMode, CEditor::OBJECTMODE_BILLBOARD); ImGui::SameLine();
 		ImGui::RadioButton(u8"エフェクト", &nObjMode, CEditor::OBJECTMODE_EFFECT);
 		pEditor->SetObjectMode((CEditor::OBJECTMODE)nObjMode);
 		ImGui::Text("");
+
+		if (nObjMode != nObjModeDef)
+		{
+			pEditor->SwitchBaseObject(nObjMode);
+		}
 
 		// 現在のモードによって処理わけ
 		if (nObjMode == CEditor::OBJECTMODE_MODEL)
@@ -999,6 +1238,67 @@ void CImGui_Jukiya::ObjModelDebug(CEditor *pEditor)
 {
 	// ヘッダー生成開始
 	ImGui::CollapsingHeader(u8"配置モデルの値設定");
+
+	// 各種データを取得
+	int nObjModelTypeMax = pEditor->GetMap()->GetNumObjectData();
+	int nObjModelType = pEditor->GetObjModelType();
+	float fObjModelPos[3] = { pEditor->GetObjModelPos().x, pEditor->GetObjModelPos().y ,pEditor->GetObjModelPos().z };
+	int nObjModelTypeDef = nObjModelType;
+
+	// 向きを360°換算に変える
+	D3DXVECTOR3 ObjRot = pEditor->GetObjModelRot();
+	ObjRot.x = D3DXToDegree(ObjRot.x);
+	ObjRot.y = D3DXToDegree(ObjRot.y);
+	ObjRot.z = D3DXToDegree(ObjRot.z);
+	float fObjModelRot[3] = { ObjRot.x, ObjRot.y ,ObjRot.z };
+
+	// 各種データを編集
+	ImGui::InputInt(u8"配置モデルの種類", &nObjModelType);
+	ImGui::InputFloat3(u8"配置モデルの座標", &fObjModelPos[0]);
+	ImGui::InputFloat3(u8"配置モデルの向き", &fObjModelRot[0]);
+
+	// 各種データ類判定
+	if (nObjModelType < 0 || nObjModelType > nObjModelTypeMax - 1)
+	{
+		nObjModelType = nObjModelTypeDef;
+	}
+
+	// 向きを円周率換算に変える
+	fObjModelRot[0] = D3DXToRadian(fObjModelRot[0]);
+	fObjModelRot[1] = D3DXToRadian(fObjModelRot[1]);
+	fObjModelRot[2] = D3DXToRadian(fObjModelRot[2]);
+
+	// 各種データ類設定
+	pEditor->SetObjModelType(nObjModelType);
+	pEditor->SetObjModelPos(D3DXVECTOR3(fObjModelPos[0], fObjModelPos[1], fObjModelPos[2]));
+	pEditor->SetObjModelRot(D3DXVECTOR3(fObjModelRot[0], fObjModelRot[1], fObjModelRot[2]));
+
+	// オブジェクトを作り替えるかどうか判定
+	if (nObjModelType != nObjModelTypeDef)
+	{
+		pEditor->SwitchBaseObject(CEditor::OBJECTMODE_MODEL);
+	}
+
+	// ベースオブジェクトに値を設定
+	pEditor->SetValueToBaseObject();
+
+	// 生成するかどうかチェック
+	if (ImGui::Button(u8"配置モデル生成"))
+	{// ボタン押下
+		pEditor->CreateObject();
+		m_nCreateObjectCounter = IMGUI_CREATE_DISP;
+	}
+
+	// 配置できたかどうか表示する
+	m_nCreateObjectCounter--;
+	if (m_nCreateObjectCounter <= 0)
+	{
+		m_nCreateObjectCounter = 0;
+	}
+	else
+	{
+		ImGui::SameLine(); ImGui::Text(u8"配置完了!!");
+	}
 }
 
 //=============================================================================
@@ -1008,6 +1308,78 @@ void CImGui_Jukiya::ObjBillboardDebug(CEditor *pEditor)
 {
 	// ヘッダー生成開始
 	ImGui::CollapsingHeader(u8"配置ビルボードの値設定");
+
+	// 各種データを取得
+	int nObjBillTexIdxMax = pEditor->GetMap()->GetTextureManager()->GetNumTexture();
+	int nObjBillTexIdx = pEditor->GetObjBillTexIdx();
+	float fObjBillPos[3] = { pEditor->GetObjBillPos().x, pEditor->GetObjBillPos().y ,pEditor->GetObjBillPos().z };
+	float fObjBillCol[4] = { pEditor->GetObjBillCol().r, pEditor->GetObjBillCol().g ,pEditor->GetObjBillCol().b ,pEditor->GetObjBillCol().a };
+	float fObjBillWidth = pEditor->GetObjBillWidth();
+	float fObjBillHeight = pEditor->GetObjBillHeight();
+	bool bObjBillLighting = pEditor->GetObjBillLighting();
+	bool bObjBillDrawAddtive = pEditor->GetObjBillDrawAddtive();
+	int nObjBillTexIdxDef = nObjBillTexIdx;
+
+	// 向きを360°換算に変える
+	float fObjBillRot = pEditor->GetObjBillRot();
+	fObjBillRot = D3DXToDegree(fObjBillRot);
+
+	// 各種データを編集
+	ImGui::InputInt(u8"配置ビルボードの使用するテクスチャの番号", &nObjBillTexIdx);
+	ImGui::InputFloat3(u8"配置ビルボードの座標", &fObjBillPos[0]);
+	ImGui::InputFloat(u8"配置ビルボードの向き", &fObjBillRot);
+	ImGui::ColorEdit4(u8"配置ビルボードの色", &fObjBillCol[0]);
+	ImGui::InputFloat(u8"配置ビルボードの幅", &fObjBillWidth);
+	ImGui::InputFloat(u8"配置ビルボードの高さ", &fObjBillHeight);
+	ImGui::Checkbox(u8"配置ビルボードのライティングするかどうか", &bObjBillLighting);
+	ImGui::Checkbox(u8"配置ビルボードの加算合成で描画するかどうか", &bObjBillDrawAddtive);
+
+	// 各種データ類判定
+	if (nObjBillTexIdx < 0 || nObjBillTexIdx > nObjBillTexIdxMax - 1)
+	{
+		nObjBillTexIdx = nObjBillTexIdxDef;
+	}
+
+	// 向きを円周率換算に変える
+	fObjBillRot = D3DXToRadian(fObjBillRot);
+
+	// 各種データ類設定
+	pEditor->SetObjBillTexIdx(nObjBillTexIdx);
+	pEditor->SetObjBillPos(D3DXVECTOR3(fObjBillPos[0], fObjBillPos[1], fObjBillPos[2]));
+	pEditor->SetObjBillRot(fObjBillRot);
+	pEditor->SetObjBillCol(D3DXCOLOR(fObjBillCol[0], fObjBillCol[1], fObjBillCol[2], fObjBillCol[3]));
+	pEditor->SetObjBillWidth(fObjBillWidth);
+	pEditor->SetObjBillHeight(fObjBillHeight);
+	pEditor->SetObjBillLighting(bObjBillLighting);
+	pEditor->SetObjBillDrawAddtive(bObjBillDrawAddtive);
+
+	// テクスチャを張り替えるか判定
+	if (nObjBillTexIdx != nObjBillTexIdxDef)
+	{
+		CBillboardObject *pBill = pEditor->GetBaseObject()->GetBillboardObj();
+		pBill->BindTexture(pEditor->GetMap()->GetTextureManager()->GetTexture(nObjBillTexIdx));
+	}
+
+	// ベースオブジェクトに値を設定
+	pEditor->SetValueToBaseObject();
+
+	// 生成するかどうかチェック
+	if (ImGui::Button(u8"配置ビルボード生成"))
+	{// ボタン押下
+		pEditor->CreateBillboardObj();
+		m_nCreateBillObjCounter = IMGUI_CREATE_DISP;
+	}
+
+	// 配置できたかどうか表示する
+	m_nCreateBillObjCounter--;
+	if (m_nCreateBillObjCounter <= 0)
+	{
+		m_nCreateBillObjCounter = 0;
+	}
+	else
+	{
+		ImGui::SameLine(); ImGui::Text(u8"配置完了!!");
+	}
 }
 
 //=============================================================================
@@ -1017,6 +1389,76 @@ void CImGui_Jukiya::ObjEffectDebug(CEditor *pEditor)
 {
 	// ヘッダー生成開始
 	ImGui::CollapsingHeader(u8"配置エフェクトの値設定");
+
+	// 各種データを取得
+	int nObjEffectTypeMax = CManager::GetBaseMode()->GetEffectManager()->GetNumEmitterData();
+	int nObjEffectType = pEditor->GetObjEffectType();
+	float fObjEffectPos[3] = { pEditor->GetObjEffectPos().x, pEditor->GetObjEffectPos().y ,pEditor->GetObjEffectPos().z };
+	int nObjEffectTypeDef = nObjEffectType;
+
+	// 向きを360°換算に変える
+	D3DXVECTOR3 ObjRot = pEditor->GetObjEffectRot();
+	ObjRot.x = D3DXToDegree(ObjRot.x);
+	ObjRot.y = D3DXToDegree(ObjRot.y);
+	ObjRot.z = D3DXToDegree(ObjRot.z);
+	float fObjEffectRot[3] = { ObjRot.x, ObjRot.y ,ObjRot.z };
+
+	// 各種データを編集
+	ImGui::InputInt(u8"配置エフェクトの種類", &nObjEffectType);
+	ImGui::InputFloat3(u8"配置エフェクトの座標", &fObjEffectPos[0]);
+	ImGui::InputFloat3(u8"配置エフェクトの向き", &fObjEffectRot[0]);
+
+	// 各種データ類判定
+	if (nObjEffectType < 0 || nObjEffectType > nObjEffectTypeMax - 1)
+	{
+		nObjEffectType = nObjEffectTypeDef;
+	}
+
+	// 向きを円周率換算に変える
+	fObjEffectRot[0] = D3DXToRadian(fObjEffectRot[0]);
+	fObjEffectRot[1] = D3DXToRadian(fObjEffectRot[1]);
+	fObjEffectRot[2] = D3DXToRadian(fObjEffectRot[2]);
+
+	// 各種データ類設定
+	pEditor->SetObjEffectType(nObjEffectType);
+	pEditor->SetObjEffectPos(D3DXVECTOR3(fObjEffectPos[0], fObjEffectPos[1], fObjEffectPos[2]));
+	pEditor->SetObjEffectRot(D3DXVECTOR3(fObjEffectRot[0], fObjEffectRot[1], fObjEffectRot[2]));
+
+	// オブジェクトを作り替えるかどうか判定
+	if (nObjEffectType != nObjEffectTypeDef)
+	{
+		bool bEffectLoop = pEditor->GetEffectManager()->GetEmitterData(nObjEffectType)->GetLoop();
+		if (bEffectLoop == true)
+		{
+			pEditor->SwitchBaseObject(CEditor::OBJECTMODE_EFFECT);
+		}
+		else
+		{
+			nObjEffectType = nObjEffectTypeDef;
+			pEditor->SetObjEffectType(nObjEffectType);
+		}
+	}
+
+	// ベースオブジェクトに値を設定
+	pEditor->SetValueToBaseObject();
+
+	// 生成するかどうかチェック
+	if (ImGui::Button(u8"配置エフェクト生成"))
+	{// ボタン押下
+		pEditor->CreateEffect();
+		m_nCreateEffectCounter = IMGUI_CREATE_DISP;
+	}
+
+	// 配置できたかどうか表示する
+	m_nCreateEffectCounter--;
+	if (m_nCreateEffectCounter <= 0)
+	{
+		m_nCreateEffectCounter = 0;
+	}
+	else
+	{
+		ImGui::SameLine(); ImGui::Text(u8"配置完了!!");
+	}
 }
 
 //=============================================================================
@@ -1060,8 +1502,8 @@ void CImGui_Jukiya::RespawnInfoDebug(CRespawn *pRespawn)
 		int nResAreaZ = pRespawn->GetAreaZ();
 
 		// エリア番号編集
-		ImGui::SliderInt(u8"横のエリア", &nResAreaX, 1, MASU_BLOCK_X);
-		ImGui::SliderInt(u8"奥行のエリア", &nResAreaZ, 1, MASU_BLOCK_Z);
+		ImGui::SliderInt(u8"横のエリア", &nResAreaX, 1, MASS_BLOCK_X);
+		ImGui::SliderInt(u8"奥行のエリア", &nResAreaZ, 1, MASS_BLOCK_Z);
 
 		// エリア番号設定
 		pRespawn->SetArea(nResAreaX, nResAreaZ);
@@ -1087,8 +1529,8 @@ void CImGui_Jukiya::HeadQuartersDebug(CEditor *pEditor)
 			int nHeadAreaZ = pHeadQuarters->GetAreaZ();
 
 			// エリア番号編集
-			ImGui::SliderInt(u8"横のエリア", &nHeadAreaX, 1, MASU_BLOCK_X);
-			ImGui::SliderInt(u8"奥行のエリア", &nHeadAreaZ, 1, MASU_BLOCK_Z);
+			ImGui::SliderInt(u8"横のエリア", &nHeadAreaX, 1, MASS_BLOCK_X);
+			ImGui::SliderInt(u8"奥行のエリア", &nHeadAreaZ, 1, MASS_BLOCK_Z);
 
 			// エリア番号設定
 			pHeadQuarters->SetArea(nHeadAreaX, nHeadAreaZ);
@@ -1097,6 +1539,114 @@ void CImGui_Jukiya::HeadQuartersDebug(CEditor *pEditor)
 		// ウィンドウ生成終了
 		ImGui::End();
 	}
+}
+
+
+//=============================================================================
+// ImGuiの敵の生成情報描画処理
+//=============================================================================
+void CImGui_Jukiya::EnemyListDebug(CEditor *pEditor)
+{
+	if (pEditor == NULL) return;
+	if (pEditor->GetMap() == NULL) return;
+
+	// ウィンドウ生成開始
+	ImGui::Begin(u8"敵の生成情報");
+
+	// 生成する敵の数を取得
+	int nNumEnemyList = pEditor->GetMap()->GetNumEnemyListData();
+	int nNumEnemyListDef = nNumEnemyList;
+	ImGui::InputInt(u8"生成する敵の数", &nNumEnemyList);
+	ImGui::Text("");
+
+	// 敵の数判定
+	if (nNumEnemyList < 1)
+	{
+		nNumEnemyList = nNumEnemyListDef;
+	}
+	if (nNumEnemyList != nNumEnemyListDef)
+	{
+		// 敵の生成情報データクラスを作り直す
+		pEditor->GetMap()->ReCreateEnemyData(nNumEnemyList);
+
+		// データを表示する番号を直す
+		m_nEnemyListIdx = 0;
+	}
+
+
+	// 敵の生成情報表示
+	ImGui::CollapsingHeader(u8"敵の生成情報の値設定");
+
+	// 表示する敵の生成情報の番号を設定
+	m_nEnemyListIdx++;
+	ImGui::SliderInt(u8"表示する番号", &m_nEnemyListIdx, 1, nNumEnemyList);
+	ImGui::Text("");
+	m_nEnemyListIdx--;
+
+
+	CEnemy_ListData **pEnemyData = pEditor->GetMap()->GetEnemyListData();
+	int nEnemyListRespawnIdx = pEnemyData[m_nEnemyListIdx]->GetRespawnIdx();
+	int nEnemyListEnemyType = pEnemyData[m_nEnemyListIdx]->GetEnemyType();
+	int nEnemyListRespawnTime = pEnemyData[m_nEnemyListIdx]->GetRespawnTime();
+	bool bEnemyListItem = pEnemyData[m_nEnemyListIdx]->GetItem();
+	int nEnemyListItemType = pEnemyData[m_nEnemyListIdx]->GetItemType();
+	ImGui::SliderInt(u8"リスポーン位置の番号", &nEnemyListRespawnIdx, 0, MAX_ENEMY_RESPAWN - 1);
+	ImGui::InputInt(u8"種類", &nEnemyListEnemyType);
+	ImGui::InputInt(u8"リスポーンする時間", &nEnemyListRespawnTime);
+	ImGui::Checkbox(u8"倒した時にアイテムを生成するかどうか", &bEnemyListItem);
+	if (bEnemyListItem == true)
+	{
+		ImGui::InputInt(u8"出現させるアイテムの番号", &nEnemyListItemType);
+	}
+
+	// データ判定
+	if (nEnemyListRespawnTime < 0)
+	{
+		nEnemyListRespawnTime = 0;
+	}
+	if (nEnemyListEnemyType < 0)
+	{
+		nEnemyListEnemyType = 0;
+	}
+	if (nEnemyListItemType < 0)
+	{
+		nEnemyListItemType = 0;
+	}
+
+	// データ設定
+	CEnemy_ListData EnemyData;
+	EnemyData.SetRespawnIdx(nEnemyListRespawnIdx);
+	EnemyData.SetEnemyType(nEnemyListEnemyType);
+	EnemyData.SetRespawnTime(nEnemyListRespawnTime);
+	EnemyData.SetItem(bEnemyListItem);
+	EnemyData.SetItemType(nEnemyListItemType);
+	pEditor->GetMap()->GetEnemyListData(m_nEnemyListIdx)->Cpy(&EnemyData);
+
+	// ウィンドウ生成終了
+	ImGui::End();
+}
+
+//=============================================================================
+// ImGuiの敵の生成情報描画処理
+//=============================================================================
+void CImGui_Jukiya::SkyDebug(CEditor *pEditor)
+{
+	if (pEditor == NULL) return;
+	if (pEditor->GetMap() == NULL) return;
+
+	// ウィンドウ生成開始
+	ImGui::Begin(u8"空情報");
+
+	// 川に張り付けるテクスチャ番号を設定
+	CSky *pSky = pEditor->GetMap()->GetSky();
+	int nNumTex = pEditor->GetMap()->GetTextureManager()->GetNumTexture();
+	int nSkyTexIdx = pSky->GetTexIdx();
+	ImGui::SliderInt(u8"テクスチャの番号", &nSkyTexIdx, 0, nNumTex - 1);
+	pSky->SetTexIdx(nSkyTexIdx);
+	pSky->BindTexture(pEditor->GetMap()->GetTextureManager()->GetTexture(nSkyTexIdx));
+
+	// ウィンドウ生成終了
+	ImGui::End();
 }
 
 //=============================================================================
@@ -1118,12 +1668,23 @@ void CImGui_Jukiya::ClearVariable(void)
 {
 	// 各種類ごとの変数をクリアする
 	ClearMapVariable();          // マップ用
+	ClearModeVariable();         // 画面切り替え用
 	ClearModelListVariable();    // モデルリスト用
 	ClearTexListVariable();      // テクスチャリスト用
 	ClearLightVariable();        // ライト用
 	ClearGameFieldVariable();    // ゲームフィールド用
 	ClearObjectVariable();       // 配置物用
 	ClearRespawnVariable();      // リスポーン用
+	ClearEnemyListVariable();    // 敵の生成情報用
+}
+
+//=============================================================================
+// ImGuiの画面切り替え用変数をクリアする
+//=============================================================================
+void CImGui_Jukiya::ClearModeVariable(void)
+{
+	m_nLoadModeCounter = 0;
+	m_bLoadModeDisp = false;
 }
 
 //=============================================================================
@@ -1191,6 +1752,9 @@ void CImGui_Jukiya::ClearObjectVariable(void)
 	m_bSaveObjectDisp = false;
 	m_nLoadObjectCounter = 0;
 	m_bLoadObjectDisp = false;
+	m_nCreateObjectCounter = 0;
+	m_nCreateBillObjCounter = 0;
+	m_nCreateEffectCounter = 0;
 }
 
 //=============================================================================
@@ -1200,4 +1764,12 @@ void CImGui_Jukiya::ClearRespawnVariable(void)
 {
 	m_nPlayerResIdx = 0;
 	m_nEnemyResIdx = 0;
+}
+
+//=============================================================================
+// ImGuiの敵の生成情報用変数をクリアする
+//=============================================================================
+void CImGui_Jukiya::ClearEnemyListVariable(void)
+{
+	m_nEnemyListIdx = 0;
 }

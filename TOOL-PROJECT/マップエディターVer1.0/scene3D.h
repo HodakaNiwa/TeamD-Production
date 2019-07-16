@@ -23,6 +23,7 @@ public:	//誰からもアクセス可能
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
+	LPDIRECT3DVERTEXBUFFER9 GetVtxBuff(void);
 	D3DXVECTOR3 GetPos(void);
 	D3DXVECTOR3 GetNor(void);
 	float GetHeight(D3DXVECTOR3 pos,bool bR);

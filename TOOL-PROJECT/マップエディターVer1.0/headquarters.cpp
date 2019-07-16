@@ -79,7 +79,7 @@ HRESULT CHeadQuarters::Init(int nAreaX, int nAreaZ, LPD3DXMESH pMesh, LPD3DXBUFF
 	m_pModel = CModel::Create(INITIALIZE_D3DXVECTOR3, GetRot(), pMesh, pBuffMat, nNumMat, pTexture);
 
 	// 当たり判定用箱モデルの作成
-	CBoxCollider *pBoxCollider = CBoxCollider::Create(GetPos(), MASU_SIZE_X, HEADQUARTERS_COL_HEIGHT, MASU_SIZE_Z, true);
+	CBoxCollider *pBoxCollider = CBoxCollider::Create(GetPos(), MASS_SIZE_X, HEADQUARTERS_COL_HEIGHT, MASS_SIZE_Z, true);
 	SetBoxCollider(pBoxCollider);
 
 	return S_OK;
@@ -167,8 +167,8 @@ void CHeadQuarters::SetArea(int nAreaX, int nAreaZ)
 
 	// エリアから座標を求める
 	D3DXVECTOR3 pos = INITIALIZE_D3DXVECTOR3;
-	pos.x = -((MASU_SIZE_X * MASU_BLOCK_X) / 2) + (MASU_SIZE_X * m_nAreaX) - MASU_SIZE_X_HALF;
-	pos.z = ((MASU_SIZE_Z * MASU_BLOCK_Z) / 2) - (MASU_SIZE_Z * m_nAreaZ) + MASU_SIZE_Z_HALF;
+	pos.x = -((MASS_SIZE_X * MASS_BLOCK_X) / 2) + (MASS_SIZE_X * m_nAreaX) - MASS_SIZE_X_HALF;
+	pos.z = ((MASS_SIZE_Z * MASS_BLOCK_Z) / 2) - (MASS_SIZE_Z * m_nAreaZ) + MASS_SIZE_Z_HALF;
 	SetPos(pos);
 
 	// 当たり判定用箱モデルもずらす
