@@ -28,6 +28,7 @@ public:    // 誰でもアクセス可能
 	void Update(void);
 	void Draw(void);
 	void SetMtxWorld(const LPDIRECT3DDEVICE9 pDevice);
+	void Cpy(CModel *pModel);
 	void SetAlpha(float fAlpha);
 
 	void BindModel(const LPD3DXMESH pMesh, const LPD3DXBUFFER pBuffMat, const DWORD nNumMat, const D3DXVECTOR3 VtxMax, const D3DXVECTOR3 VtxMin, LPDIRECT3DTEXTURE9 *pTexture);

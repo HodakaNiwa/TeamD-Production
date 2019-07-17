@@ -254,6 +254,23 @@ void CModel::BindModel(const LPD3DXMESH pMesh, const LPD3DXBUFFER pBuffMat, cons
 }
 
 //=============================================================================
+//    モデルの値をコピーする
+//=============================================================================
+void CModel::Cpy(CModel *pModel)
+{
+	if (pModel == NULL) return;
+
+	SetPos(pModel->GetPos());
+	SetRot(pModel->GetRot());
+	SetScale(pModel->GetScale());
+	SetAddPos(pModel->GetAddPos());
+	SetMtxWorld(pModel->GetMtxWorld());
+	SetParent(pModel->GetParent());
+	BindModel(pModel->GetMesh(), pModel->GetBuffMat(), pModel->GetNumMat(),
+		pModel->GetVtxMax(), pModel->GetVtxMin(), pModel->GetTexture());
+}
+
+//=============================================================================
 //    モデルの透明度設定処理
 //=============================================================================
 void CModel::SetAlpha(float fAlpha)

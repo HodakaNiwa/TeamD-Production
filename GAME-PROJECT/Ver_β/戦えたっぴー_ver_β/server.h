@@ -98,6 +98,7 @@ public:    // 誰でもアクセス可能
 	void Print(char *fmt, ...);
 	int GetClientId(void);
 	char *GetReceiveMessage(void);
+	int GetLengthData(void);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 

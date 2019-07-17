@@ -151,12 +151,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="basemode.cpp" />
+    <ClCompile Include="billboardObject.cpp" />
     <ClCompile Include="block.cpp" />
     <ClCompile Include="boxCollider.cpp" />
     <ClCompile Include="bullet.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="cameraManager.cpp" />
     <ClCompile Include="character.cpp" />
+    <ClCompile Include="characterManager.cpp" />
     <ClCompile Include="charaselect.cpp" />
     <ClCompile Include="debugproc.cpp" />
     <ClCompile Include="effectManager.cpp" />
@@ -182,6 +184,7 @@
     <ClCompile Include="model.cpp" />
     <ClCompile Include="modelcreate.cpp" />
     <ClCompile Include="motion.cpp" />
+    <ClCompile Include="object.cpp" />
     <ClCompile Include="object3D.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="player.cpp" />
@@ -198,6 +201,7 @@
     <ClCompile Include="serverlib.cpp" />
     <ClCompile Include="sky.cpp" />
     <ClCompile Include="sound.cpp" />
+    <ClCompile Include="blossoms.cpp" />
     <ClCompile Include="splash.cpp" />
     <ClCompile Include="textureManager.cpp" />
     <ClCompile Include="title.cpp" />
@@ -206,12 +210,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basemode.h" />
+    <ClInclude Include="billboardObject.h" />
     <ClInclude Include="block.h" />
+    <ClInclude Include="blossoms.h" />
     <ClInclude Include="boxCollider.h" />
     <ClInclude Include="bullet.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="cameraManager.h" />
     <ClInclude Include="character.h" />
+    <ClInclude Include="characterManager.h" />
     <ClInclude Include="charaselect.h" />
     <ClInclude Include="debugproc.h" />
     <ClInclude Include="effectManager.h" />
@@ -237,6 +244,7 @@
     <ClInclude Include="model.h" />
     <ClInclude Include="modelcreate.h" />
     <ClInclude Include="motion.h" />
+    <ClInclude Include="object.h" />
     <ClInclude Include="object3D.h" />
     <ClInclude Include="particle.h" />
     <ClInclude Include="player.h" />

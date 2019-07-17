@@ -18,6 +18,7 @@
 //=============================================================================
 LPD3DXFONT		CDebugProc::m_pFont;
 char			CDebugProc::m_aStr[MAX_CHAR];
+bool            CDebugProc::m_bDisp = true;
 
 //=============================================================================
 // デバッグ用のプロシージャコンストラクタ
@@ -109,10 +110,21 @@ void CDebugProc::ClearString(void)
 void CDebugProc::Draw(void)
 {
 #ifdef DEBUGPROC_DISP
-	RECT rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+	if (m_bDisp == true)
+	{
+		RECT rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
-	// テキスト描画
-	m_pFont->DrawText(NULL, m_aStr, -1, &rect, DT_LEFT, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff));
+		// テキスト描画
+		m_pFont->DrawText(NULL, m_aStr, -1, &rect, DT_LEFT, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff));
+	}
 	ClearString();
 #endif
+}
+
+//=============================================================================
+// デバッグ用のプロシージャの描画するかどうかを切り替える処理
+//=============================================================================
+void CDebugProc::SwitchDisp(void)
+{
+	m_bDisp = m_bDisp ? false : true;
 }

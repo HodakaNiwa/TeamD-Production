@@ -240,6 +240,18 @@
     <ClCompile Include="tutorial.cpp">
       <Filter>ソース ファイル\モード</Filter>
     </ClCompile>
+    <ClCompile Include="blossoms.cpp">
+      <Filter>ソース ファイル\オブジェクト\2Dオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="billboardObject.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="object.cpp">
+      <Filter>ソース ファイル\マップ</Filter>
+    </ClCompile>
+    <ClCompile Include="characterManager.cpp">
+      <Filter>ソース ファイル\管轄クラス</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -400,6 +412,18 @@
     </ClInclude>
     <ClInclude Include="tutorial.h">
       <Filter>ヘッダー ファイル\モード</Filter>
+    </ClInclude>
+    <ClInclude Include="blossoms.h">
+      <Filter>ヘッダー ファイル\オブジェクト\2Dオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="characterManager.h">
+      <Filter>ヘッダー ファイル\管轄クラス</Filter>
+    </ClInclude>
+    <ClInclude Include="billboardObject.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
+    </ClInclude>
+    <ClInclude Include="object.h">
+      <Filter>ヘッダー ファイル\マップ</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

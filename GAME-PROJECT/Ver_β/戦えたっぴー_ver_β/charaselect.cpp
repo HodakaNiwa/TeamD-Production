@@ -304,6 +304,13 @@ void CCharaSelect::Draw(void)
 	TextureDraw();
 }
 
+
+//*****************************************************************************
+//
+// 生成用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
 // キャラセレクトのテクスチャ管轄クラス生成処理
 //=============================================================================
@@ -445,6 +452,13 @@ void CCharaSelect::CreateRenderTexture(void)
 	CManager::GetRenderer()->ResetRenderTarget();
 }
 
+
+//*****************************************************************************
+//
+// 開放用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
 // キャラセレクトの背景ポリゴンを開放する
 //=============================================================================
@@ -585,6 +599,13 @@ void CCharaSelect::ReleasePlayerDataPointer(void)
 	m_aPlayerDataFileName = NULL;
 }
 
+
+//*****************************************************************************
+//
+// サーバーとの交信用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
 // キャラセレクトのサーバーへ送るデータを設定する処理
 //=============================================================================
@@ -595,6 +616,13 @@ void CCharaSelect::SetDataToServer(void)
 
 	// 現在のプレイヤー番号を設定
 	CManager::GetClient()->Print("%d ", m_nSelectPlayer[CManager::GetClient()->GetClientId()]);
+
+	// 現在のマップ番号を設定
+	if (CManager::GetClient()->GetClientId() == 0)
+	{
+		CManager::GetClient()->Print("%d ", m_nSelectStageSide);
+		CManager::GetClient()->Print("%d ", m_nSelectStageVertical);
+	}
 }
 
 //=============================================================================
@@ -602,37 +630,84 @@ void CCharaSelect::SetDataToServer(void)
 //=============================================================================
 void CCharaSelect::GetDataFromServer(void)
 {
+	int nWord = 0;
 	char *pStr = CManager::GetClient()->GetReceiveMessage();
+	if (pStr == NULL || CManager::GetClient()->GetLengthData() <= 0)return;
+	if (*pStr == *"???")return;
 
 	// 現在の状態を読み取る
 	int nState = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
 	m_State[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] = (STATE)nState;
 
 	// 現在のプレイヤー番号を読み取る
-	int nPlayerNumber = CFunctionLib::ReadInt(pStr, " ");
+	int nPlayerNumber = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
 	m_nSelectPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] = nPlayerNumber;
 
 	CDebugProc::Print(1, "相手の状態 : %d\n", nState);
 	CDebugProc::Print(1, "相手の選択しているプレイヤー番号 : %d\n", nPlayerNumber);
 
+	// 現在のマップ番号を読み取る
+	if (CManager::GetClient()->GetClientId() != 0)
+	{
+		m_nSelectStageSide = CFunctionLib::ReadInt(pStr, "");
+		nWord = CFunctionLib::PopString(pStr, "");
+		pStr += nWord;
+		m_nSelectStageVertical = CFunctionLib::ReadInt(pStr, "");
+
+		int nSelectStage = CHARASELECT_MAPTYPE_NUMBER;
+		if (m_nSelectStage != nSelectStage)
+		{// 現在の選択番号と異なっていた
+			ChangeNoneStagePolygon(m_nSelectStage);
+			m_nSelectStage = nSelectStage;
+			ChangeSelectStagePolygon(m_nSelectStage);
+		}
+		CDebugProc::Print(1, "相手の選択しているマップ番号 : %d\n", m_nSelectStage);
+	}
+
 	// 相手の状態によって画面遷移するか決める
 	if (nState == STATE_WAIT_PARTNER && m_State[CManager::GetClient()->GetClientId()] == STATE_WAIT_PARTNER)
 	{
+		// 相手の準備中ポリゴンのテクスチャを変える
 		if (m_apPreparation[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] != NULL && GetTextureManager() != NULL)
 		{
 			m_apPreparation[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->BindTexture(GetTextureManager()->GetTexture(m_nPreparationTexIdx[1]));
 		}
-		m_State[CManager::GetClient()->GetClientId()] = STATE_END;
+
+		// 状態を設定
+		if (CManager::GetClient()->GetClientId() == 0)
+		{
+			ChangeState_WaitPartnerToStageSelect(CManager::GetClient()->GetClientId());
+		}
+		else
+		{
+			m_State[CManager::GetClient()->GetClientId()] = STATE_WAIT_STAGESELECT;
+		}
 	}
 	else if (nState == STATE_WAIT_PARTNER && m_State[CManager::GetClient()->GetClientId()] != STATE_WAIT_PARTNER)
 	{
+		// 相手の準備中ポリゴンのテクスチャを変える
 		if (m_apPreparation[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] != NULL && GetTextureManager() != NULL)
 		{
 			m_apPreparation[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->BindTexture(GetTextureManager()->GetTexture(m_nPreparationTexIdx[1]));
 		}
 	}
+	else if (nState == STATE_END)
+	{
+		m_State[CManager::GetClient()->GetClientId()] = STATE_END;
+	}
 }
 
+
+//*****************************************************************************
+//
+// 状態による処理分け用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
 // キャラセレクトのセレクト状態の更新処理
 //=============================================================================
@@ -723,16 +798,7 @@ void CCharaSelect::WaitPartnerUpdate(int nIdx)
 		if (pKey->GetTrigger(DIK_RETURN) == true ||
 			CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
 		{// 決定ボタンが押された
-			m_State[nIdx] = STATE_STAGE_SELECT;
-			// キャラセレクト用のポリゴンを破棄
-			ReleasePlayer();
-			ReleaseRenderPolygon();
-			ReleasePreparation();
-			ReleasePlayerNumber();
-			ReleaseYouPolygon();
-
-			// ステージ選択用のポリゴンを生成
-			CreateStagePolygon();
+			ChangeState_WaitPartnerToStageSelect(nIdx);
 		}
 	}
 }
@@ -827,8 +893,8 @@ void CCharaSelect::WaitInputToStageSelect(int nIdx)
 	if (pKey == NULL || CManager::GetClient() == NULL) return;
 
 	if (pKey->GetTrigger(DIK_A) == true ||
-		CManager::GetXInput()->GetPress(0, CXInput::XIJS_BUTTON_2) == true ||
-		CManager::GetXInput()->GetPress(0, CXInput::XIJS_BUTTON_18) == true ||
+		CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_2) == true ||
+		CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_18) == true ||
 		pKey->GetRepeat(DIK_A) == true ||
 		CManager::GetXInput()->GetRepeat(0, CXInput::XIJS_BUTTON_2) == true ||
 		CManager::GetXInput()->GetRepeat(0, CXInput::XIJS_BUTTON_18) == true)
@@ -925,6 +991,32 @@ void CCharaSelect::CircleRotation(int nIdx)
 }
 
 //=============================================================================
+// 相手のキャラセレクトを待つ状態からステージ選択を待つ状態にする処理
+//=============================================================================
+void CCharaSelect::ChangeState_WaitPartnerToStageSelect(int nIdx)
+{
+	// 状態を設定
+	m_State[nIdx] = STATE_STAGE_SELECT;
+
+	// キャラセレクト用のポリゴンを破棄
+	ReleasePlayer();
+	ReleaseRenderPolygon();
+	ReleasePreparation();
+	ReleasePlayerNumber();
+	ReleaseYouPolygon();
+
+	// ステージ選択用のポリゴンを生成
+	CreateStagePolygon();
+}
+
+
+//*****************************************************************************
+//
+// 描画用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
 // キャラセレクトのプレイヤー描画処理
 //=============================================================================
 void CCharaSelect::CharaDraw(int nCntTex)
@@ -1014,6 +1106,13 @@ void CCharaSelect::TextureDraw()
 	}
 }
 
+
+//*****************************************************************************
+//
+// スクリプト読み込み用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
 // キャラセレクトのシステム情報を読み込む
 //=============================================================================
@@ -1319,6 +1418,13 @@ void CCharaSelect::LoadYouPolygon(CFileLoader *pFileLoader, char *pStr)
 	m_fYouPolygonPosXDef = YouPolygonPos.x;
 }
 
+
+//*****************************************************************************
+//
+// 値変更用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
 // キャラセレクトの変数を初期化する
 //=============================================================================
@@ -1359,6 +1465,14 @@ void CCharaSelect::ClearVariable(void)
 void CCharaSelect::SetState(const STATE state)
 {
 	m_State[CManager::GetClient()->GetClientId()] = state;
+}
+
+//=============================================================================
+// キャラセレクトのステージの種類番号を設定する
+//=============================================================================
+void CCharaSelect::SetStageType(const int nType)
+{
+	m_nSelectStage = nType;
 }
 
 //=============================================================================

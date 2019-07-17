@@ -41,7 +41,6 @@ MAPSET
 	LIGHT_FILENAME = data/TEXT/MAP/LIGHT/light_example.txt					# ライト情報のスクリプトファイル名
 	GAMEFILED_FILENAME = data/TEXT/MAP/GAMEFIELD/gamefield_example.txt		# ゲームフィールド情報スクリプトファイル名
 	OBJECT_FILENAME = data/TEXT/MAP/OBJECT/object_example.txt				# 配置物情報スクリプトファイル名
-	ENEMYLIST_FILENAME = data/TEXT/MAP/ENEMYLIST/enemylist_example.txt		# 敵の生成情報情報のスクリプトファイル名
 END_MAPSET
 
 END_SCRIPT		# この行は絶対消さないこと！

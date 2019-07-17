@@ -164,11 +164,26 @@ void CEnemy::Update(void)
 	{
 		if (CManager::GetClient()->GetClientId() == 0)
 		{
-			//ˆÚ“®ˆ—
-			Move();
+			if (CManager::GetMode() == CManager::MODE_GAME)
+			{// ƒQ[ƒ€‰æ–Ê‚Å“G‚ª“®‚¯‚éó‘Ô‚Å‚ ‚é
 
-			// ’e‚ğ‘Å‚Âˆ—
-			SetBullet();
+				if (CManager::GetGame()->GetEnemyMove() == true)
+				{
+					//ˆÚ“®ˆ—
+					Move();
+
+					// ’e‚ğ‘Å‚Âˆ—
+					SetBullet();
+				}
+			}
+			else
+			{
+				//ˆÚ“®ˆ—
+				Move();
+
+				// ’e‚ğ‘Å‚Âˆ—
+				SetBullet();
+			}
 		}
 	}
 

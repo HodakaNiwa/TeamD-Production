@@ -62,12 +62,14 @@ public:	// 誰からもアクセス可能
 	static CCharaSelect *Create(void);
 	static int GetPlayerNumber(int nIdx);
 	static int GetStageType(void);
+	static void SetStageType(const int nType);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:	// 自分だけがアクセス可能
 	void ClearVariable(void);
 
+	// 生成用関数
 	void CreateTexture(int nNumTex);
 	void CreateCamera(void);
 	void CreatePlayer(void);
@@ -75,6 +77,7 @@ private:	// 自分だけがアクセス可能
 	void CreateStagePolygon(void);
 	void CreatePlayerDataPointer(void);
 
+	// 開放用関数
 	void ReleaseBg(void);
 	void ReleasePlayer(void);
 	void ReleaseRenderTexture(void);
@@ -85,8 +88,11 @@ private:	// 自分だけがアクセス可能
 	void ReleaseStagePolygon(void);
 	void ReleasePlayerDataPointer(void);
 
+	// サーバーとの交信用関数
 	void SetDataToServer(void);
 	void GetDataFromServer(void);
+
+	// 状態による処理分け用関数
 	void SelectUpdate(int nIdx);
 	void CharaChangeToLeftUpdate(int nIdx);
 	void CharaChangeToRightUpdate(int nIdx);
@@ -99,10 +105,13 @@ private:	// 自分だけがアクセス可能
 	void ChangeNoneStagePolygon(int nSelect);
 	void ChangeSelectStagePolygon(int nSelect);
 	void CircleRotation(int nIdx);
+	void ChangeState_WaitPartnerToStageSelect(int nIdx);
 
+	// 描画用関数
 	void CharaDraw(int nCntTex);
 	void TextureDraw(void);
 
+	// スクリプト読み込み用関数
 	void LoadSystem(void);
 	void LoadSystemScript(CFileLoader *pFileLoader, char *pStr);
 	void LoadTexFileName(char *pStr, int nCntTex);
@@ -112,6 +121,7 @@ private:	// 自分だけがアクセス可能
 	void LoadPlayerNumber(CFileLoader *pFileLoader, char *pStr, int nCntPlayerNum);
 	void LoadYouPolygon(CFileLoader *pFileLoader, char *pStr);
 
+	// メンバ変数
 	STATE m_State[MAX_NUM_PLAYER];                              // 状態
 	int m_nStateCounter;                                        // 状態を管理するカウンター
 	LPDIRECT3DTEXTURE9 m_apRenderTexture[MAX_NUM_PLAYER];       // レンダリングに使用するテクスチャへのポインタ

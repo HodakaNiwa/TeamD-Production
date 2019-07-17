@@ -21,6 +21,7 @@ class CDirectionalLight;
 class CPointLight;
 class CSpotLight;
 class CRespawn;
+class CBlock;
 
 //*****************************************************************************
 // クラス定義
@@ -38,6 +39,7 @@ public:	//誰からもアクセス可能
 
 private:	//自分だけがアクセス可能
 	void ClearVariable(void);
+	void ClearModeVariable(void);
 	void ClearMapVariable(void);
 	void ClearModelListVariable(void);
 	void ClearTexListVariable(void);
@@ -45,10 +47,13 @@ private:	//自分だけがアクセス可能
 	void ClearGameFieldVariable(void);
 	void ClearObjectVariable(void);
 	void ClearRespawnVariable(void);
+	void ClearEnemyListVariable(void);
 
 	CLightManager *ChangeLight(CLightManager *pLightManager, int nCntLight, CLight *pLightOld, int nLightType, int nLightTypeDef);
 
 	void WindowDebug(void);
+	void LoadFileNameDebug(void);
+	void ChangeModeDebug(int nMode);
 	void EditerDebug(void);
 	void CameraDebug(CEditor *pEditor);
 	void GameCameraDebug(CCamera *pCamera);
@@ -71,6 +76,7 @@ private:	//自分だけがアクセス可能
 
 	void GameFieldDebug(CEditor *pEditor);
 	void BlockDebug(CEditor *pEditor);
+	void AreaBlockDebug(CEditor *pEditor);
 	void RiverDebug(CEditor *pEditor);
 	void IceDebug(CEditor *pEditor);
 
@@ -84,10 +90,17 @@ private:	//自分だけがアクセス可能
 
 	void HeadQuartersDebug(CEditor *pEditor);
 
+	void EnemyListDebug(CEditor *pEditor);
+
+	void SkyDebug(CEditor *pEditor);
+
 	void DemoplayDebug(void);
 
+	// 画面切り替え情報用
+	int m_nLoadModeCounter;               // 画面切り替え情報読み込み成否情報表示用カウンター
+	bool m_bLoadModeDisp;                 // 画面切り替え情報読み込み成否情報を表示するかどうか
 
-	//マップ情報用変数
+	// マップ情報用変数
 	int m_nSaveMapCounter;                // マップ情報保存成否情報表示用カウンター
 	bool m_bSaveMapDisp;                  // マップ情報保存成否情報を表示するかどうか
 	int m_nLoadMapCounter;                // マップ情報読み込み成否情報表示用カウンター
@@ -123,9 +136,15 @@ private:	//自分だけがアクセス可能
 	bool m_bSaveObjectDisp;               // 配置物情報保存成否情報を表示するかどうか
 	int m_nLoadObjectCounter;             // 配置物情報読み込み成否情報表示用カウンター
 	bool m_bLoadObjectDisp;               // 配置物情報読み込み成否情報を表示するかどうか
+	int m_nCreateObjectCounter;           // 配置モデル設置成否情報表示用カウンター
+	int m_nCreateBillObjCounter;          // 配置ビルボード設置成否情報表示用カウンター
+	int m_nCreateEffectCounter;           // 配置エフェクト設置成否情報表示用カウンター
 
 	// リスポーン用変数
-	int m_nPlayerResIdx;
-	int m_nEnemyResIdx;
+	int m_nPlayerResIdx;                  // 編集するプレイヤーのリスポーンクラスの番号
+	int m_nEnemyResIdx;                   // 編集する敵のリスポーンクラスの番号
+
+	// 敵の生成情報用変数
+	int m_nEnemyListIdx;                  // 編集する敵の生成情報の番号
 };
 #endif

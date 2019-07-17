@@ -47,8 +47,8 @@ public:	//誰からもアクセス可能
 	//静的メンバ関数
 	static CRenderer		*GetRenderer(void);
 	static CInputKeyboard	*GetKeyboard(void);
-	static CInputMouse *GetMouse(void);
-	static CInputJoyStick		*GetJoypad(void);
+	static CInputMouse      *GetMouse(void);
+	static CInputJoyStick   *GetJoypad(void);
 	static CSound			*GetSound(void);
 	static CBasemode        *GetBaseMode(void);
 	static CEditor          *GetEditor(void);
@@ -56,18 +56,23 @@ public:	//誰からもアクセス可能
 	static MODE				GetMode(void);
 	static void				SetMode(MODE mode);
 	static CFade			*GetFade(void);
+	static bool             GetStartUp(void);
+	static void             SetLoadMapFileName(char *pFileName);
+	static char             *GetLoadMapFileName(void);
 
 private:	//自分だけがアクセス可能
 	//静的メンバ変数
-	static CRenderer		*m_pRenderer;		//レンダリングのポインタ
-	static CInputKeyboard	*m_pInputKeyboard;	//キーボートのポインタ
-	static CInputMouse       *m_pMouse;         // マウスクラス型のポインタ
-	static CInputJoyStick   *m_pInputJoypad;	//ジョイパッドのポインタ
-	static CSound			*m_pSound;			//サウンドのポインタ
-	static CDebugProc		*m_pDebugproc;		//デバッグのポインタ
-	static MODE				m_mode;				//モードの情報
-	static CBasemode		*m_pBasemode;		//ベースモードのポインタ
-	static CFade			*m_pFade;			//フェードのポインタ
+	static CRenderer		*m_pRenderer;		       // レンダリングのポインタ
+	static CInputKeyboard	*m_pInputKeyboard;	       // キーボートのポインタ
+	static CInputMouse       *m_pMouse;                // マウスクラス型のポインタ
+	static CInputJoyStick   *m_pInputJoypad;	       // ジョイパッドのポインタ
+	static CSound			*m_pSound;			       // サウンドのポインタ
+	static CDebugProc		*m_pDebugproc;		       // デバッグのポインタ
+	static MODE				m_mode;				       // モードの情報
+	static CBasemode		*m_pBasemode;		       // ベースモードのポインタ
+	static CFade			*m_pFade;			       // フェードのポインタ
+	static bool             m_bStartUp;                // 起動したかどうか
+	static char             m_aLoadMapFileName[256];   // 読み込むマップファイル名
 
 protected:	//自分と派生クラスだけがアクセス可能
 };

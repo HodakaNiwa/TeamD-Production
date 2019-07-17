@@ -352,21 +352,21 @@ void CPlayer::Move(void)
 	move.z += (0.0f - move.z) * 0.8f;
 
 	//範囲外に行った場合もとに戻す
-	if (pos.x > (MASU_SIZE_X * MASU_BLOCK_X) - 35.0f)
+	if (pos.x > (MASS_SIZE_X * MASS_BLOCK_X) - 35.0f)
 	{
-		pos.x = (MASU_SIZE_X * MASU_BLOCK_X) - 35.0f;
+		pos.x = (MASS_SIZE_X * MASS_BLOCK_X) - 35.0f;
 	}
-	if(pos.x < -(MASU_SIZE_X * MASU_BLOCK_X) + 35.0f)
+	if(pos.x < -(MASS_SIZE_X * MASS_BLOCK_X) + 35.0f)
 	{
-		pos.x = -(MASU_SIZE_X * MASU_BLOCK_X) + 35.0f;
+		pos.x = -(MASS_SIZE_X * MASS_BLOCK_X) + 35.0f;
 	}
-	if (pos.z > (MASU_SIZE_Z * MASU_BLOCK_Z) - 35.0f)
+	if (pos.z > (MASS_SIZE_Z * MASS_BLOCK_Z) - 35.0f)
 	{
-		pos.z = (MASU_SIZE_Z * MASU_BLOCK_Z) - 35.0f;
+		pos.z = (MASS_SIZE_Z * MASS_BLOCK_Z) - 35.0f;
 	}
-	if (pos.z < -(MASU_SIZE_Z * MASU_BLOCK_Z) + 35.0f)
+	if (pos.z < -(MASS_SIZE_Z * MASS_BLOCK_Z) + 35.0f)
 	{
-		pos.z = -(MASU_SIZE_Z * MASU_BLOCK_Z) + 35.0f;
+		pos.z = -(MASS_SIZE_Z * MASS_BLOCK_Z) + 35.0f;
 	}
 
 	//位置の設置処理
@@ -458,6 +458,7 @@ void CPlayer::Collision(void)
 					{
 						if (pBoxCollider->Collision(&pos, &posOld, &move, colRange / 2, NULL) == true)
 						{
+							pBlock->Hit(this);
 							bland = true;
 						};
 					}

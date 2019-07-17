@@ -114,7 +114,7 @@ HRESULT CScene3D::Init(void)
 	//pVtx[2].nor = m_dData;
 	//pVtx[3].nor = m_nor0;
 
-	pVtx[0].nor = D3DXVECTOR3(0.0f,1.0f,0.0f);
+	pVtx[0].nor = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 	pVtx[1].nor = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 	pVtx[2].nor = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 	pVtx[3].nor = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
@@ -306,6 +306,13 @@ void CScene3D::MovePos(void)
 
 	// 頂点バッファをアンロック
 	m_pVtxBuff->Unlock();
+}
+//=============================================================================
+// 位置の移動処理
+//=============================================================================
+LPDIRECT3DVERTEXBUFFER9 CScene3D::GetVtxBuff(void)
+{
+	return m_pVtxBuff;
 }
 
 //=============================================================================

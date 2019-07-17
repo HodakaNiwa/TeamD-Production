@@ -11,6 +11,8 @@
 #include "model.h"
 #include "boxCollider.h"
 
+#include "editor.h"
+
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -25,10 +27,10 @@
 //=============================================================================
 CObject3D::CObject3D(int nPriority,OBJTYPE type) : CScene(nPriority,type)
 {
-	m_pos = INITIALIZE_D3DXVECTOR3;						//位置
-	m_rot = INITIALIZE_D3DXVECTOR3;						//向き
-	m_colRange = D3DXVECTOR3(75.0f,75.0f, 75.0f);		//当たり判定の大きさ
-	m_bReturnFlag = true;								//当たった際に戻すかどうか
+	m_pos = INITIALIZE_D3DXVECTOR3;				//位置
+	m_rot = INITIALIZE_D3DXVECTOR3;				//向き
+	m_colRange = INITIALIZE_D3DXVECTOR3;		//当たり判定の大きさ
+	m_bReturnFlag = true;						//当たった際に戻すかどうか
 	m_pBoxCollider = NULL;
 }
 //=============================================================================
@@ -43,7 +45,7 @@ CObject3D::~CObject3D()
 //=============================================================================
 CObject3D *CObject3D::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot)
 {
-	CObject3D *pObject3D = NULL;		//プレイヤーのポインタ
+	CObject3D *pObject3D = NULL;
 
 	if (pObject3D == NULL)
 	{//NULLの場合
@@ -110,8 +112,14 @@ void CObject3D::Update(void)
 //=============================================================================
 void CObject3D::Draw(void)
 {
+	bool bDisp = true;
+	if (CManager::GetEditor() != NULL)
+	{
+		bDisp = CManager::GetEditor()->GetColRangeDisp();
+	}
+
 	//当たり判定箱の描画処理
-	if (m_pBoxCollider != NULL)
+	if (m_pBoxCollider != NULL && bDisp == true)
 	{
 		m_pBoxCollider->Draw();
 	}

@@ -16,7 +16,6 @@
 #include "fileLoader.h"
 #include "fileSaver.h"
 #include "functionlib.h"
-#include "manager.h"
 #include "input.h"
 #include "fade.h"
 #include "UI.h"
@@ -30,48 +29,77 @@
 #include "sound.h"
 #include "charaselect.h"
 #include "effectManager.h"
+#include "blossoms.h"
 #include "debugproc.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define GAME_SYSTEM_FILENAME         "data/TEXT/MODE/game.ini"    // 初期化に使用するシステムファイル名
-#define GAME_STAGEDISP_TIME          (120)                        // ステージ番号表示状態になってから通常状態に切り替わるまでの時間
-#define GAME_NEXTMODE_TIMING         (60)                         // 終了状態になってから次のモードに切り替わるまでの時間
-#define GAME_GAMEOVER_TIMING         (180)                        // ゲームオーバー状態になってから次のモードに切り替わるまでの時間
-#define GAME_GAMEOVER_POSUP          (8.0f)                       // ゲームオーバーロゴをどれくらい上げるか
-#define GAME_GAMEOVER_POSYMAX        (10.0f)                      // ゲームオーバーポリゴンのY座標最大値(ポリゴンの高さに加えて判定)
-#define GAME_NUMBER_INTERVAL_CUT     (0.8f)                       // 数字の間隔の倍率(ポリゴンの幅をこれで乗算する)
-#define GAME_PLAYER_STOCK_INI        (3)                          // プレイヤーの残機数初期値
-#define GAME_PLAYER_RESPAWN_TIMING   (180)                        // プレイヤーがリスポーンするまでの時間
-#define GAME_MAPIDX_MAX              (3)                          // ステージの種類ごとの数
+#define GAME_DEBUG                                                    // 宣言時デバッグコマンド適用
+#ifdef GAME_DEBUG
+#define GAME_DEBUG_STARTMAP (3)
+#endif
+
+#define GAME_SYSTEM_FILENAME             "data/TEXT/MODE/game.ini"    // 初期化に使用するシステムファイル名
+#define GAME_STAGEDISP_TIME              (120)                        // ステージ番号表示状態になってから通常状態に切り替わるまでの時間
+#define GAME_NEXTMODE_TIMING             (60)                         // 終了状態になってから次のモードに切り替わるまでの時間
+#define GAME_GAMEOVER_TIMING             (180)                        // ゲームオーバー状態になってから次のモードに切り替わるまでの時間
+#define GAME_GAMEOVER_POSUP              (8.0f)                       // ゲームオーバーロゴをどれくらい上げるか
+#define GAME_GAMEOVER_POSYMAX            (10.0f)                      // ゲームオーバーポリゴンのY座標最大値(ポリゴンの高さに加えて判定)
+#define GAME_NUMBER_INTERVAL_CUT         (0.8f)                       // 数字の間隔の倍率(ポリゴンの幅をこれで乗算する)
+#define GAME_PLAYER_STOCK_INI            (3)                          // プレイヤーの残機数初期値
+#define GAME_PLAYER_RESPAWN_TIMING       (180)                        // プレイヤーがリスポーンするまでの時間
+#define GAME_MAPSTAGE_MAX                (3)                          // ステージの種類ごとの数
+#define GAME_STAGEPOLYGON_PRIORITY       (6)                          // ステージポリゴンの描画優先順位
+#define GAME_GAMEOVERPOLYGON_PRIORITY    (6)                          // ゲームオーバーポリゴンの描画優先順位
+
+// アイテムイベント用マクロ
+#define GAME_ITEMEVENT_ENEMYSTOPTIME     (300)                        // 敵をどれくらい止めておくか
 
 // マップ更新時に消されるオブジェクト(判定用のマクロなのでここに追加)
-#define GAME_DELETE_OBJECT (pScene->GetObjType() == CScene::OBJTYPE_BULLET || pScene->GetObjType() == CScene::OBJTYPE_PARTICLE || pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER || pScene->GetObjType() == CScene::OBJTYPE_EMITTER)
+#define GAME_DELETE_OBJECT (pScene->GetObjType() == CScene::OBJTYPE_BULLET || pScene->GetObjType() == CScene::OBJTYPE_PARTICLE || pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER || pScene->GetObjType() == CScene::OBJTYPE_EMITTER || pScene->GetObjType() == CScene::OBJTYPE_BLOSSOMS)
 
 // ステージ背景ポリゴン初期化用
-#define GAME_STAGEBG_POS_INI         (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define GAME_STAGEBG_COL_INI         (D3DXCOLOR(0.0f,0.0f,0.0f,1.0f))
-#define GAME_STAGEBG_WIDTH_INI       (SCREEN_WIDTH / 2.0f)
-#define GAME_STAGEBG_HEIGHT_INI      (SCREEN_HEIGHT / 2.0f)
+#define GAME_STAGEBG_POS_INI             (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define GAME_STAGEBG_COL_INI             (D3DXCOLOR(0.0f,0.0f,0.0f,1.0f))
+#define GAME_STAGEBG_WIDTH_INI           (SCREEN_WIDTH / 2.0f)
+#define GAME_STAGEBG_HEIGHT_INI          (SCREEN_HEIGHT / 2.0f)
 
 // ステージロゴポリゴン初期化用
-#define GAME_STAGELOGO_POS_INI       (D3DXVECTOR3(500.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define GAME_STAGELOGO_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define GAME_STAGELOGO_WIDTH_INI     (170.0f)
-#define GAME_STAGELOGO_HEIGHT_INI    (60.0f)
+#define GAME_STAGELOGO_POS_INI           (D3DXVECTOR3(500.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define GAME_STAGELOGO_COL_INI           (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define GAME_STAGELOGO_WIDTH_INI         (170.0f)
+#define GAME_STAGELOGO_HEIGHT_INI        (60.0f)
 
 // ステージ番号表示用ポリゴン初期化用
-#define GAME_STAGENUMBER_POS_INI     (D3DXVECTOR3(750.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define GAME_STAGENUMBER_COL_INI     (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define GAME_STAGENUMBER_WIDTH_INI   (40.0f)
-#define GAME_STAGENUMBER_HEIGHT_INI  (40.0f)
+#define GAME_STAGENUMBER_POS_INI         (D3DXVECTOR3(750.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define GAME_STAGENUMBER_COL_INI         (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define GAME_STAGENUMBER_WIDTH_INI       (40.0f)
+#define GAME_STAGENUMBER_HEIGHT_INI      (40.0f)
 
 // ゲームオーバーロゴポリゴン初期化用
-#define GAME_GAMEOVERLOGO_POS_INI    (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 900.0f, 0.0f))
-#define GAME_GAMEOVERLOGO_COL_INI    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define GAME_GAMEOVERLOGO_WIDTH_INI  (80.0f)
-#define GAME_GAMEOVERLOGO_HEIGHT_INI (80.0f)
+#define GAME_GAMEOVERLOGO_POS_INI        (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 900.0f, 0.0f))
+#define GAME_GAMEOVERLOGO_COL_INI        (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define GAME_GAMEOVERLOGO_WIDTH_INI      (80.0f)
+#define GAME_GAMEOVERLOGO_HEIGHT_INI     (80.0f)
+
+// 桜の花びらデータ初期化用
+#define GAME_BLOSSOMS_POS_INI            (D3DXVECTOR3(SCREEN_WIDTH - UI_BG_WIDTH_INI + 100.0f, -100.0f, 0.0f))
+#define GAME_BLOSSOMS_COL_INI            (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define GAME_BLOSSOMS_TIME_INI           (300)
+#define GAME_BLOSSOMS_APPEAR_INI         (3)
+#define GAME_BLOSSOMS_MOVEX_MAX_INI      (15)
+#define GAME_BLOSSOMS_MOVEX_MIN_INI      (5)
+#define GAME_BLOSSOMS_MOVEY_MAX_INI      (10)
+#define GAME_BLOSSOMS_MOVEY_MIN_INI      (2)
+#define GAME_BLOSSOMS_WIDTH_MAX_INI      (20)
+#define GAME_BLOSSOMS_WIDTH_MIN_INI      (10)
+#define GAME_BLOSSOMS_HEIGHT_MAX_INI     (20)
+#define GAME_BLOSSOMS_HEIGHT_MIN_INI     (10)
+#define GAME_BLOSSOMS_ANGLESPEED_MAX_INI (5)
+#define GAME_BLOSSOMS_ANGLESPEED_MIN_INI (0)
+#define GAME_BLOSSOMS_ROTSPEED_MAX_INI   (5)
+#define GAME_BLOSSOMS_ROTSPEED_MIN_INI   (0)
 
 // 値読み込み用のパス
 // テクスチャ用
@@ -84,6 +112,10 @@
 
 // マップ用
 #define NUM_MAP "NUM_MAP = "
+
+// アイテムイベント用
+#define ITEMEVENT_FILENAME "ITEMEVENT_FILENAME = "
+#define ENEMY_STOP "ENEMY_STOP = "
 
 // エフェクト用
 #define EFFECT_FILENAME "EFFECT_FILENAME = "
@@ -121,6 +153,19 @@
 // ゲームオーバーロゴポリゴン用
 #define GAMEOVERPOLYGONSET "GAMEOVERPOLYGONSET"
 #define END_GAMEOVERPOLYGONSET "END_GAMEOVERPOLYGONSET"
+
+// ひな祭りイベント用
+#define HINAMATSURI_FILENAME "HINAMATSURI_FILENAME = "
+
+// 桜の花びらデータ用
+#define CHERRYBLOSSOMSSET "CHERRYBLOSSOMSSET"
+#define END_CHERRYBLOSSOMSSET "END_CHERRYBLOSSOMSSET"
+#define TIME "TIME = "
+#define APPEAR "APPEAR = "
+#define MOVEX "MOVEX = "
+#define MOVEY "MOVEY = "
+#define ANGLESPEED "ANGLESPEED = "
+#define ROTSPEED "ROTSPEED = "
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -168,7 +213,10 @@ HRESULT CGame::Init(void)
 	ClearVariable();
 
 	// マップの番号を設定する
-	m_nMapIdx = CCharaSelect::GetStageType() * GAME_MAPIDX_MAX;
+#ifdef GAME_DEBUG
+	CCharaSelect::SetStageType(GAME_DEBUG_STARTMAP);
+#endif
+	m_nMapIdx = CCharaSelect::GetStageType() * GAME_MAPSTAGE_MAX;
 
 	// システムの初期化
 	LoadSystem();
@@ -229,6 +277,14 @@ void CGame::Uninit(void)
 //=============================================================================
 void CGame::Update(void)
 {
+	// 敵を動かせるかチェック
+	m_nEnemyMoveCounter--;
+	if (m_nEnemyMoveCounter <= 0)
+	{
+		m_nEnemyMoveCounter = 0;
+		m_bEnemyMove = true;
+	}
+
 	// 状態によって処理わけ
 	switch (m_State)
 	{
@@ -246,6 +302,10 @@ void CGame::Update(void)
 		break;
 	case STATE_GAMEOVER:
 		GameOverUpdate();
+		CScene::UpdateAll();
+		break;
+	case STATE_CHANGE_MAP:
+		ChangeMapUpdate();
 		CScene::UpdateAll();
 		break;
 	case STATE_PREV_MAP:
@@ -302,6 +362,7 @@ void CGame::Update(void)
 	GetDataFromServer();
 
 	// データクリア
+	m_bDeletePlayerFlag = false;
 	m_nNumDeleteEnemy = 0;
 	strcpy(m_aDeleteEnemy, "\0");
 
@@ -314,6 +375,7 @@ void CGame::Update(void)
 	CDebugProc::Print(1, "プレイヤー1の種類番号 : %d\n", CCharaSelect::GetPlayerNumber(0));
 	CDebugProc::Print(1, "プレイヤー2の種類番号 : %d\n\n", CCharaSelect::GetPlayerNumber(1));
 	CDebugProc::Print(1, "現在のマップ番号      : %d\n", m_nMapIdx);
+	CDebugProc::Print(1, "現在のステージ番号    : %d\n", m_nStageIdx);
 	CDebugProc::Print(1, "ゲームカウンター      : %d\n", m_nGameCounter);
 	CDebugProc::Print(1, "現在生成された敵の数  : %d\n", m_nSpawnEnemyCount);
 	CDebugProc::Print(1, "残りの敵の数          : %d\n", m_nNumEnemy);
@@ -383,6 +445,13 @@ void CGame::DeletePlayer(CPlayer *pPlayer, const int nIdx)
 	{
 		SetState(STATE_GAMEOVER);
 	}
+
+	// ホストじゃなかったら
+	if (CManager::GetClient() == NULL)return;
+	if (CManager::GetClient()->GetClientId() == 0 && nIdx != 0)
+	{
+		m_bDeletePlayerFlag = true;
+	}
 }
 
 //=============================================================================
@@ -443,6 +512,13 @@ void CGame::SetDataToServerFromPlayer(void)
 		// プレイヤーの向きを設定
 		D3DXVECTOR3 PlayerRot = m_pPlayer[CManager::GetClient()->GetClientId()]->GetRot();
 		CManager::GetClient()->Print("%.1f %.1f %.1f", PlayerRot.x, PlayerRot.y, PlayerRot.z);
+		CManager::GetClient()->Print(" ");
+	}
+
+	// ホストだったら
+	if (CManager::GetClient()->GetClientId() == 0)
+	{
+		CManager::GetClient()->Print("%d", (int)m_bDeletePlayerFlag);
 		CManager::GetClient()->Print(" ");
 	}
 }
@@ -709,6 +785,7 @@ void CGame::GetDataFromServer(void)
 {
 	// 送られたメッセージを取得
 	char *pStr = CManager::GetClient()->GetReceiveMessage();
+	if (pStr == NULL) return;
 	if (*pStr == *"???") return;
 
 	// プレイヤーのデータを設定
@@ -802,6 +879,20 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetPos(D3DXVECTOR3(fGetPlayerPosX, fGetPlayerPosY, fGetPlayerPosZ));
 				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetRot(D3DXVECTOR3(fGetPlayerRotX, fGetPlayerRotY, fGetPlayerRotZ));
 			}
+		}
+	}
+
+
+	// ホストじゃなかったら
+	if (CManager::GetClient()->GetClientId() != 0)
+	{
+		nNumPlayer = CFunctionLib::ReadInt(pStr, "");
+		nWord = CFunctionLib::PopString(pStr, "");
+		pStr += nWord;
+		if (nNumPlayer == 1 && m_pPlayer[CManager::GetClient()->GetClientId()] != NULL)
+		{
+			m_pPlayer[CManager::GetClient()->GetClientId()]->Uninit();
+			m_pPlayer[CManager::GetClient()->GetClientId()] = NULL;
 		}
 	}
 
@@ -1584,8 +1675,9 @@ void CGame::StageSelectUpdate(void)
 		CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_16) == true ||
 		CManager::GetXInput()->GetRepeat(0, CXInput::XIJS_BUTTON_16) == true)
 	{// 上方向の入力がされた
-		if (m_nMapIdx < GAME_MAPIDX_MAX - 1)
+		if (m_nStageIdx < GAME_MAPSTAGE_MAX - 1)
 		{
+			m_nStageIdx++;
 			m_nMapIdx++;
 			ReleaseStageNumber();
 			CalcStageDigits();
@@ -1598,8 +1690,9 @@ void CGame::StageSelectUpdate(void)
 		CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_17) == true ||
 		CManager::GetXInput()->GetRepeat(0, CXInput::XIJS_BUTTON_17) == true)
 	{// 下方向の入力がされた
-		if (m_nMapIdx > 0)
+		if (m_nStageIdx > 0)
 		{
+			m_nStageIdx--;
 			m_nMapIdx--;
 			ReleaseStageNumber();
 			CalcStageDigits();
@@ -1657,33 +1750,99 @@ void CGame::StageDispUpdate(void)
 //=============================================================================
 void CGame::NormalUpdate(void)
 {
+#ifdef GAME_DEBUG  // デバッグコマンド適用時
+
 	CInputKeyboard *pKey = CManager::GetKeyboard();
 	if (pKey == NULL) return;
 
-	if (pKey->GetTrigger(DIK_RETURN) == true)
-	{
-		SetState(STATE_END);
-	}
-	else if (pKey->GetTrigger(DIK_9) == true)
-	{
-		SetState(STATE_GAMEOVER);
-	}
-
+	// ステージセレクトデバッグ
 	if (CManager::GetClient()->GetClientId() == 0)
 	{
-		if (pKey->GetTrigger(DIK_1) == true)
+		if (pKey->GetTrigger(DIK_1) == true && pKey->GetPress(DIK_LSHIFT) == true)
 		{
 			SetState(STATE_PREV_MAP);
 		}
-		else if (pKey->GetTrigger(DIK_2) == true)
+		else if (pKey->GetTrigger(DIK_2) == true && pKey->GetPress(DIK_LSHIFT) == true)
 		{
 			SetState(STATE_NEXT_MAP);
 		}
-		else if (pKey->GetTrigger(DIK_3) == true)
+		else if (pKey->GetTrigger(DIK_3) == true && pKey->GetPress(DIK_LSHIFT) == true)
 		{
 			SetState(STATE_STAGE_SELECT);
 		}
 	}
+
+	// 状態チェックデバッグ
+	if (pKey->GetTrigger(DIK_4) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		SetState(STATE_GAMEOVER);
+	}
+	else if (pKey->GetTrigger(DIK_5) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		SetState(STATE_END);
+	}
+
+
+	// アイテムイベントデバッグ
+	if (pKey->GetTrigger(DIK_F1) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_Star(0);
+	}
+	else if (pKey->GetTrigger(DIK_F2) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_Star(1);
+	}
+	else if (pKey->GetTrigger(DIK_F3) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_Grenade();
+	}
+	else if (pKey->GetTrigger(DIK_F4) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_1Up(0);
+	}
+	else if (pKey->GetTrigger(DIK_F5) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_1Up(1);
+	}
+	else if (pKey->GetTrigger(DIK_F6) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_Scoop();
+	}
+	else if (pKey->GetTrigger(DIK_F7) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_Clock();
+	}
+	else if (pKey->GetTrigger(DIK_F8) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_Helmet(0);
+	}
+	else if (pKey->GetTrigger(DIK_F9) == true && pKey->GetPress(DIK_LSHIFT) == true)
+	{
+		ItemEvent_Helmet(1);
+	}
+
+	// ステージイベントデバッグ
+	if (CManager::GetKeyboard()->GetTrigger(DIK_1) == true && CManager::GetKeyboard()->GetPress(DIK_RSHIFT) == true)
+	{
+		m_HinaEvent = HINAEVENT_CHERRY_BLOSSOMS;
+		m_nEventCounter = 0;
+	}
+
+	CDebugProc::Print(1, "デバッグコマンド\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [1]キー        : 前のステージにする\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [2]キー        : 次のステージにする\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [3]キー        : ステージセレクト状態にする\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [4]キー        : ゲームオーバー状態にする\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [5]キー        : 終了状態にする\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [F1]～[F2]キー : スターアイテムイベント\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [F3]キー       : グレネードアイテムイベント\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [F4]～[F5]キー : 1Upアイテムイベント\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [F6]キー       : スコップアイテムイベント\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [F7]キー       : 時計アイテムイベント\n");
+	CDebugProc::Print(1, "[LSHIFT]キー + [F8]～[F9]キー : ヘルメットアイテムイベント\n");
+	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : 花びら舞い散る\n\n");
+
+#endif
 
 	CDebugProc::Print(1, "通常状態\n");
 }
@@ -1738,6 +1897,51 @@ void CGame::GameOverLogoUp(void)
 }
 
 //=============================================================================
+// ゲームのゲームクリア状態の更新処理
+//=============================================================================
+void CGame::GameClearUpdate(void)
+{
+
+}
+
+//=============================================================================
+// ゲームのマップを変える状態の更新処理
+//=============================================================================
+void CGame::ChangeMapUpdate(void)
+{
+	if (CManager::GetClient()->GetClientId() == 0)
+	{// ホストだったら
+		m_nMapIdx++;
+		m_nStageIdx++;
+		CalcStageDigits();
+		ReleaseMap();
+		DeleteGameObject();
+		CreateMap();
+		m_nGameCounter = 0;
+		SetState(STATE_STAGE_DISP);
+		CManager::GetSound()->PlaySound(1);
+	}
+	else
+	{// ホストじゃなかったら
+		m_nMapIdx++;
+		m_nStageIdx++;
+		CalcStageDigits();
+		ReleaseMap();
+		DeleteGameObject();
+		CreateMap();
+		m_nGameCounter = 0;
+		SetState(STATE_STAGE_DISP);
+		CManager::GetSound()->PlaySound(1);
+	}
+
+	// データクリア
+	m_nNumDeleteEnemy = 0;
+	strcpy(m_aDeleteEnemy, "\0");
+	m_nNumDeleteBlock = 0;
+	strcpy(m_aDeleteBlock, "\0");
+}
+
+//=============================================================================
 // ゲームの終了状態の更新処理
 //=============================================================================
 void CGame::EndUpdate(void)
@@ -1745,8 +1949,8 @@ void CGame::EndUpdate(void)
 	m_nStateCounter++;
 	if (m_nStateCounter % GAME_NEXTMODE_TIMING == 0)
 	{
-		if (m_nMapIdx >= GAME_MAPIDX_MAX - 1)
-		{// これ以上マップがない
+		if (m_nStageIdx >= GAME_MAPSTAGE_MAX - 1)
+		{// これ以上ステージがない
 			CFade *pFade = CManager::GetFade();
 			if (pFade == NULL) return;
 			if (pFade->GetFade() != CFade::FADE_NONE) return;
@@ -1758,30 +1962,87 @@ void CGame::EndUpdate(void)
 		{// まだ次のマップが存在する
 			if (CManager::GetClient()->GetClientId() == 0)
 			{// ホストだった
-				m_nMapIdx++;
-				CalcStageDigits();
-				ReleaseMap();
-				DeleteGameObject();
-				CreateMap();
-				m_nGameCounter = 0;
-				SetState(STATE_STAGE_DISP);
-				CManager::GetSound()->PlaySound(1);
-			}
-			else
-			{// ホストではなかった
-				m_nMapIdx++;
-				CalcStageDigits();
-				ReleaseMap();
-				DeleteGameObject();
-				CreateMap();
-				m_nGameCounter = 0;
-				SetState(STATE_STAGE_DISP);
-				m_nMapIdx--;
+				SetState(STATE_CHANGE_MAP);
 			}
 		}
 	}
 
 	CDebugProc::Print(1, "終了状態\n");
+}
+
+
+
+//*****************************************************************************
+//
+// アイテムイベント処理用関数
+// Auther : Hodaka Niwa & Jukiya Hayakawa
+//
+//*****************************************************************************
+//=============================================================================
+// ゲームのスターアイテムのイベント処理
+//=============================================================================
+void CGame::ItemEvent_Star(int nPlayerNumber)
+{
+	// プレイヤーのパラメータをパワーアップさせる
+
+}
+
+//=============================================================================
+// ゲームのグレネードアイテムのイベント処理
+//=============================================================================
+void CGame::ItemEvent_Grenade(void)
+{
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ENEMY)
+			{// 敵だった
+				pScene->Uninit();
+				pScene = NULL;
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
+
+//=============================================================================
+// ゲームの1Upアイテムのイベント処理
+//=============================================================================
+void CGame::ItemEvent_1Up(int nPlayerNumber)
+{
+	// プレイヤーの残機数を増やす
+	m_nPlayerStock[nPlayerNumber]++;
+}
+
+//=============================================================================
+// ゲームのスコップアイテムのイベント処理
+//=============================================================================
+void CGame::ItemEvent_Scoop(void)
+{
+	// 司令部の周りに壊せないブロックを置く
+}
+
+//=============================================================================
+// ゲームの時計アイテムのイベント処理
+//=============================================================================
+void CGame::ItemEvent_Clock(void)
+{
+	// 敵が動けない状態にする
+	m_bEnemyMove = false;
+	m_nEnemyMoveCounter = m_ItemEventData.nStop;
+}
+
+//=============================================================================
+// ゲームのヘルメットアイテムのイベント処理
+//=============================================================================
+void CGame::ItemEvent_Helmet(int nPlayerNumber)
+{
+	// プレイヤーを無敵状態にする
 }
 
 
@@ -1820,8 +2081,279 @@ void CGame::MapEvent_NewYear(void)
 //=============================================================================
 void CGame::MapEvent_Hinamatsuri(void)
 {
+	CDebugProc::Print(1, "ひな祭りイベント\n");
 
+	switch (m_HinaEvent)
+	{
+	case HINAEVENT_NORMAL:
+		MapEvent_Hinamatsuri_Normal();
+		break;
+	case HINAEVENT_CHERRY_BLOSSOMS:
+		MapEvent_Hinamatsuri_CherryBlossoms();
+		break;
+	case HINAEVENT_DROP_ITEM:
+		MapEvent_Hinamatsuri_DropItem();
+		break;
+	}
 }
+
+//=============================================================================
+// ゲームのひな祭りの通常のマップイベント処理
+//=============================================================================
+void CGame::MapEvent_Hinamatsuri_Normal(void)
+{
+	CDebugProc::Print(1, "通常イベント\n");
+}
+
+//=============================================================================
+// ゲームのひな祭りの桜が舞い散るマップイベント処理
+//=============================================================================
+void CGame::MapEvent_Hinamatsuri_CherryBlossoms(void)
+{
+	CDebugProc::Print(1, "桜舞い散るイベント\n");
+	if (m_State != STATE_NORMAL) { return; }
+
+	// 桜の花びら生成
+	for (int nCnt = 0; nCnt < m_CherryBlossomsData.nAppear; nCnt++)
+	{
+		CreateBlossoms();
+	}
+
+	// イベントカウンター進行
+	m_nEventCounter++;
+	if (m_nEventCounter >= m_CherryBlossomsData.nTime)
+	{// カウンターが一定値になった
+		m_nEventCounter = 0;
+		m_HinaEvent = HINAEVENT_NORMAL;
+	}
+}
+
+//=============================================================================
+// ゲームのひな祭りのアイテムを投下するマップイベント処理
+//=============================================================================
+void CGame::MapEvent_Hinamatsuri_DropItem(void)
+{
+	CDebugProc::Print(1, "アイテムドロップイベント\n");
+}
+
+
+//*****************************************************************************
+//
+// ゲーム内スポーン処理用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
+// ゲームのプレイヤーをリスポーン位置にずらす処理
+//=============================================================================
+void CGame::SetPlayerPosToSpawn(void)
+{
+	// プレイヤーのリスポーン位置を取得
+	D3DXVECTOR3 PlayerPos = INITIALIZE_D3DXVECTOR3;
+	CMap *pMap = GetMap();
+	if (pMap != NULL)
+	{
+		PlayerPos = pMap->GetPlayerRespawn(CManager::GetClient()->GetClientId())->GetPos();
+	}
+
+	if (m_pPlayer[CManager::GetClient()->GetClientId()] != NULL)
+	{
+		m_pPlayer[CManager::GetClient()->GetClientId()]->SetPos(PlayerPos);
+	}
+}
+
+//=============================================================================
+// ゲームのプレイヤーをリスポーンさせるかチェックする
+//=============================================================================
+void CGame::CheckPlayerResSpawn(int nCntPlayer)
+{
+	if (m_pPlayer[nCntPlayer] == NULL && m_nPlayerStock[nCntPlayer] >= 1)
+	{
+		m_nPlayerRespawnCounter++;
+		if (m_nPlayerRespawnCounter % GAME_PLAYER_RESPAWN_TIMING == 0)
+		{
+			m_nPlayerRespawnCounter = 0;
+			m_nPlayerStock[nCntPlayer]--;
+			m_pPlayer[nCntPlayer] = CPlayer::Create(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, nCntPlayer);
+
+			// プレイヤーのリスポーン位置を取得
+			D3DXVECTOR3 PlayerPos = INITIALIZE_D3DXVECTOR3;
+			CMap *pMap = GetMap();
+			if (pMap != NULL)
+			{
+				PlayerPos = pMap->GetPlayerRespawn(nCntPlayer)->GetPos();
+			}
+
+			// プレイヤーの位置をずらす
+			m_pPlayer[nCntPlayer]->SetPos(PlayerPos);
+		}
+	}
+}
+
+//=============================================================================
+// ゲームの敵の生成するタイミングかどうか判定する
+//=============================================================================
+void CGame::CheckEnemySpawn(int nTime)
+{
+	CMap *pMap = GetMap();
+	if (pMap == NULL)return;
+
+	int nNumEnemyListData = pMap->GetNumEnemyListData();
+	CEnemy_ListData *pEnemyData = NULL;
+
+	// もう敵が出ないのであればこの時点で処理終了
+	if (m_nSpawnEnemyCount == nNumEnemyListData) return;
+
+	// カウンター増加
+	m_nGameCounter++;
+	for (int nCnt = 0; nCnt < nNumEnemyListData; nCnt++)
+	{// 敵を生成する数分繰り返し
+		pEnemyData = pMap->GetEnemyListData(nCnt);
+		if (pEnemyData->GetRespawnTime() == nTime)
+		{// リスポーンするタイミングである
+			EnemySpawn(pMap, pEnemyData, nCnt);
+			m_nSpawnEnemyCount++;
+		}
+	}
+}
+
+//=============================================================================
+// ゲームの敵の生成する
+//=============================================================================
+void CGame::EnemySpawn(CMap *pMap, CEnemy_ListData *pEnemyData, int nCnt)
+{
+	// 敵のリスポーン位置を取得
+	D3DXVECTOR3 EnemyPos = pMap->GetEnemyRespawn(pEnemyData->GetRespawnIdx())->GetPos();
+
+	// 敵の生成(ここは後で種類分けしておく)
+	CEnemy::Create(EnemyPos, INITIALIZE_D3DXVECTOR3);
+}
+
+
+
+//*****************************************************************************
+//
+// マップを変える用関数(デバッグ用の関数込み)
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
+// ゲームの各種カウンターを初期化する
+//=============================================================================
+void CGame::ResetCounter(void)
+{
+	m_nSpawnEnemyCount = 0;
+	m_nGameCounter = 0;
+	m_nStateCounter = 0;
+	m_nEventCounter = 0;
+	m_nEnemyMoveCounter = 0;
+}
+
+//=============================================================================
+// ゲームの次のマップに切り替える処理
+//=============================================================================
+void CGame::ChangeNextMap(void)
+{
+	// 現在のマップを破棄
+	ReleaseMap();
+
+	// ゲームに使用しているオブジェクトを破棄
+	DeleteGameObject();
+
+	// マップ番号を増やしマップを読み込む
+	m_nMapIdx++;
+	m_nStageIdx++;
+	if (m_nStageIdx >= GAME_MAPSTAGE_MAX)
+	{
+		m_nMapIdx--;
+		m_nStageIdx--;
+	}
+	CreateMap();
+
+	// マップ番号の桁数を計算しておく
+	CalcStageDigits();
+
+	// プレイヤーの位置をスポーン位置を設定
+	SetPlayerPosToSpawn();
+
+	// 各種カウンター初期化
+	m_nGameCounter = 0;
+	m_nSpawnEnemyCount = 0;
+
+	// 状態を設定
+	SetState(STATE_STAGE_DISP);
+}
+
+//=============================================================================
+// ゲームの前のマップに切り替える処理
+//=============================================================================
+void CGame::ChangePrevMap(void)
+{
+	// 現在のマップを破棄
+	ReleaseMap();
+
+	// ゲームに使用しているオブジェクトを破棄
+	DeleteGameObject();
+
+	// マップ番号を減らしマップを読み込む
+	m_nMapIdx--;
+	m_nStageIdx--;
+	if (m_nStageIdx < 0)
+	{
+		m_nMapIdx++;
+		m_nStageIdx++;
+	}
+	CreateMap();
+
+	// マップ番号の桁数を計算しておく
+	CalcStageDigits();
+
+	// プレイヤーの位置をスポーン位置に設定
+	SetPlayerPosToSpawn();
+
+	// 各種カウンター初期化
+	m_nGameCounter = 0;
+	m_nSpawnEnemyCount = 0;
+
+	// 状態を設定
+	SetState(STATE_STAGE_DISP);
+}
+
+//=============================================================================
+// ゲームのゲームに使用しているオブジェクトを破棄する処理
+//=============================================================================
+void CGame::DeleteGameObject(void)
+{
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (GAME_DELETE_OBJECT)
+			{// ゲームに使用しているオブジェクトクラスだった
+				pScene->Uninit();
+				pScene = NULL;
+			}
+			pScene = pSceneNext;
+		}
+	}
+
+	// 死亡フラグチェック
+	CScene::DeathCheck();
+}
+
+//=============================================================================
+// ゲームのステージ番号の桁数を計算する処理
+//=============================================================================
+void CGame::CalcStageDigits(void)
+{
+	m_nNumNumberDigits = (int)log10f((float)(m_nStageIdx + 1)) + 1;	// 桁数を求める
+	if (m_nNumNumberDigits <= 0) { m_nNumNumberDigits = 1; }	    // 0以下のとき1にする
+}
+
 
 
 //*****************************************************************************
@@ -1920,7 +2452,8 @@ void CGame::CreatePlayer(void)
 //=============================================================================
 void CGame::CreateGameOverLogo(void)
 {
-	m_pGameOverLogo = CScene2D::Create(m_GameOverPolyData.pos, m_GameOverPolyData.col, m_GameOverPolyData.fWidth, m_GameOverPolyData.fHeight);
+	m_pGameOverLogo = CScene2D::Create(m_GameOverPolyData.pos, m_GameOverPolyData.col,
+		m_GameOverPolyData.fWidth, m_GameOverPolyData.fHeight, GAME_GAMEOVERPOLYGON_PRIORITY);
 	if (m_pGameOverLogo != NULL, GetTextureManager() != NULL)
 	{
 		m_pGameOverLogo->BindTexture(GetTextureManager()->GetTexture(m_GameOverPolyData.nTexIdx));
@@ -1932,7 +2465,8 @@ void CGame::CreateGameOverLogo(void)
 //=============================================================================
 void CGame::CreateStageBg(void)
 {
-	m_pStageBg = CScene2D::Create(m_StageBgData.pos, m_StageBgData.col, m_StageBgData.fWidth, m_StageBgData.fHeight);
+	m_pStageBg = CScene2D::Create(m_StageBgData.pos, m_StageBgData.col, m_StageBgData.fWidth,
+		m_StageBgData.fHeight, GAME_STAGEPOLYGON_PRIORITY);
 }
 
 //=============================================================================
@@ -1940,7 +2474,8 @@ void CGame::CreateStageBg(void)
 //=============================================================================
 void CGame::CreateStageLogo(void)
 {
-	m_pStageLogo = CScene2D::Create(m_StageLogoData.pos, m_StageLogoData.col, m_StageLogoData.fWidth, m_StageLogoData.fHeight);
+	m_pStageLogo = CScene2D::Create(m_StageLogoData.pos, m_StageLogoData.col,
+		m_StageLogoData.fWidth, m_StageLogoData.fHeight, GAME_STAGEPOLYGON_PRIORITY);
 	if (m_pStageLogo != NULL && GetTextureManager() != NULL)
 	{
 		m_pStageLogo->BindTexture(GetTextureManager()->GetTexture(m_StageLogoData.nTexIdx));
@@ -1958,18 +2493,52 @@ void CGame::CreateStageNumber(void)
 	if (m_pStageNumber != NULL)
 	{
 		for (int nCntNumber = 0; nCntNumber < m_nNumNumberDigits; nCntNumber++)
-		{
+		{// 現在のステージ番号の桁数分繰り返し
 			m_pStageNumber[nCntNumber] = NULL;
-			m_pStageNumber[nCntNumber] = CNumber::Create(NumberPos, m_StageNumberData.col, m_StageNumberData.fWidth, m_StageNumberData.fHeight);
+			m_pStageNumber[nCntNumber] = CNumber::Create(NumberPos, m_StageNumberData.col,
+				m_StageNumberData.fWidth, m_StageNumberData.fHeight, 0.0f, CNumber::STATE_NONE,
+				0, 3, GAME_STAGEPOLYGON_PRIORITY);
 			if (m_pStageNumber[nCntNumber] != NULL && GetTextureManager() != NULL)
-			{
-				nStageNumber = (m_nMapIdx + 1) % ((int)powf(10.0f, (float)nCntNumber) * 10) / (int)powf(10.0f, (float)nCntNumber);
+			{// 生成できた
+				nStageNumber = (m_nStageIdx + 1) % ((int)powf(10.0f, (float)nCntNumber) * 10) / (int)powf(10.0f, (float)nCntNumber);
 				m_pStageNumber[nCntNumber]->SetNumber(nStageNumber);
 				m_pStageNumber[nCntNumber]->BindTexture(GetTextureManager()->GetTexture(m_nNumberTexIdx));
 
 			}
 			NumberPos.x -= m_StageNumberData.fWidth + (m_StageNumberData.fWidth * GAME_NUMBER_INTERVAL_CUT);
 		}
+	}
+}
+
+//=============================================================================
+// ゲームの桜の花びらを生成する処理
+//=============================================================================
+void CGame::CreateBlossoms(void)
+{
+	// 各種値の計算
+	// 移動量
+	D3DXVECTOR3 Move = INITIALIZE_D3DXVECTOR3;
+	Move.x = (float)((rand() % (m_CherryBlossomsData.nMoveXMax - m_CherryBlossomsData.nMoveXMin)) + m_CherryBlossomsData.nMoveXMin);
+	Move.x *= -1.0f;
+	Move.y = (float)((rand() % (m_CherryBlossomsData.nMoveYMax - m_CherryBlossomsData.nMoveYMin)) + m_CherryBlossomsData.nMoveYMin);
+
+	// 角度の回転スピード
+	float fAngleSpeed = (float)(rand() % (m_CherryBlossomsData.nAngleSpeedMax - m_CherryBlossomsData.nAngleSpeedMin) + m_CherryBlossomsData.nAngleSpeedMin);
+
+	// 向きの回転スピード
+	float fRotSpeed = (float)(rand() % (m_CherryBlossomsData.nRotSpeedMax - m_CherryBlossomsData.nRotSpeedMin) + m_CherryBlossomsData.nRotSpeedMin);
+
+	// 幅
+	float fWidth = (float)((rand() % (m_CherryBlossomsData.nWidthMax - m_CherryBlossomsData.nWidthMin)) + m_CherryBlossomsData.nWidthMin);
+
+	// 高さ
+	float fHeight = (float)((rand() % (m_CherryBlossomsData.nHeightMax - m_CherryBlossomsData.nHeightMin)) + m_CherryBlossomsData.nHeightMin);
+
+	// 花びらポリゴン生成
+	CBlossoms *pBlossoms = CBlossoms::Create(Move, D3DXToRadian(fAngleSpeed), D3DXToRadian(fRotSpeed), GAME_BLOSSOMS_POS_INI, GAME_BLOSSOMS_COL_INI, fWidth, fHeight);
+	if (pBlossoms != NULL && GetTextureManager() != NULL)
+	{
+		pBlossoms->BindTexture(GetTextureManager()->GetTexture(m_CherryBlossomsData.nTexIdx));
 	}
 }
 
@@ -2084,218 +2653,6 @@ void CGame::ReleaseStageNumber(void)
 
 //*****************************************************************************
 //
-// ゲーム内スポーン処理用関数
-// Auther : Hodaka Niwa
-//
-//*****************************************************************************
-//=============================================================================
-// ゲームのプレイヤーをリスポーン位置にずらす処理
-//=============================================================================
-void CGame::SetPlayerPosToSpawn(void)
-{
-	// プレイヤーのリスポーン位置を取得
-	D3DXVECTOR3 PlayerPos = INITIALIZE_D3DXVECTOR3;
-	CMap *pMap = GetMap();
-	if (pMap != NULL)
-	{
-		PlayerPos = pMap->GetPlayerRespawn(CManager::GetClient()->GetClientId())->GetPos();
-	}
-
-	if (m_pPlayer[CManager::GetClient()->GetClientId()] != NULL)
-	{
-		m_pPlayer[CManager::GetClient()->GetClientId()]->SetPos(PlayerPos);
-	}
-}
-
-//=============================================================================
-// ゲームのプレイヤーをリスポーンさせるかチェックする
-//=============================================================================
-void CGame::CheckPlayerResSpawn(int nCntPlayer)
-{
-	if (m_pPlayer[nCntPlayer] == NULL && m_nPlayerStock[nCntPlayer] >= 1)
-	{
-		m_nPlayerRespawnCounter++;
-		if (m_nPlayerRespawnCounter % GAME_PLAYER_RESPAWN_TIMING == 0)
-		{
-			m_nPlayerRespawnCounter = 0;
-			m_nPlayerStock[nCntPlayer]--;
-			m_pPlayer[nCntPlayer] = CPlayer::Create(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, nCntPlayer);
-
-			// プレイヤーのリスポーン位置を取得
-			D3DXVECTOR3 PlayerPos = INITIALIZE_D3DXVECTOR3;
-			CMap *pMap = GetMap();
-			if (pMap != NULL)
-			{
-				PlayerPos = pMap->GetPlayerRespawn(nCntPlayer)->GetPos();
-			}
-
-			// プレイヤーの位置をずらす
-			m_pPlayer[nCntPlayer]->SetPos(PlayerPos);
-		}
-	}
-}
-
-//=============================================================================
-// ゲームの敵の生成するタイミングかどうか判定する
-//=============================================================================
-void CGame::CheckEnemySpawn(int nTime)
-{
-	CMap *pMap = GetMap();
-	if (pMap == NULL)return;
-
-	int nNumEnemyListData = pMap->GetNumEnemyListData();
-	CEnemy_ListData *pEnemyData = NULL;
-
-	// もう敵が出ないのであればこの時点で処理終了
-	if (m_nSpawnEnemyCount == nNumEnemyListData) return;
-
-	// カウンター増加
-	m_nGameCounter++;
-	for (int nCnt = 0; nCnt < nNumEnemyListData; nCnt++)
-	{// 敵を生成する数分繰り返し
-		pEnemyData = pMap->GetEnemyListData(nCnt);
-		if (pEnemyData->GetRespawnTime() == nTime)
-		{// リスポーンするタイミングである
-			EnemySpawn(pMap, pEnemyData, nCnt);
-			m_nSpawnEnemyCount++;
-		}
-	}
-}
-
-//=============================================================================
-// ゲームの敵の生成する
-//=============================================================================
-void CGame::EnemySpawn(CMap *pMap, CEnemy_ListData *pEnemyData, int nCnt)
-{
-	// 敵のリスポーン位置を取得
-	D3DXVECTOR3 EnemyPos = pMap->GetEnemyRespawn(pEnemyData->GetRespawnIdx())->GetPos();
-
-	// 敵の生成(ここは後で種類分けしておく)
-	CEnemy::Create(EnemyPos, INITIALIZE_D3DXVECTOR3);
-}
-
-
-
-//*****************************************************************************
-//
-// マップを変える用関数(デバッグ用の関数込み)
-// Auther : Hodaka Niwa
-//
-//*****************************************************************************
-//=============================================================================
-// ゲームの各種カウンターを初期化する
-//=============================================================================
-void CGame::ResetCounter(void)
-{
-	m_nSpawnEnemyCount = 0;
-	m_nGameCounter = 0;
-	m_nStateCounter = 0;
-}
-
-//=============================================================================
-// ゲームの次のマップに切り替える処理
-//=============================================================================
-void CGame::ChangeNextMap(void)
-{
-	// 現在のマップを破棄
-	ReleaseMap();
-
-	// ゲームに使用しているオブジェクトを破棄
-	DeleteGameObject();
-
-	// マップ番号を増やしマップを読み込む
-	m_nMapIdx++;
-	if (m_nMapIdx >= GAME_MAPIDX_MAX)
-	{
-		m_nMapIdx--;
-	}
-	CreateMap();
-
-	// マップ番号の桁数を計算しておく
-	CalcStageDigits();
-
-	// プレイヤーの位置をスポーン位置を設定
-	SetPlayerPosToSpawn();
-
-	// 各種カウンター初期化
-	m_nGameCounter = 0;
-	m_nSpawnEnemyCount = 0;
-
-	// 状態を設定
-	SetState(STATE_STAGE_DISP);
-}
-
-//=============================================================================
-// ゲームの前のマップに切り替える処理
-//=============================================================================
-void CGame::ChangePrevMap(void)
-{
-	// 現在のマップを破棄
-	ReleaseMap();
-
-	// ゲームに使用しているオブジェクトを破棄
-	DeleteGameObject();
-
-	// マップ番号を減らしマップを読み込む
-	m_nMapIdx--;
-	if (m_nMapIdx <= 0)
-	{
-		m_nMapIdx = 0;
-	}
-	CreateMap();
-
-	// マップ番号の桁数を計算しておく
-	CalcStageDigits();
-
-	// プレイヤーの位置をスポーン位置に設定
-	SetPlayerPosToSpawn();
-
-	// 各種カウンター初期化
-	m_nGameCounter = 0;
-	m_nSpawnEnemyCount = 0;
-
-	// 状態を設定
-	SetState(STATE_STAGE_DISP);
-}
-
-//=============================================================================
-// ゲームのゲームに使用しているオブジェクトを破棄する処理
-//=============================================================================
-void CGame::DeleteGameObject(void)
-{
-	CScene *pScene = NULL;
-	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
-	{// 処理優先順位の数だけ繰り返し
-		pScene = CScene::GetTop(nCntPriority);
-		while (pScene != NULL)
-		{// ポインタが空になるまで
-			pSceneNext = pScene->GetNext();
-			if (GAME_DELETE_OBJECT)
-			{// ゲームに使用しているオブジェクトクラスだった
-				pScene->Uninit();
-				pScene = NULL;
-			}
-			pScene = pSceneNext;
-		}
-	}
-
-	// 死亡フラグチェック
-	CScene::DeathCheck();
-}
-
-//=============================================================================
-// ゲームのステージ番号の桁数を計算する処理
-//=============================================================================
-void CGame::CalcStageDigits(void)
-{
-	m_nNumNumberDigits = (int)log10f((float)(m_nMapIdx + 1)) + 1;	// 桁数を求める
-	if (m_nNumNumberDigits <= 0) { m_nNumNumberDigits = 1; }	    // 0以下のとき1にする
-}
-
-
-//*****************************************************************************
-//
 // スクリプト読み込み用関数(マップイベント用にスクリプトを作るならここに！！)
 // Auther : Hodaka Niwa
 //
@@ -2359,6 +2716,10 @@ void CGame::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
 			LoadModel(pStr, nCntModel);
 			nCntModel++;
 		}
+		else if (CFunctionLib::Memcmp(pStr, EFFECT_FILENAME) == 0)
+		{// 読み込むエフェクトのファイル名だった
+			LoadEffectFileName(pStr);
+		}
 		else if (CFunctionLib::Memcmp(pStr, NUM_MAP) == 0)
 		{// 読み込むマップの数だった
 			m_nNumMap = CFunctionLib::ReadInt(pStr, NUM_MAP);
@@ -2368,6 +2729,10 @@ void CGame::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
 		{// 読み込むマップファイル名だった
 			LoadMapFileName(pStr, nCntMap);
 			nCntMap++;
+		}
+		else if (CFunctionLib::Memcmp(pStr, ITEMEVENT_FILENAME) == 0)
+		{// アイテムイベント用スクリプトファイル名だった
+			LoadItemEvent(pStr);
 		}
 		else if (CFunctionLib::Memcmp(pStr, NUMBER_TEX_IDX) == 0)
 		{// 数字の使用するテクスチャ番号だった
@@ -2397,6 +2762,10 @@ void CGame::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
 		else if (CFunctionLib::Memcmp(pStr, GAMEOVERPOLYGONSET) == 0)
 		{// ゲームオーバーロゴポリゴン情報だった
 			LoadGameOverLogo(pFileLoader, pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, HINAMATSURI_FILENAME) == 0)
+		{// ひな祭りイベント用スクリプトファイル名だった
+			LoadHinamatsuriEvent(pStr);
 		}
 		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
 		{// スクリプトファイル終了の合図だった
@@ -2633,6 +3002,206 @@ void CGame::LoadGameOverLogo(CFileLoader *pFileLoader, char *pStr)
 
 //*****************************************************************************
 //
+// アイテムイベント用スクリプト読み込み処理
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
+// ゲームのアイテムイベントスクリプトを読み込む
+//=============================================================================
+void CGame::LoadItemEvent(char *pStr)
+{
+	char aFileName[256] = "\0";
+	strcpy(aFileName, CFunctionLib::ReadString(pStr, aFileName, ITEMEVENT_FILENAME));
+	CFileLoader *pFileLoader = NULL;
+	pFileLoader = CFileLoader::Create(aFileName);
+	if (pFileLoader != NULL)
+	{
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, SCRIPT) == 0)
+		{// 読み込み開始の合図だった
+			LoadItemEventScript(pFileLoader, pStr);
+		}
+
+		// メモリの開放
+		if (pFileLoader != NULL)
+		{
+			pFileLoader->Uninit();
+			delete pFileLoader;
+			pFileLoader = NULL;
+		}
+	}
+}
+
+//=============================================================================
+// ゲームのアイテムイベント情報をファイルから読み込む
+//=============================================================================
+void CGame::LoadItemEventScript(CFileLoader *pFileLoader, char *pStr)
+{
+	while (1)
+	{// ループ開始
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, ENEMY_STOP) == 0)
+		{// 敵をどれくらい止めるか情報だった
+			m_ItemEventData.nStop = CFunctionLib::ReadInt(pStr, ENEMY_STOP);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		{// スクリプトファイル終了の合図だった
+			break;
+		}
+	}
+}
+
+
+//*****************************************************************************
+//
+// ひな祭りイベント用スクリプト読み込み処理
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
+// ゲームのひな祭りイベントスクリプトを読み込む
+//=============================================================================
+void CGame::LoadHinamatsuriEvent(char *pStr)
+{
+	char aFileName[256] = "\0";
+	strcpy(aFileName, CFunctionLib::ReadString(pStr, aFileName, HINAMATSURI_FILENAME));
+	CFileLoader *pFileLoader = NULL;
+	pFileLoader = CFileLoader::Create(aFileName);
+	if (pFileLoader != NULL)
+	{
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, SCRIPT) == 0)
+		{// 読み込み開始の合図だった
+			LoadHinamatsuriEventScript(pFileLoader, pStr);
+		}
+
+		// メモリの開放
+		if (pFileLoader != NULL)
+		{
+			pFileLoader->Uninit();
+			delete pFileLoader;
+			pFileLoader = NULL;
+		}
+	}
+}
+
+//=============================================================================
+// ゲームのひな祭りイベント情報をファイルから読み込む
+//=============================================================================
+void CGame::LoadHinamatsuriEventScript(CFileLoader *pFileLoader, char *pStr)
+{
+	while (1)
+	{// ループ開始
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, CHERRYBLOSSOMSSET) == 0)
+		{// 桜の花びら情報だった
+			LoadCherryBlossomsData(pFileLoader, pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		{// スクリプトファイル終了の合図だった
+			break;
+		}
+	}
+}
+
+//=============================================================================
+// ゲームの桜の花びらデータ情報を読み込む
+//=============================================================================
+void CGame::LoadCherryBlossomsData(CFileLoader *pFileLoader, char *pStr)
+{
+	// データ初期化
+	m_CherryBlossomsData.nTime = GAME_BLOSSOMS_TIME_INI;
+	m_CherryBlossomsData.nAppear = GAME_BLOSSOMS_APPEAR_INI;
+	m_CherryBlossomsData.nTexIdx = 0;
+	m_CherryBlossomsData.nMoveXMax = GAME_BLOSSOMS_MOVEX_MAX_INI;
+	m_CherryBlossomsData.nMoveXMin = GAME_BLOSSOMS_MOVEX_MIN_INI;
+	m_CherryBlossomsData.nMoveYMax = GAME_BLOSSOMS_MOVEY_MAX_INI;
+	m_CherryBlossomsData.nMoveYMin = GAME_BLOSSOMS_MOVEY_MIN_INI;
+	m_CherryBlossomsData.nWidthMax = GAME_BLOSSOMS_WIDTH_MAX_INI;
+	m_CherryBlossomsData.nWidthMin = GAME_BLOSSOMS_WIDTH_MIN_INI;
+	m_CherryBlossomsData.nHeightMax = GAME_BLOSSOMS_HEIGHT_MAX_INI;
+	m_CherryBlossomsData.nHeightMin = GAME_BLOSSOMS_HEIGHT_MIN_INI;
+	m_CherryBlossomsData.nAngleSpeedMax = GAME_BLOSSOMS_ANGLESPEED_MAX_INI;
+	m_CherryBlossomsData.nAngleSpeedMin = GAME_BLOSSOMS_ANGLESPEED_MIN_INI;
+	m_CherryBlossomsData.nRotSpeedMax = GAME_BLOSSOMS_ROTSPEED_MAX_INI;
+	m_CherryBlossomsData.nRotSpeedMin = GAME_BLOSSOMS_ROTSPEED_MIN_INI;
+
+	// データ読み込み
+	int nWord = 0;
+	while (1)
+	{
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, TIME) == 0)
+		{// 桜の花びらが降り注ぐ時間
+			m_CherryBlossomsData.nTime = CFunctionLib::ReadInt(pStr, TIME);
+		}
+		if (CFunctionLib::Memcmp(pStr, APPEAR) == 0)
+		{// 桜の花びらを1フレーム毎にどれくらい出すか
+			m_CherryBlossomsData.nAppear = CFunctionLib::ReadInt(pStr, APPEAR);
+		}
+		if (CFunctionLib::Memcmp(pStr, TEX_IDX) == 0)
+		{// 使用するテクスチャの番号だった
+			m_CherryBlossomsData.nTexIdx = CFunctionLib::ReadInt(pStr, TEX_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, MOVEX) == 0)
+		{// X方向の移動量だった
+			m_CherryBlossomsData.nMoveXMax = CFunctionLib::ReadInt(pStr, MOVEX);
+			pStr = CFunctionLib::HeadPutout(pStr, MOVEX);
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			m_CherryBlossomsData.nMoveXMin = CFunctionLib::ReadInt(pStr, "");
+		}
+		else if (CFunctionLib::Memcmp(pStr, MOVEY) == 0)
+		{// Y方向の移動量だった
+			m_CherryBlossomsData.nMoveYMax = CFunctionLib::ReadInt(pStr, MOVEY);
+			pStr = CFunctionLib::HeadPutout(pStr, MOVEY);
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			m_CherryBlossomsData.nMoveYMin = CFunctionLib::ReadInt(pStr, "");
+		}
+		else if (CFunctionLib::Memcmp(pStr, WIDTH) == 0)
+		{// ポリゴンの幅だった
+			m_CherryBlossomsData.nWidthMax = CFunctionLib::ReadInt(pStr, WIDTH);
+			pStr = CFunctionLib::HeadPutout(pStr, WIDTH);
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			m_CherryBlossomsData.nWidthMin = CFunctionLib::ReadInt(pStr, "");
+		}
+		else if (CFunctionLib::Memcmp(pStr, HEIGHT) == 0)
+		{// ポリゴンの高さだった
+			m_CherryBlossomsData.nHeightMax = CFunctionLib::ReadInt(pStr, HEIGHT);
+			pStr = CFunctionLib::HeadPutout(pStr, HEIGHT);
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			m_CherryBlossomsData.nHeightMin = CFunctionLib::ReadInt(pStr, "");
+		}
+		else if (CFunctionLib::Memcmp(pStr, ANGLESPEED) == 0)
+		{// 角度を回転させるスピードだった
+			m_CherryBlossomsData.nRotSpeedMax = CFunctionLib::ReadInt(pStr, ANGLESPEED);
+			pStr = CFunctionLib::HeadPutout(pStr, ANGLESPEED);
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			m_CherryBlossomsData.nRotSpeedMin = CFunctionLib::ReadInt(pStr, "");
+		}
+		else if (CFunctionLib::Memcmp(pStr, ROTSPEED) == 0)
+		{// 向きを回転させるスピードだった
+			m_CherryBlossomsData.nRotSpeedMax = CFunctionLib::ReadInt(pStr, ROTSPEED);
+			pStr = CFunctionLib::HeadPutout(pStr, ROTSPEED);
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			m_CherryBlossomsData.nRotSpeedMin = CFunctionLib::ReadInt(pStr, "");
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_CHERRYBLOSSOMSSET) == 0)
+		{// 桜の花びらデータ終了の合図だった
+			break;
+		}
+	}
+}
+
+
+//*****************************************************************************
+//
 // 設定、取得等色々関数(外部との窓口も含めてここに書いてます)
 // Auther : Hodaka Niwa
 //
@@ -2647,6 +3216,7 @@ void CGame::ClearVariable(void)
 	m_pMapFileName = NULL;
 	m_nStateCounter = 0;
 	m_nMapIdx = 0;
+	m_nStageIdx = 0;
 	m_nNumMap = 0;
 	m_nGameCounter = 0;
 	m_nSpawnEnemyCount = 0;
@@ -2662,6 +3232,11 @@ void CGame::ClearVariable(void)
 	strcpy(m_aDeleteBlock, "\0");
 	m_nNumDeleteEnemy = 0;
 	strcpy(m_aDeleteEnemy, "\0");
+	m_bDeletePlayerFlag = 0;
+	m_bEnemyMove = true;
+	m_nEnemyMoveCounter = 0;
+	m_HinaEvent = HINAEVENT_CHERRY_BLOSSOMS;
+	m_nEventCounter = 0;
 	for (int nCntPlayer = NULL; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
 		m_pPlayer[nCntPlayer] = NULL;
@@ -2735,4 +3310,12 @@ CPlayer *CGame::GetPlayer(const int nIdx)
 int CGame::GetNumEnemy(void)
 {
 	return m_nNumEnemy;
+}
+
+//=============================================================================
+// ゲームの敵を動かせるかどうか取得する
+//=============================================================================
+bool CGame::GetEnemyMove(void)
+{
+	return m_bEnemyMove;
 }

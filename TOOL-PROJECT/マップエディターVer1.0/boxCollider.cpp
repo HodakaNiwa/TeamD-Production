@@ -11,7 +11,8 @@
 //*****************************************************************************
 //     マクロ定義
 //*****************************************************************************
-#define BOX_COLLIDER_LINEWIDTH (3.0f)    // 線の幅
+#define BOX_COLLIDER_LINECOLOR (D3DXCOLOR(0.0f,0.0f,1.0f,1.0f))  // 線の色
+#define BOX_COLLIDER_LINEWIDTH (1.2f)                            // 線の幅
 
 //*****************************************************************************
 //     静的メンバ変数
@@ -197,7 +198,7 @@ void CBoxCollider::Draw(void)
 			{
 				Vec[0] = m_VecPos[m_Index[(nCnt * 2)]];
 				Vec[1] = m_VecPos[m_Index[(nCnt * 2) + 1]];
-				m_pLine->DrawTransform(Vec, 2, &m_MtxWorld, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+				m_pLine->DrawTransform(Vec, 2, &m_MtxWorld, BOX_COLLIDER_LINECOLOR);
 			}
 			m_pLine->End();
 		}

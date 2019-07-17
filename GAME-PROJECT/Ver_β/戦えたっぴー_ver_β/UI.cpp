@@ -12,7 +12,6 @@
 //*****************************************************************************
 // 初期化用マクロ
 // 背景用
-#define UI_BG_WIDTH_INI             (90.0f)
 #define UI_BG_HEIGHT_INI            (SCREEN_HEIGHT / 2)
 #define UI_BG_POS_INI               (D3DXVECTOR3(SCREEN_WIDTH - UI_BG_WIDTH_INI,SCREEN_HEIGHT / 2,0.0f))
 #define UI_BG_COL_INI               (D3DXCOLOR(0.3f,0.3f,0.3f,1.0f))
@@ -222,7 +221,7 @@ void CUI::ClearVariable(void)
 //=============================================================================
 void CUI::CreateBg(void)
 {
-	m_pBg = CScene2D::Create(UI_BG_POS_INI, UI_BG_COL_INI, UI_BG_WIDTH_INI, UI_BG_HEIGHT_INI);
+	m_pBg = CScene2D::Create(UI_BG_POS_INI, UI_BG_COL_INI, UI_BG_WIDTH_INI, UI_BG_HEIGHT_INI, UI_PRIORITY);
 }
 
 //=============================================================================
@@ -245,7 +244,8 @@ void CUI::CreatePlayerIcon(void)
 
 	for (int nCnt = 0; nCnt < MAX_NUM_PLAYER; nCnt++)
 	{
-		m_pPlayerIcon[nCnt] = CScene2D::Create(PlayerIconPos[nCnt], PlayerIconCol[nCnt], fPlayerIconWidth[nCnt], fPlayerIconHeight[nCnt]);
+		m_pPlayerIcon[nCnt] = CScene2D::Create(PlayerIconPos[nCnt], PlayerIconCol[nCnt],
+			fPlayerIconWidth[nCnt], fPlayerIconHeight[nCnt], UI_PRIORITY);
 	}
 }
 
@@ -262,7 +262,8 @@ void CUI::CreatePlayerStock(void)
 //=============================================================================
 void CUI::CreateStageIcon(void)
 {
-	m_pStageIcon = CScene2D::Create(UI_STAGEICON_POS_INI, UI_STAGEICON_COL_INI, UI_STAGEICON_WIDTH_INI, UI_STAGEICON_HEIGHT_INI);
+	m_pStageIcon = CScene2D::Create(UI_STAGEICON_POS_INI, UI_STAGEICON_COL_INI,
+		UI_STAGEICON_WIDTH_INI, UI_STAGEICON_HEIGHT_INI, UI_PRIORITY);
 }
 
 //=============================================================================

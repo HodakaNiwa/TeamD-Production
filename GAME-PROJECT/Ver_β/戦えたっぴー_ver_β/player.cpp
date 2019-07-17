@@ -119,7 +119,7 @@ void CPlayer::Uninit(void)
 	//I—¹ˆ—
 	CCharacter::Uninit();
 
-	if (CManager::GetGame() != NULL)
+	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
 		CManager::GetGame()->DeletePlayer(NULL, m_nIdx);
 	}
@@ -571,4 +571,12 @@ void CPlayer::Hit(CScene *pScene)
 void CPlayer::ClearVariable(void)
 {
 
+}
+
+//=============================================================================
+// ”Ô†‚ğæ“¾‚·‚éˆ—
+//=============================================================================
+int CPlayer::GetIdx(void)
+{
+	return m_nIdx;
 }
