@@ -4,8 +4,8 @@ Format Text Ver 1.0
 Scene {
 	pos 227.7805 -75.8673 3840.0007
 	lookat 0.0000 0.0000 0.0000
-	head 18.9400
-	pich 0.3008
+	head 20.2000
+	pich 0.2208
 	bank 0.0000
 	ortho 0
 	zoom2 1.9531
@@ -20,7 +20,7 @@ Scene {
 Material 13 {
 	"たっぴー" col(1.000 1.000 1.000 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.000) power(5.00) tex("C:\Users\game112\Desktop\授業系\チーム（たっぴー）\企画書用イラスト\たっぴー紅茶.png")
 	"カップ" col(0.749 0.749 0.749 0.590) dif(0.800) amb(0.620) emi(0.000) spc(0.240) power(1.00)
-	"中身" col(1.000 1.000 1.000 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.000) power(5.00) tex("C:\Users\game112\Desktop\授業系\チーム（たっぴー）\作業物\ミルクティー中身.png")
+	"中身" col(1.000 1.000 1.000 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.000) power(5.00) tex("data/TEXTURE/CHARACTER/milktea_contents.png")
 	"帯白" col(1.000 1.000 1.000 1.000) dif(0.800) amb(0.600) emi(0.130) spc(0.000) power(0.00)
 	"帯色" col(1.000 0.733 0.275 1.000) dif(0.800) amb(0.600) emi(0.130) spc(0.000) power(0.00)
 	"mat2" col(1.000 0.898 0.596 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.000) power(5.00)
@@ -28,7 +28,7 @@ Material 13 {
 	"キャタピラー" col(0.459 0.459 0.459 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.590) power(10.00)
 	"クッキーP" col(0.898 0.678 0.376 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.000) power(5.00)
 	"飴R" col(0.886 0.043 0.055 1.000) dif(0.800) amb(0.640) emi(0.200) spc(0.480) power(32.00)
-	"顔グラデ" col(1.000 1.000 1.000 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.000) power(5.00) tex("C:\Users\game112\Desktop\授業系\チーム（たっぴー）\作業物\紅茶顔.png")
+	"顔グラデ" col(1.000 1.000 1.000 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.000) power(5.00) tex("data/TEXTURE/CHARACTER/blacktea_face.png")
 	"車輪の軸" col(0.310 0.310 0.310 1.000) dif(0.800) amb(0.600) emi(0.000) spc(0.370) power(10.00)
 	"たぴおか" col(0.310 0.196 0.176 1.000) dif(0.800) amb(0.350) emi(0.000) spc(0.680) power(44.00)
 }
