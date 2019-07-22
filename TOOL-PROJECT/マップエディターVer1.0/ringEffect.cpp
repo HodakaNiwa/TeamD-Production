@@ -7,7 +7,6 @@
 #include "ringEffect.h"
 #include "manager.h"
 #include "renderer.h"
-#include "debugproc.h"
 
 //*****************************************************************************
 //     マクロ定義
@@ -26,7 +25,8 @@
 //=============================================================================
 CRingData::CRingData()
 {
-	m_Rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);           // 向き
+	m_MaxRot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);        // 向きの最大値
+	m_MinRot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);        // 向きの最小値
 	m_MaxMove = D3DXVECTOR3(0.0f, 0.0f, 0.0f);       // 移動量の最大値
 	m_MinMove = D3DXVECTOR3(0.0f, 0.0f, 0.0f);       // 移動量の最小値
 	m_ChangeMove = D3DXVECTOR3(0.0f, 0.0f, 0.0f);    // 移動量の変化量
@@ -166,41 +166,41 @@ void CRingEffect::Uninit(void)
 //=============================================================================
 void CRingEffect::Update(void)
 {
-	// 各種値の取得
-	D3DXVECTOR3 pos = GetPos();        // 座標
-	D3DXVECTOR3 rot = GetRot();        // 向き
-	D3DXCOLOR col = GetCol();          // 色
-	float fHeight = GetHeight();       // 高さ
-	float fRadius = GetRadius();       // 半径
-	float fDiffusion = GetDiffusion(); // 幅
-
 	// 寿命を減らす
 	m_nLife--;
 
-	// 移動量を加算する
-	pos += m_Move;
-
-	// 移動量を変化させる
-	m_Move += m_ChangeMove;
-
-	// 色を変化させる
-	col += m_ChangeCol;
-
-	// 高さを変化させる
-	fHeight += m_fChangeHeight;
-
-	// 半径を変化させる
-	fRadius += m_fChangeRadius;
-
-	// 幅を変化させる
-	fDiffusion += m_fChangeDiffusion;
-
-	if (m_nLife <= 0 || col.a <= 0.0f)
+	if (m_nLife <= 0)
 	{// 寿命がなくなった
 		Uninit();
 	}
 	else
 	{// 寿命がまだある
+		// 各種値の取得
+		D3DXVECTOR3 pos = GetPos();        // 座標
+		D3DXVECTOR3 rot = GetRot();        // 向き
+		D3DXCOLOR col = GetCol();          // 色
+		float fHeight = GetHeight();       // 高さ
+		float fRadius = GetRadius();       // 半径
+		float fDiffusion = GetDiffusion(); // 幅
+
+		// 移動量を加算する
+		pos += m_Move;
+
+		// 移動量を変化させる
+		m_Move += m_ChangeMove;
+
+		// 色を変化させる
+		col += m_ChangeCol;
+
+		// 高さを変化させる
+		fHeight += m_fChangeHeight;
+
+		// 半径を変化させる
+		fRadius += m_fChangeRadius;
+
+		// 幅を変化させる
+		fDiffusion += m_fChangeDiffusion;
+
 		// 向きを変化させる
 		if (m_nRotPattern == 0)
 		{// 0のパターン(時計回り)なら
@@ -296,8 +296,8 @@ void CRingEffect::Draw(void)
 			}
 
 			// Zテストを無効にする
-			pDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);      // 深度バッファの書き込み設定を無効に
-			pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);  // 以下のものを描画する
+			pDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE); // 深度バッファの書き込み設定を無効に
+			pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);// すべて描画する
 
 			// 共通の描画処理
 			CMeshRing::Draw();

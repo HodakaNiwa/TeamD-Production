@@ -6,20 +6,16 @@
 //*****************************************************************************
 #include "emitter.h"
 #include "manager.h"
-#include "basemode.h"
 #include "camera.h"
-#include "cameraManager.h"
 #include "particle.h"
 #include "ringEffect.h"
 #include "effectManager.h"
 #include "input.h"
 
-#include "debugproc.h"
-
 //*****************************************************************************
 //    マクロ定義
 //*****************************************************************************
-#define EMITTER_EDIT_EFFECTALPAH  (0.2f) // マップエディット時のエフェクトの透明度
+#define EMITTER_EFFECT_PRIORITY   (5)    // エフェクトの処理優先順位
 
 //*****************************************************************************
 //    CEmitterDataの処理
@@ -29,15 +25,15 @@
 //=============================================================================
 CEmitterData::CEmitterData()
 {
-	m_nType = 0;         // 使用するエフェクトの種類
-	m_nTexIdx = 0;       // 使用するテクスチャの番号
-	m_nEffectIdx = 0;    // 使用するエフェクトの番号
-	m_fRangeMax = 0.0f;  // エフェクトを生成する範囲の最大値
-	m_fRangeMin = 0.0f;  // エフェクトを生成する範囲の最小値
-	m_nLife = 0;         // 寿命
-	m_nLap = 0;          // 1回の放出で出すエフェクトの個数
-	m_nAppear = 0;       // エフェクトを出す間隔
-	m_bLoop = false;     // ループするかしないか
+	m_nType = 0;                                // 使用するエフェクトの種類
+	m_nTexIdx = 0;                              // 使用するテクスチャの番号
+	m_nEffectIdx = 0;                           // 使用するエフェクトの番号
+	m_RangeMax = D3DXVECTOR3(0.0f, 0.0f, 0.0f); // エフェクトを生成する範囲の最大値
+	m_RangeMin = D3DXVECTOR3(0.0f, 0.0f, 0.0f); // エフェクトを生成する範囲の最小値
+	m_nLife = 0;                                // 寿命
+	m_nLap = 0;                                 // 1回の放出で出すエフェクトの個数
+	m_nAppear = 0;                              // エフェクトを出す間隔
+	m_bLoop = false;                            // ループするかしないか
 }
 
 //=============================================================================
@@ -57,11 +53,11 @@ CEmitterData::~CEmitterData()
 CEmitter::CEmitter(int nPriority, OBJTYPE objType) : CScene(nPriority, objType)
 {
 	// 各種値の設定
+	m_nType = 0;                            // 種類番号
 	m_pTexture = NULL;                      // テクスチャへのポインタ
 	m_Pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 座標
 	m_Rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);  // 向き
 	D3DXMatrixIdentity(&m_MtxWorld);        // ワールドマトリックス
-	m_nType = 0;                            // 使用するエフェクトの種類
 	m_nTexIdx = 0;                          // 使用するテクスチャ番号
 	m_nEffectIdx = 0;                       // 使用するエフェクトの番号
 	m_nLife = 0;                            // エミッタの寿命
@@ -132,100 +128,11 @@ void CEmitter::Draw(void)
 }
 
 //=============================================================================
-//    移動処理
+//    種類番号を設定する処理
 //=============================================================================
-void CEmitter::Movement(void)
+void CEmitter::SetType(const int nType)
 {
-	// キーボードの取得
-	CInputKeyboard *pKeyboard = CManager::GetKeyboard();
-
-	// カメラを取得
-	CCamera *pCamera = CManager::GetBaseMode()->GetCameraManager()->GetCamera();
-
-	if (pKeyboard->GetPress(DIK_A) == true)
-	{// 左方向の入力がされた
-		if (pKeyboard->GetPress(DIK_W) == true)
-		{// 同時に上方向の入力がされた
-		    // 移動処理
-			m_Pos.x += sinf(pCamera->GetRot().y - (D3DX_PI * 0.25f)) * EMITTER_MOVEMENT;
-			m_Pos.z += cosf(pCamera->GetRot().y - (D3DX_PI * 0.25f)) * EMITTER_MOVEMENT;
-		}
-		else if (pKeyboard->GetPress(DIK_S) == true)
-		{// 同時に下方向の入力がされた
-		    // 移動処理
-			m_Pos.x += sinf(pCamera->GetRot().y - (D3DX_PI * 0.75f)) * EMITTER_MOVEMENT;
-			m_Pos.z += cosf(pCamera->GetRot().y - (D3DX_PI * 0.75f)) * EMITTER_MOVEMENT;
-		}
-		else
-		{// 何も押されてない
-		    // 移動処理
-			m_Pos.x += sinf(pCamera->GetRot().y - (D3DX_PI * 0.5f)) * EMITTER_MOVEMENT;
-			m_Pos.z += cosf(pCamera->GetRot().y - (D3DX_PI * 0.5f)) * EMITTER_MOVEMENT;
-		}
-	}
-	else if (pKeyboard->GetPress(DIK_D) == true)
-	{// 右方向の入力がされた
-		if (pKeyboard->GetPress(DIK_W) == true)
-		{// 同時に上方向の入力がされた
-		    // 移動処理
-			m_Pos.x -= sinf(pCamera->GetRot().y - (D3DX_PI * 0.75f)) * EMITTER_MOVEMENT;
-			m_Pos.z -= cosf(pCamera->GetRot().y - (D3DX_PI * 0.75f)) * EMITTER_MOVEMENT;
-		}
-		else if (pKeyboard->GetPress(DIK_S) == true)
-		{// 同時に下方向の入力がされた
-		    // 移動処理
-			m_Pos.x -= sinf(pCamera->GetRot().y - (D3DX_PI * 0.25f)) * EMITTER_MOVEMENT;
-			m_Pos.z -= cosf(pCamera->GetRot().y - (D3DX_PI * 0.25f)) * EMITTER_MOVEMENT;
-		}
-		else
-		{// 何も押されてない
-		    // 移動処理
-			m_Pos.x -= sinf(pCamera->GetRot().y - (D3DX_PI * 0.5f)) * EMITTER_MOVEMENT;
-			m_Pos.z -= cosf(pCamera->GetRot().y - (D3DX_PI * 0.5f)) * EMITTER_MOVEMENT;
-		}
-	}
-	else if (pKeyboard->GetPress(DIK_W) == true)
-	{// 上方向の入力がされた
-	    // 移動処理
-		m_Pos.x += sinf(pCamera->GetRot().y) * EMITTER_MOVEMENT;
-		m_Pos.z += cosf(pCamera->GetRot().y) * EMITTER_MOVEMENT;
-	}
-	else if (pKeyboard->GetPress(DIK_S) == true)
-	{// 下方向の入力がされた
-	    // 移動処理
-		m_Pos.x += sinf(pCamera->GetRot().y + D3DX_PI) * EMITTER_MOVEMENT;
-		m_Pos.z += cosf(pCamera->GetRot().y + D3DX_PI) * EMITTER_MOVEMENT;
-	}
-
-	if (pKeyboard->GetPress(DIK_R) == true)
-	{// 縦方向の入力がされた
-	    // 移動処理
-		m_Pos.y += EMITTER_MOVEMENT;
-	}
-	else if (pKeyboard->GetPress(DIK_V) == true)
-	{// 縦方向の入力がされた
-	    // 移動処理
-		m_Pos.y -= EMITTER_MOVEMENT;
-	}
-
-	if (pKeyboard->GetPress(DIK_Q) == true)
-	{// Qキーの入力がされた
-	    // 回転処理
-		m_Rot.y += EMITTER_ROTATION;
-		if (m_Rot.y > D3DX_PI)
-		{// 円周率を超えた
-			m_Rot.y -= D3DX_PI * 2.0f;
-		}
-	}
-	else if (pKeyboard->GetPress(DIK_E) == true)
-	{// Eキーの入力がされた
-	    // 回転処理
-		m_Rot.y -= EMITTER_ROTATION;
-		if (m_Rot.y < -D3DX_PI)
-		{// 円周率を超えた
-			m_Rot.y += D3DX_PI * 2.0f;
-		}
-	}
+	m_nType = nType;
 }
 
 //=============================================================================
@@ -261,14 +168,6 @@ void CEmitter::SetMtxWorld(const D3DXMATRIX mtxWorld)
 }
 
 //=============================================================================
-//    使用するエフェクトの種類設定処理
-//=============================================================================
-void CEmitter::SetType(const int nType)
-{
-	m_nType = nType;
-}
-
-//=============================================================================
 //    使用するテクスチャ番号設定処理
 //=============================================================================
 void CEmitter::SetTexIdx(const int nTexIdx)
@@ -287,17 +186,17 @@ void CEmitter::SetEffectIdx(const int nEffectIdx)
 //=============================================================================
 //    エフェクトを生成する範囲の最大値設定処理
 //=============================================================================
-void CEmitter::SetRangeMax(const float fRangeMax)
+void CEmitter::SetRangeMax(const D3DXVECTOR3 RangeMax)
 {
-	m_fRangeMax = fRangeMax;
+	m_RangeMax = RangeMax;
 }
 
 //=============================================================================
 //    エフェクトを生成する範囲の最小値設定処理
 //=============================================================================
-void CEmitter::SetRangeMin(const float fRangeMin)
+void CEmitter::SetRangeMin(const D3DXVECTOR3 RangeMin)
 {
-	m_fRangeMin = fRangeMin;
+	m_RangeMin = RangeMin;
 }
 
 //=============================================================================
@@ -333,6 +232,14 @@ void CEmitter::SetLoop(const bool bLoop)
 }
 
 //=============================================================================
+//    種類番号を取得する処理
+//=============================================================================
+int CEmitter::GetType(void)
+{
+	return m_nType;
+}
+
+//=============================================================================
 //    テクスチャへのポインタ取得処理
 //=============================================================================
 LPDIRECT3DTEXTURE9 CEmitter::GetTexture(void)
@@ -365,14 +272,6 @@ D3DXMATRIX CEmitter::GetMtxWorld(void)
 }
 
 //=============================================================================
-//    使用するエフェクトの種類取得処理
-//=============================================================================
-int CEmitter::GetType(void)
-{
-	return m_nType;
-}
-
-//=============================================================================
 //    使用するテクスチャ番号取得処理
 //=============================================================================
 int CEmitter::GetTexIdx(void)
@@ -391,17 +290,17 @@ int CEmitter::GetEffectIdx(void)
 //=============================================================================
 //    エフェクトを生成する範囲の最大値取得処理
 //=============================================================================
-float CEmitter::GetRangeMax(void)
+D3DXVECTOR3 CEmitter::GetRangeMax(void)
 {
-	return m_fRangeMax;
+	return m_RangeMax;
 }
 
 //=============================================================================
 //    エフェクトを生成する範囲の最小値取得処理
 //=============================================================================
-float CEmitter::GetRangeMin(void)
+D3DXVECTOR3 CEmitter::GetRangeMin(void)
 {
-	return m_fRangeMin;
+	return m_RangeMin;
 }
 
 //=============================================================================
@@ -459,7 +358,7 @@ CParEmitter::~CParEmitter()
 //=============================================================================
 //    生成処理
 //=============================================================================
-CParEmitter *CParEmitter::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nTexIdx, int nEffectIdx, float fRangeMax, float fRangeMin, int nLife, int nLap, int nAppear, bool bLoop, CParData *pParData, LPDIRECT3DTEXTURE9 pTexture, int nPriority)
+CParEmitter *CParEmitter::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nTexIdx, int nEffectIdx, D3DXVECTOR3 RangeMax, D3DXVECTOR3 RangeMin, int nLife, int nLap, int nAppear, bool bLoop, CParData *pParData, LPDIRECT3DTEXTURE9 pTexture, int nType, int nPriority)
 {
 	CParEmitter *pParEmitter = NULL;       // パーティクルエミッタクラス型のポインタ
 	if (pParEmitter == NULL)
@@ -467,16 +366,16 @@ CParEmitter *CParEmitter::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, in
 		pParEmitter = new CParEmitter(nPriority);
 		if (pParEmitter != NULL)
 		{// インスタンスを生成できた
-		 // 各種値の設定
+		    // 各種値の設定
+			pParEmitter->SetType(nType);
 			pParEmitter->SetParData(pParData);
 			pParEmitter->BindTexture(pTexture);
 			pParEmitter->SetPos(pos);
 			pParEmitter->SetRot(rot);
-			pParEmitter->SetType(nType);
 			pParEmitter->SetTexIdx(nTexIdx);
 			pParEmitter->SetEffectIdx(nEffectIdx);
-			pParEmitter->SetRangeMax(fRangeMax);
-			pParEmitter->SetRangeMin(fRangeMin);
+			pParEmitter->SetRangeMax(RangeMax);
+			pParEmitter->SetRangeMin(RangeMin);
 			pParEmitter->SetLife(nLife);
 			pParEmitter->SetLap(nLap);
 			pParEmitter->SetAppear(nAppear);
@@ -546,15 +445,11 @@ void CParEmitter::SetEffect(void)
 	D3DXVECTOR3 pos = GetPos();                               // 座標
 	D3DXVECTOR3 Move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);         // 移動量
 	D3DXVECTOR3 ChangeMove = D3DXVECTOR3(0.0f, 0.0f, 0.0f);   // 移動量の変化量
-	D3DXVECTOR3 Range = D3DXVECTOR3(0.0f, 0.0f, 0.0f);        // 生成する範囲
-	float fMaxRot = 0.0f;                                     // 生成時の向き(最大値)
-	float fMinRot = 0.0f;                                     // 生成時の向き(最小値)
 	D3DXCOLOR InitCol = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);    // 初期化時の色
 	float fWidth = 0.0f;                                      // 幅
 	float fHeight = 0.0f;                                     // 高さ
 	float fRot = 0.0f;                                        // 向き
 	D3DXCOLOR ChangeCol = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);  // 色の変化量
-	float fGravity = 0.0f;                                    // 重力
 	float fSpread = 0.0f;                                     // 半径の変化量
 	float fChangeRot = 0.0f;                                  // 向きの変化量
 	float fBouncing = 0.0f;                                   // バウンド量
@@ -568,14 +463,10 @@ void CParEmitter::SetEffect(void)
 	if (m_pParData != NULL)
 	{// メモリが確保されている
 		// データから代入する部分はデータから引っ張ってくる
-		fMaxRot = D3DXToRadian(m_pParData->GetMaxRot());
-		fMinRot = D3DXToRadian(m_pParData->GetMinRot());
-		Range = m_pParData->GetRange();
 		ChangeMove = m_pParData->GetChangeMove();
 		InitCol = m_pParData->GetInitCol();
 		ChangeCol = m_pParData->GetChangeCol();
 		fSpread = m_pParData->GetSpread();
-		fGravity = m_pParData->GetGravity();
 		fBouncing = m_pParData->GetBouncing();
 		fChangeRot = m_pParData->GetRotSpeed();
 		nRotPattern = m_pParData->GetRotPattern();
@@ -583,201 +474,173 @@ void CParEmitter::SetEffect(void)
 		bDrawAddtive = m_pParData->GetDrawAddtive();
 		bLighting = m_pParData->GetLighting();
 
+		// エミッタ自身の向きを反映させるために行列計算
+		D3DXMATRIX mtxRot;
+		D3DXMatrixRotationYawPitchRoll(&mtxRot, GetRot().y, GetRot().x, GetRot().z);
+
 		// ランダムに出力するところだけ計算する
-		float fRandom = 0.0f;
-		float fRange = 0.0f;
-		float fAngle = 0.0f;
+		int nRange = 0;
 
 		// 向き
-		fMaxRot *= 100.0f;
-		fMinRot *= 100.0f;
-		fRandom = (fMaxRot - fMinRot);
-		if (fRandom > 0 && fRandom >= 0.1f)
+		int nMaxRot = (int)m_pParData->GetMaxRot();
+		int nMinRot = (int)m_pParData->GetMinRot();
+		nRange = nMaxRot - nMinRot;
+		if (nRange >= 1)
 		{
-			fAngle = (rand() % (int)fRandom) * 1.0f;
+			fRot = (float)((rand() % nRange));
 		}
-		fAngle /= 100.0f;
-		fAngle += fMinRot + GetRot().y;
-		if (fAngle > D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle -= D3DX_PI * 2.0f;
+		else
+		{
+			fRot = m_pParData->GetMinRot();
 		}
-		if (fAngle < -D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle += D3DX_PI * 2.0f;
-		}
-		fRot = fAngle;
+		fRot = D3DXToRadian(fRot);
 
-		// 座標の計算
-		float fMag = D3DXToRadian(m_pParData->GetRangeMag());
-
+		// 範囲の計算
+		D3DXVECTOR3 Range;
+		D3DXVECTOR3 RangeMax = GetRangeMax();
+		D3DXVECTOR3 RangeMin = GetRangeMin();
 		// X方向
-		fRange = (D3DX_PI * 2.0f) - (fMag - (D3DX_PI * 2.0f));
-		if (fRange > 0 && fRange >= 0.0001f)
+		float fRangeX = 0.0f;
+		int nRangeMaxX = (int)RangeMax.x;
+		int nRangeMinX = (int)RangeMin.x;
+		nRange = nRangeMaxX - nRangeMinX;
+		if (nRange >= 1)
 		{
-			fRandom = (float)(rand() % ((int)fRange * 100));
-			pos.x += sinf(fRandom / 100.0f) * Range.x;
+			fRangeX = (float)(rand() % nRange + nRangeMinX);
+		}
+		else
+		{
+			fRangeX = RangeMin.x;
 		}
 
 		// Y方向
-		fRange = (D3DX_PI * 2.0f) - (fMag - (D3DX_PI * 2.0f));
-		if (fRange > 0 && fRange >= 0.0001f)
+		float fRangeY = 0.0f;
+		int nRangeMaxY = (int)RangeMax.y;
+		int nRangeMinY = (int)RangeMin.y;
+		nRange = nRangeMaxY - nRangeMinY;
+		if (nRange >= 1)
 		{
-			fRandom = (float)(rand() % ((int)fRange * 100));
-			pos.y += sinf(fRandom / 100.0f) * Range.y;
+			fRangeY = (float)(rand() % nRange + nRangeMinY);
+		}
+		else
+		{
+			fRangeY = RangeMin.y;
 		}
 
 		// Z方向
-		fRange = (D3DX_PI * 2.0f) - (fMag - (D3DX_PI * 2.0f));
-		if (fRange > 0 && fRange >= 0.0001f)
+		float fRangeZ = 0.0f;
+		int nRangeMaxZ = (int)RangeMax.z;
+		int nRangeMinZ = (int)RangeMin.z;
+		nRange = nRangeMaxZ - nRangeMinZ;
+		if (nRange >= 1)
 		{
-			fRandom = (float)(rand() % ((int)fRange * 100));
-			pos.z += cosf(fRandom / 100.0f) * Range.z;
+			fRangeZ = (float)(rand() % nRange + nRangeMinZ);
 		}
+		else
+		{
+			fRangeZ = RangeMin.z;
+		}
+		Range = D3DXVECTOR3(fRangeX, fRangeY, fRangeZ);
+		D3DXVec3TransformCoord(&Range, &Range, &mtxRot);
+
+		// 算出された範囲をエミッタの座標に加えたものをパーティクルの放出位置とする
+		pos += Range;
 
 		// 移動量の計算
 		D3DXVECTOR3 MaxMove = m_pParData->GetMaxMove();
 		D3DXVECTOR3 MinMove = m_pParData->GetMinMove();
+		D3DXVECTOR3 Move;
 
+		// 移動量を計算する
 		// X方向
-		// 角度の算出
-		float fAngleMax = D3DXToRadian(GetRangeMax());
-		float fAngleMin = D3DXToRadian(GetRangeMin());
-		fAngleMax *= 100.0f;
-		fAngleMin *= 100.0f;
-		fRandom = (fAngleMax - fAngleMin);
-		if (fRandom > 0 && fRandom >= 0.1f)
+		float fMoveX = 0.0f;
+		int nMaxMoveX = (int)MaxMove.x;
+		int nMinMoveX = (int)MinMove.x;
+		nRange = nMaxMoveX - nMinMoveX;
+		if (nRange >= 1)
 		{
-			fAngle = (rand() % (int)fRandom) * 1.0f;
-		}
-		fAngle /= 100.0f;
-		fAngle += fAngleMin + GetRot().y;
-		if (fAngle > D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle -= D3DX_PI * 2.0f;
-		}
-		if (fAngle < -D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle += D3DX_PI * 2.0f;
-		}
-		fRange = (MaxMove.x - MinMove.x);
-		if (fRange > 0 && fRange >= 1)
-		{
-			fRandom = rand() % (int)fRange + MinMove.x;
-			Move.x = sinf(fAngle) * fRandom;
+			fMoveX = (float)(rand() % nRange + nMinMoveX);
 		}
 		else
 		{
-			Move.x = MinMove.x;
+			fMoveX = MinMove.x;
 		}
-
 
 		// Y方向
-		// 角度の算出
-		fAngleMax = D3DXToRadian(GetRangeMax());
-		fAngleMin = D3DXToRadian(GetRangeMin());
-		fAngleMax *= 100.0f;
-		fAngleMin *= 100.0f;
-		fRandom = (fAngleMax - fAngleMin);
-		if (fRandom > 0 && fRandom >= 1)
+		float fMoveY = 0.0f;
+		int nMaxMoveY = (int)MaxMove.y;
+		int nMinMoveY = (int)MinMove.y;
+		nRange = nMaxMoveY - nMinMoveY;
+		if (nRange >= 1)
 		{
-			fAngle = (rand() % (int)fRandom) * 1.0f;
-		}
-		fAngle /= 100.0f;
-		fAngle += fAngleMin + GetRot().y;
-		if (fAngle > D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle -= D3DX_PI * 2.0f;
-		}
-		if (fAngle < -D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle += D3DX_PI * 2.0f;
-		}
-		fRange = (MaxMove.y - MinMove.y);
-		if (fRange > 0 && fRange >= 1)
-		{
-			fRandom = rand() % (int)fRange + MinMove.y;
-			Move.y = sinf(fAngle) * fRandom;
+			fMoveY = (float)(rand() % nRange + nMinMoveY);
 		}
 		else
 		{
-			Move.y = MinMove.y;
+			fMoveY = MinMove.y;
 		}
 
 		// Z方向
-		// 角度の算出
-		fAngleMax = D3DXToRadian(GetRangeMax());
-		fAngleMin = D3DXToRadian(GetRangeMin());
-		fAngleMax *= 100.0f;
-		fAngleMin *= 100.0f;
-		fRandom = (fAngleMax - fAngleMin);
-		if (fRandom > 0 && fRandom >= 1)
+		float fMoveZ = 0.0f;
+		int nMaxMoveZ = (int)MaxMove.z;
+		int nMinMoveZ = (int)MinMove.z;
+		nRange = nMaxMoveZ - nMinMoveZ;
+		if (nRange >= 1)
 		{
-			fAngle = (rand() % (int)fRandom) * 1.0f;
-		}
-		fAngle /= 100.0f;
-		fAngle += fAngleMin + GetRot().y;
-		if (fAngle > D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle -= D3DX_PI * 2.0f;
-		}
-		if (fAngle < -D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle += D3DX_PI * 2.0f;
-		}
-		fRange = (MaxMove.z - MinMove.z);
-		if (fRange > 0 && fRange >= 1)
-		{
-			fRandom = rand() % (int)fRange + MinMove.z;
-			Move.z = cosf(fAngle) * fRandom;
+			fMoveZ = (float)(rand() % nRange + nMinMoveZ);
 		}
 		else
 		{
-			Move.z = MinMove.z;
+			fMoveZ = MinMove.z;
 		}
+
+		// 向きを反映させ移動量を設定
+		Move = D3DXVECTOR3(fMoveX, fMoveY, fMoveZ);
+		D3DXVec3TransformCoord(&Move, &Move, &mtxRot);
+		D3DXVec3TransformCoord(&ChangeMove, &ChangeMove, &mtxRot);
 
 		// 大きさ
 		// 幅
-		float MaxWidth = m_pParData->GetMaxWidth();
-		float MinWidth = m_pParData->GetMinWidth();
-		fRange = MaxWidth - MinWidth;
-		if (fRange > 0 && fRange >= 1)
+		int nMaxWidth = (int)m_pParData->GetMaxWidth();
+		int nMinWidth = (int)m_pParData->GetMinWidth();
+		nRange = nMaxWidth - nMinWidth;
+		if (nRange >= 1)
 		{
-			fWidth = rand() % (int)fRange + MinWidth;
+			fWidth = (float)((rand() % nRange) + nMinWidth);
 		}
 		else
 		{
-			fWidth = MinWidth;
+			fWidth = (float)nMinWidth;
 		}
 
 		// 高さ
-		float MaxHeight = m_pParData->GetMaxHeight();
-		float MinHeight = m_pParData->GetMinHeight();
-		fRange = MaxHeight - MinHeight;
-		if (fRange > 0 && fRange >= 1)
+		int nMaxHeight = (int)m_pParData->GetMaxHeight();
+		int nMinHeight = (int)m_pParData->GetMinHeight();
+		nRange = nMaxHeight - nMinHeight;
+		if (nRange >= 1)
 		{
-			fHeight = rand() % (int)fRange + MinHeight;
+			fHeight = (float)((rand() % nRange) + nMinHeight);
 		}
 		else
 		{
-			fHeight = MinHeight;
+			fHeight = (float)nMinHeight;
 		}
 
 		// 寿命
-		int MaxLife = m_pParData->GetMaxLife();
-		int MinLife = m_pParData->GetMinLife();
-		fRange = (float)(MaxLife - MinLife);
-		if (fRange > 0 && fRange >= 1)
+		int nMaxLife = m_pParData->GetMaxLife();
+		int nMinLife = m_pParData->GetMinLife();
+		nRange = nMaxLife - nMinLife;
+		if (nRange >= 1)
 		{
-			nLife = rand() % (int)fRange + MinLife;
+			nLife = rand() % nRange + nMinLife;
 		}
 		else
 		{
-			nLife = MinLife;
+			nLife = nMinLife;
 		}
 
 		// パーティクルの生成
-		CParticle *pParticle = CParticle::Create(pos, Move, ChangeMove, InitCol, fWidth, fHeight, fRot, ChangeCol, fGravity, fSpread, fChangeRot, fBouncing, nLife, nRotPattern, bCollision, bDrawAddtive, bLighting, EFFECT_PRIORITY);
+		CParticle *pParticle = CParticle::Create(pos, Move, ChangeMove, InitCol, fWidth, fHeight, fRot, ChangeCol, fSpread, fChangeRot, fBouncing, nLife, nRotPattern, bCollision, bDrawAddtive, bLighting, EMITTER_EFFECT_PRIORITY);
 		if (pParticle != NULL)
 		{// パーティクルの生成に成功した
 			pParticle->BindTexture(GetTexture());
@@ -791,14 +654,6 @@ void CParEmitter::SetEffect(void)
 void CParEmitter::SetParData(CParData *pParData)
 {
 	m_pParData = pParData;
-}
-
-//=============================================================================
-//    パーティクルデータへのポインタ取得処理
-//=============================================================================
-CParData *CParEmitter::GetParData(void)
-{
-	return m_pParData;
 }
 
 //*****************************************************************************
@@ -824,7 +679,7 @@ CRingEmitter::~CRingEmitter()
 //=============================================================================
 //    生成処理
 //=============================================================================
-CRingEmitter *CRingEmitter::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nTexIdx, int nEffectIdx, float fRangeMax, float fRangeMin, int nLife, int nLap, int nAppear, bool bLoop, CRingData *pRingData, LPDIRECT3DTEXTURE9 pTexture, int nPriority)
+CRingEmitter *CRingEmitter::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nTexIdx, int nEffectIdx, D3DXVECTOR3 RangeMax, D3DXVECTOR3 RangeMin, int nLife, int nLap, int nAppear, bool bLoop, CRingData *pRingData, LPDIRECT3DTEXTURE9 pTexture, int nType, int nPriority)
 {
 	CRingEmitter *pRingEmitter = NULL;     // リングエフェクトエミッタクラス型のポインタ
 	if (pRingEmitter == NULL)
@@ -832,16 +687,16 @@ CRingEmitter *CRingEmitter::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, 
 		pRingEmitter = new CRingEmitter(nPriority);
 		if (pRingEmitter != NULL)
 		{// インスタンスを生成できた
-		    // 各種値の設定
+		 // 各種値の設定
+			pRingEmitter->SetType(nType);
 			pRingEmitter->SetRingData(pRingData);
 			pRingEmitter->BindTexture(pTexture);
 			pRingEmitter->SetPos(pos);
 			pRingEmitter->SetRot(rot);
-			pRingEmitter->SetType(nType);
 			pRingEmitter->SetTexIdx(nTexIdx);
 			pRingEmitter->SetEffectIdx(nEffectIdx);
-			pRingEmitter->SetRangeMax(fRangeMax);
-			pRingEmitter->SetRangeMin(fRangeMin);
+			pRingEmitter->SetRangeMax(RangeMax);
+			pRingEmitter->SetRangeMin(RangeMin);
 			pRingEmitter->SetLife(nLife);
 			pRingEmitter->SetLap(nLap);
 			pRingEmitter->SetAppear(nAppear);
@@ -909,9 +764,7 @@ void CRingEmitter::SetEffect(void)
 {
 	// 生成に必要なデータを作成
 	D3DXVECTOR3 pos = GetPos();                               // 座標
-	D3DXVECTOR3 Move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);         // 移動量
 	D3DXVECTOR3 ChangeMove = D3DXVECTOR3(0.0f, 0.0f, 0.0f);   // 移動量の変化量
-	D3DXVECTOR3 rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);          // 向き
 	D3DXCOLOR InitCol = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);    // 初期化時の色
 	float fHeight = 0.0f;                                     // 高さ
 	float fRadius = 0.0f;                                     // 半径
@@ -936,7 +789,6 @@ void CRingEmitter::SetEffect(void)
 	if (m_pRingData != NULL)
 	{// メモリが確保されている
 	    // データから代入する部分はデータから引っ張ってくる
-		rot = m_pRingData->GetRot();
 		ChangeMove = m_pRingData->GetChangeMove();
 		InitCol = m_pRingData->GetInitCol();
 		ChangeCol = m_pRingData->GetChangeCol();
@@ -953,127 +805,193 @@ void CRingEmitter::SetEffect(void)
 		bCulling = m_pRingData->GetCulling();
 		bDrawAddtive = m_pRingData->GetDrawAddtive();
 
+		// エミッタ自身の向きを反映させるために行列計算
+		D3DXMATRIX mtxRot;
+		D3DXMatrixRotationYawPitchRoll(&mtxRot, GetRot().y, GetRot().x, GetRot().z);
+
 		// ランダムに出力するところだけ計算する
-		float fRandom = 0.0f;
-		float fRange = 0.0f;
-		float fAngle = 0.0f;
+		int nRange = 0;
+
+		// 範囲の計算
+		D3DXVECTOR3 Range;
+		D3DXVECTOR3 RangeMax = GetRangeMax();
+		D3DXVECTOR3 RangeMin = GetRangeMin();
+		// X方向
+		float fRangeX = 0.0f;
+		int nRangeMaxX = (int)RangeMax.x;
+		int nRangeMinX = (int)RangeMin.x;
+		nRange = nRangeMaxX - nRangeMinX;
+		if (nRange >= 1)
+		{
+			fRangeX = (float)(rand() % nRange + nRangeMinX);
+		}
+		else
+		{
+			fRangeX = RangeMin.x;
+		}
+
+		// Y方向
+		float fRangeY = 0.0f;
+		int nRangeMaxY = (int)RangeMax.y;
+		int nRangeMinY = (int)RangeMin.y;
+		nRange = nRangeMaxY - nRangeMinY;
+		if (nRange >= 1)
+		{
+			fRangeY = (float)(rand() % nRange + nRangeMinY);
+		}
+		else
+		{
+			fRangeY = RangeMin.y;
+		}
+
+		// Z方向
+		float fRangeZ = 0.0f;
+		int nRangeMaxZ = (int)RangeMax.z;
+		int nRangeMinZ = (int)RangeMin.z;
+		nRange = nRangeMaxZ - nRangeMinZ;
+		if (nRange >= 1)
+		{
+			fRangeZ = (float)(rand() % nRange + nRangeMinZ);
+		}
+		else
+		{
+			fRangeZ = RangeMin.z;
+		}
+		Range = D3DXVECTOR3(fRangeX, fRangeY, fRangeZ);
+		D3DXVec3TransformCoord(&Range, &Range, &mtxRot);
+
+		// 算出された範囲をエミッタの座標に加えたものをパーティクルの放出位置とする
+		pos += Range;
+
+		// 向きの計算
+		D3DXVECTOR3 MaxRot = m_pRingData->GetMaxRot();
+		D3DXVECTOR3 MinRot = m_pRingData->GetMinRot();
+		D3DXVECTOR3 Rot;
+
+		// X方向
+		float fRotX = 0.0f;
+		int nMaxRotX = (int)MaxRot.x;
+		int nMinRotX = (int)MinRot.x;
+		nRange = nMaxRotX - nMinRotX;
+		if (nRange >= 1)
+		{
+			fRotX = (float)(rand() % nRange + nMinRotX);
+		}
+		else
+		{
+			fRotX = MinRot.x;
+		}
+
+		// Y方向
+		float fRotY = 0.0f;
+		int nMaxRotY = (int)MaxRot.y;
+		int nMinRotY = (int)MinRot.y;
+		nRange = nMaxRotY - nMinRotY;
+		if (nRange >= 1)
+		{
+			fRotY = (float)(rand() % nRange + nMinRotY);
+		}
+		else
+		{
+			fRotY = MinRot.y;
+		}
+
+		// Z方向
+		float fRotZ = 0.0f;
+		int nMaxRotZ = (int)MaxRot.z;
+		int nMinRotZ = (int)MinRot.z;
+		nRange = nMaxRotZ - nMinRotZ;
+		if (nRange >= 1)
+		{
+			fRotZ = (float)(rand() % nRange + nMinRotZ);
+		}
+		else
+		{
+			fRotZ = MinRot.z;
+		}
+		Rot = D3DXVECTOR3(fRotX, fRotY, fRotZ);
+
+		// エミッタ自身の向きも加算する
+		D3DXVECTOR3 EmitterRot = GetRot();
+		EmitterRot.x = D3DXToDegree(EmitterRot.x);
+		EmitterRot.y = D3DXToDegree(EmitterRot.y);
+		EmitterRot.z = D3DXToDegree(EmitterRot.z);
+		Rot += EmitterRot;
+
+		// 向きを円周率換算にしておく
+		Rot.x = D3DXToRadian(Rot.x);
+		Rot.y = D3DXToRadian(Rot.y);
+		Rot.z = D3DXToRadian(Rot.z);
+
 
 		// 移動量の計算
 		D3DXVECTOR3 MaxMove = m_pRingData->GetMaxMove();
 		D3DXVECTOR3 MinMove = m_pRingData->GetMinMove();
+		D3DXVECTOR3 Move;
 
+		// 移動量を計算する
 		// X方向
-		// 角度の算出
-		float fAngleMax = D3DXToRadian(GetRangeMax());
-		float fAngleMin = D3DXToRadian(GetRangeMin());
-		fAngleMax *= 100.0f;
-		fAngleMin *= 100.0f;
-		fRandom = (fAngleMax - fAngleMin);
-		if (fRandom > 0 && fRandom >= 0.1f)
+		float fMoveX = 0.0f;
+		int nMaxMoveX = (int)MaxMove.x;
+		int nMinMoveX = (int)MinMove.x;
+		nRange = nMaxMoveX - nMinMoveX;
+		if (nRange >= 1)
 		{
-			fAngle = (rand() % (int)fRandom) * 1.0f;
-		}
-		fAngle /= 100.0f;
-		fAngle += fAngleMin + GetRot().y;
-		if (fAngle > D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle -= D3DX_PI * 2.0f;
-		}
-		if (fAngle < -D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle += D3DX_PI * 2.0f;
-		}
-		fRange = (MaxMove.x - MinMove.x);
-		if (fRange > 0 && fRange >= 1)
-		{
-			fRandom = rand() % (int)fRange + MinMove.x;
-			Move.x = sinf(fAngle) * fRandom;
+			fMoveX = (float)(rand() % nRange + nMinMoveX);
 		}
 		else
 		{
-			Move.x = MinMove.x;
+			fMoveX = MinMove.x;
 		}
-
 
 		// Y方向
-		// 角度の算出
-		fAngleMax = D3DXToRadian(GetRangeMax());
-		fAngleMin = D3DXToRadian(GetRangeMin());
-		fAngleMax *= 100.0f;
-		fAngleMin *= 100.0f;
-		fRandom = (fAngleMax - fAngleMin);
-		if (fRandom > 0 && fRandom >= 1)
+		float fMoveY = 0.0f;
+		int nMaxMoveY = (int)MaxMove.y;
+		int nMinMoveY = (int)MinMove.y;
+		nRange = nMaxMoveY - nMinMoveY;
+		if (nRange >= 1)
 		{
-			fAngle = (rand() % (int)fRandom) * 1.0f;
-		}
-		fAngle /= 100.0f;
-		fAngle += fAngleMin + GetRot().y;
-		if (fAngle > D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle -= D3DX_PI * 2.0f;
-		}
-		if (fAngle < -D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle += D3DX_PI * 2.0f;
-		}
-		fRange = (MaxMove.y - MinMove.y);
-		if (fRange > 0 && fRange >= 1)
-		{
-			fRandom = rand() % (int)fRange + MinMove.y;
-			Move.y = sinf(fAngle) * fRandom;
+			fMoveY = (float)(rand() % nRange + nMinMoveY);
 		}
 		else
 		{
-			Move.y = MinMove.y;
+			fMoveY = MinMove.y;
 		}
 
 		// Z方向
-		// 角度の算出
-		fAngleMax = D3DXToRadian(GetRangeMax());
-		fAngleMin = D3DXToRadian(GetRangeMin());
-		fAngleMax *= 100.0f;
-		fAngleMin *= 100.0f;
-		fRandom = (fAngleMax - fAngleMin);
-		if (fRandom > 0 && fRandom >= 1)
+		float fMoveZ = 0.0f;
+		int nMaxMoveZ = (int)MaxMove.z;
+		int nMinMoveZ = (int)MinMove.z;
+		nRange = nMaxMoveZ - nMinMoveZ;
+		if (nRange >= 1)
 		{
-			fAngle = (rand() % (int)fRandom) * 1.0f;
-		}
-		fAngle /= 100.0f;
-		fAngle += fAngleMin + GetRot().y;
-		if (fAngle > D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle -= D3DX_PI * 2.0f;
-		}
-		if (fAngle < -D3DX_PI)
-		{// 角度が円周率を超えている
-			fAngle += D3DX_PI * 2.0f;
-		}
-		fRange = (MaxMove.z - MinMove.z);
-		if (fRange > 0 && fRange >= 1)
-		{
-			fRandom = rand() % (int)fRange + MinMove.z;
-			Move.z = cosf(fAngle) * fRandom;
+			fMoveZ = (float)(rand() % nRange + nMinMoveZ);
 		}
 		else
 		{
-			Move.z = MinMove.z;
+			fMoveZ = MinMove.z;
 		}
 
+		// 向きを反映させ移動量を設定
+		Move = D3DXVECTOR3(fMoveX, fMoveY, fMoveZ);
+		D3DXVec3TransformCoord(&Move, &Move, &mtxRot);
+		D3DXVec3TransformCoord(&ChangeMove, &ChangeMove, &mtxRot);
+
 		// 寿命
-		int MaxLife = m_pRingData->GetMaxLife();
-		int MinLife = m_pRingData->GetMinLife();
-		fRange = (float)(MaxLife - MinLife);
-		if (fRange > 0 && fRange >= 1)
+		int nMaxLife = m_pRingData->GetMaxLife();
+		int nMinLife = m_pRingData->GetMinLife();
+		nRange = nMaxLife - nMinLife;
+		if (nRange >= 1)
 		{
-			nLife = rand() % (int)fRange + MinLife;
+			nLife = rand() % nRange + nMinLife;
 		}
 		else
 		{
-			nLife = MinLife;
+			nLife = nMinLife;
 		}
 
 		// リングエフェクトの生成
-		CRingEffect *pRingEffect = CRingEffect::Create(pos, rot, InitCol, fHeight, fRadius, fDiffusion, nXBlock, nYBlock, nLife, RotSpeed, nRotPattern, Move, ChangeMove, ChangeCol, fChangeHeight, fChangeRadius, fChangeDiffusion, bCulling, bDrawAddtive, EFFECT_PRIORITY);
+		CRingEffect *pRingEffect = CRingEffect::Create(pos, Rot, InitCol, fHeight, fRadius, fDiffusion, nXBlock, nYBlock, nLife, RotSpeed, nRotPattern, Move, ChangeMove, ChangeCol, fChangeHeight, fChangeRadius, fChangeDiffusion, bCulling, bDrawAddtive, EMITTER_EFFECT_PRIORITY);
 		if (pRingEffect != NULL)
 		{// リングエフェクトの生成に成功した
 			pRingEffect->BindTexture(GetTexture());
@@ -1087,12 +1005,4 @@ void CRingEmitter::SetEffect(void)
 void CRingEmitter::SetRingData(CRingData *pRingData)
 {
 	m_pRingData = pRingData;
-}
-
-//=============================================================================
-//    リングエフェクトデータへのポインタ取得処理
-//=============================================================================
-CRingData *CRingEmitter::GetRingData(void)
-{
-	return m_pRingData;
 }

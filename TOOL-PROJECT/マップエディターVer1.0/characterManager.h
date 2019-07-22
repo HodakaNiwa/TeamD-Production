@@ -29,6 +29,7 @@ class CModelCreate;
 class CModel;
 class CTextureManager;
 class CObject;
+class CEnemy;
 
 //*****************************************************************************
 //    キャラクター管轄クラスの定義
@@ -44,6 +45,7 @@ public:    // 誰でもアクセス可能
 	HRESULT Init(void);
 	void Uninit(void);
 	CObject *SetObject(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nPriority = 3);
+	CEnemy *SetEnemy(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nPriority = 3);
 
 	void SetFileName(char *pFileName);
 	void SetModelCreate(CModelCreate *pModelCreate);

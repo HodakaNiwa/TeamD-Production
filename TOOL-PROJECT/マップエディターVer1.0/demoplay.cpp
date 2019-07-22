@@ -25,6 +25,9 @@
 #include "UI.h"
 #include "respawn.h"
 #include "effectManager.h"
+#include "playerManager.h"
+#include "characterManager.h"
+#include "bullet.h"
 
 //=============================================================================
 // マクロ定義
@@ -34,7 +37,32 @@
 #define DEMOPLAY_SYSTEM_FILENAME  "data/TEXT/demoplay.ini"    // 初期化に使用するシステムファイル名
 
 // 読み込み用のパス
+// モデル用
+#define NUM_MODEL "NUM_MODEL = "
+#define MODEL_FILENAME "MODEL_FILENAME = "
+
+// マップ用
+#define NUM_MAP "NUM_MAP = "
+
+// エフェクト用
 #define EFFECT_FILENAME "EFFECT_FILENAME = "
+
+// 弾用
+#define BULLET_MODEL_IDX "BULLET_MODEL_IDX = "
+
+// アイテム用
+#define ITEM_MODEL_IDX "ITEM_MODEL_IDX = "
+
+// アイテムイベント用
+#define ITEMEVENT_FILENAME "ITEMEVENT_FILENAME = "
+#define ENEMY_STOP "ENEMY_STOP = "
+
+// プレイヤーデータ用
+#define PLAYERDATA_FILENAME "PLAYERDATA_FILENAME = "
+
+// 敵データ用
+#define ENEMY_FILENAME "ENEMY_FILENAME = "
+
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -100,8 +128,7 @@ HRESULT CDemoplay::Init(void)
 	CreateUI();
 
 	// プレイヤーの生成
-	CPlayer *pPlayer = CPlayer::Create(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3);
-	pPlayer->SetPos(GetMap()->GetPlayerRespawn(0)->GetPos());
+	CreatePlayer();
 
 	// 敵を生成するかチェックする
 	CheckEnemySpawn(m_nGameCounter);
@@ -121,6 +148,11 @@ void CDemoplay::Uninit(void)
 		delete m_pUI;
 		m_pUI = NULL;
 	}
+
+	// 各種クラスの破棄
+	ReleasePlayer();
+	ReleasePlayerManager();
+	ReleaseEnemyManager();
 
 	// 共通の終了処理
 	CBasemode::Uninit();
@@ -156,15 +188,13 @@ void CDemoplay::Draw(void)
 	CScene::DrawAll();
 }
 
-//=============================================================================
-// デモプレイの変数をクリアする
-//=============================================================================
-void CDemoplay::ClearVariable(void)
-{
-	m_nGameCounter = 0;
-	m_nSpawnEnemyCount = 0;
-}
 
+//*****************************************************************************
+//
+// 生成用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
 // デモプレイのカメラ生成処理
 //=============================================================================
@@ -200,6 +230,91 @@ void CDemoplay::CreateUI(void)
 }
 
 //=============================================================================
+// デモプレイのプレイヤー生成処理
+//=============================================================================
+void CDemoplay::CreatePlayer(void)
+{
+	// プレイヤーを生成する
+	m_pPlayer = m_pPlayerManager->SetPlayer(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, 0);
+}
+
+//=============================================================================
+// デモプレイの敵生成処理
+//=============================================================================
+CEnemy *CDemoplay::CreateEnemy(D3DXVECTOR3 pos, D3DXVECTOR3 rot, CEnemy_ListData *pEnemyData)
+{
+	CEnemy *pEnemy = m_pEnemyManager[pEnemyData->GetEnemyType()]->SetEnemy(pos, rot, pEnemyData->GetEnemyType());
+
+	if (pEnemy == NULL)return NULL;
+	// アイテムのデータを設定する
+	if (pEnemyData->GetItem() == true)
+	{
+		pEnemy->SetItemData(pEnemyData->GetItemType());
+	}
+
+	// AIのデータを設定する
+	pEnemy->SetAIData(pEnemyData->GetAI_BulletEva(), pEnemyData->GetAI_MassEva(), pEnemyData->GetAI_DownEva());
+
+	return pEnemy;
+}
+
+//=============================================================================
+// デモプレイのアイテムを生成する処理
+//=============================================================================
+void CDemoplay::CreateItem(D3DXVECTOR3 pos, D3DXVECTOR3 rot, const int nItemType)
+{
+	int nModelIdx = 0;
+	switch (nItemType)
+	{
+	case CItem::TYPE_STAR:
+		nModelIdx = m_nItemModelIdx[0];
+		CItemStar::Create(pos, rot, nItemType, nModelIdx, GetModelCreate()->GetMesh(nModelIdx),
+			GetModelCreate()->GetBuffMat(nModelIdx), GetModelCreate()->GetNumMat(nModelIdx),
+			GetModelCreate()->GetTexture(nModelIdx));
+		break;
+	case CItem::TYPE_GRENADE:
+		nModelIdx = m_nItemModelIdx[1];
+		CItemGrenade::Create(pos, rot, nItemType, nModelIdx, GetModelCreate()->GetMesh(nModelIdx),
+			GetModelCreate()->GetBuffMat(nModelIdx), GetModelCreate()->GetNumMat(nModelIdx),
+			GetModelCreate()->GetTexture(nModelIdx));
+		break;
+	case CItem::TYPE_1UP_TANK:
+		nModelIdx = m_nItemModelIdx[2];
+		CItem1up::Create(pos, rot, nItemType, nModelIdx, GetModelCreate()->GetMesh(nModelIdx),
+			GetModelCreate()->GetBuffMat(nModelIdx), GetModelCreate()->GetNumMat(nModelIdx),
+			GetModelCreate()->GetTexture(nModelIdx));
+		break;
+	case CItem::TYPE_SCOOP:
+		nModelIdx = m_nItemModelIdx[3];
+		CItemScoop::Create(pos, rot, nItemType, nModelIdx, GetModelCreate()->GetMesh(nModelIdx),
+			GetModelCreate()->GetBuffMat(nModelIdx), GetModelCreate()->GetNumMat(nModelIdx),
+			GetModelCreate()->GetTexture(nModelIdx));
+		break;
+	case CItem::TYPE_CLOCK:
+		nModelIdx = m_nItemModelIdx[4];
+		CItemClock::Create(pos, rot, nItemType, nModelIdx, GetModelCreate()->GetMesh(nModelIdx),
+			GetModelCreate()->GetBuffMat(nModelIdx), GetModelCreate()->GetNumMat(nModelIdx),
+			GetModelCreate()->GetTexture(nModelIdx));
+		break;
+	case CItem::TYPE_HELMET:
+		nModelIdx = m_nItemModelIdx[5];
+		CItemHelmet::Create(pos, rot, nItemType, nModelIdx, GetModelCreate()->GetMesh(nModelIdx),
+			GetModelCreate()->GetBuffMat(nModelIdx), GetModelCreate()->GetNumMat(nModelIdx),
+			GetModelCreate()->GetTexture(nModelIdx));
+		break;
+	}
+}
+
+
+
+
+//*****************************************************************************
+//
+// デモプレイ内スポーン処理用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
 // デモプレイの敵の生成するタイミングかどうか判定する
 //=============================================================================
 void CDemoplay::CheckEnemySpawn(int nTime)
@@ -231,7 +346,129 @@ void CDemoplay::EnemySpawn(CMap *pMap, CEnemy_ListData *pEnemyData, int nCnt)
 	D3DXVECTOR3 EnemyPos = pMap->GetEnemyRespawn(pEnemyData->GetRespawnIdx())->GetPos();
 
 	// 敵の生成(ここは後で種類分けしておく)
-	CEnemy::Create(EnemyPos, INITIALIZE_D3DXVECTOR3);
+	CreateEnemy(EnemyPos, INITIALIZE_D3DXVECTOR3, pEnemyData);
+}
+
+
+//*****************************************************************************
+//
+// 開放用関数
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
+// デモプレイのプレイヤークラスを開放する
+//=============================================================================
+void CDemoplay::ReleasePlayer(void)
+{
+	if (m_pPlayer != NULL)
+	{
+		m_pPlayer->Uninit();
+		m_pPlayer = NULL;
+	}
+}
+
+//=============================================================================
+// デモプレイのプレイヤー管轄クラスを開放する
+//=============================================================================
+void CDemoplay::ReleasePlayerManager(void)
+{
+	if (m_pPlayerManager != NULL)
+	{
+		m_pPlayerManager->Uninit();
+		delete m_pPlayerManager;
+		m_pPlayerManager = NULL;
+	}
+}
+
+//=============================================================================
+// デモプレイの敵データ管轄クラスを開放する
+//=============================================================================
+void CDemoplay::ReleaseEnemyManager(void)
+{
+	for (int nCntEnemy = 0; nCntEnemy < CEnemy::TYPE_MAX; nCntEnemy++)
+	{
+		if (m_pEnemyManager[nCntEnemy] != NULL)
+		{
+			m_pEnemyManager[nCntEnemy]->Uninit();
+			delete m_pEnemyManager[nCntEnemy];
+			m_pEnemyManager[nCntEnemy] = NULL;
+		}
+	}
+}
+
+
+//*****************************************************************************
+//
+// アイテムイベント処理用関数
+// Auther : Hodaka Niwa & Jukiya Hayakawa
+//
+//*****************************************************************************
+//=============================================================================
+// チュートリアルのスターアイテムのイベント処理
+//=============================================================================
+void CDemoplay::ItemEvent_Star(int nPlayerNumber)
+{
+	// プレイヤーのパラメータをパワーアップさせる
+
+}
+
+//=============================================================================
+// チュートリアルのグレネードアイテムのイベント処理
+//=============================================================================
+void CDemoplay::ItemEvent_Grenade(void)
+{
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ENEMY)
+			{// 敵だった
+				pScene->Uninit();
+				pScene = NULL;
+			}
+			pScene = pSceneNext;
+		}
+	}
+}
+
+//=============================================================================
+// チュートリアルの1Upアイテムのイベント処理
+//=============================================================================
+void CDemoplay::ItemEvent_1Up(int nPlayerNumber)
+{
+	// プレイヤーの残機数を増やす
+	m_nPlayerStock++;
+}
+
+//=============================================================================
+// チュートリアルのスコップアイテムのイベント処理
+//=============================================================================
+void CDemoplay::ItemEvent_Scoop(void)
+{
+	// 司令部の周りに壊せないブロックを置く
+}
+
+//=============================================================================
+// チュートリアルの時計アイテムのイベント処理
+//=============================================================================
+void CDemoplay::ItemEvent_Clock(void)
+{
+	// 敵が動けない状態にする
+	m_bEnemyMove = false;
+	m_nEnemyMoveCounter = m_ItemEventData.nStop;
+}
+
+//=============================================================================
+// チュートリアルのヘルメットアイテムのイベント処理
+//=============================================================================
+void CDemoplay::ItemEvent_Helmet(int nPlayerNumber)
+{
+	// プレイヤーを無敵状態にする
 }
 
 //=============================================================================
@@ -265,27 +502,68 @@ void CDemoplay::LoadSystem(void)
 //=============================================================================
 void CDemoplay::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
 {
-	int nCntTex = 0;  // テクスチャを読み込んだ数
+	int nCntMap = 0;
+	int nCntTex = 0;
+	int nCntModel = 0;
+	int nCntItemModel = 0;
+	int nCntEnemy = 0;
+	int nCntPlayer = 0;
 
 	while (1)
-	{
+	{// ループ開始
 		strcpy(pStr, pFileLoader->GetString(pStr));
 		if (CFunctionLib::Memcmp(pStr, NUM_TEXTURE) == 0)
 		{// 読み込むテクスチャの数だった
-			CreateTextureManager(CFunctionLib::ReadInt(pStr, NUM_TEXTURE));
+			int nNumTex = CFunctionLib::ReadInt(pStr, NUM_TEXTURE);
+			CTextureManager *pTextureManager = CTextureManager::Create(nNumTex);
+			SetTextureManager(pTextureManager);
 		}
 		else if (CFunctionLib::Memcmp(pStr, TEXTURE_FILENAME) == 0)
-		{// テクスチャのファイル名だった
-			LoadTexture(CFunctionLib::ReadString(pStr, pStr, TEXTURE_FILENAME), nCntTex);
+		{// 読み込むテクスチャのファイル名だった
+			LoadTexture(pStr, nCntTex);
 			nCntTex++;
 		}
+		else if (CFunctionLib::Memcmp(pStr, NUM_MODEL) == 0)
+		{// 読み込むモデルの数だった
+			int nNumModel = CFunctionLib::ReadInt(pStr, NUM_MODEL);
+			CModelCreate *pModelCreate = CModelCreate::Create(nNumModel);
+			SetModelCreate(pModelCreate);
+		}
+		else if (CFunctionLib::Memcmp(pStr, MODEL_FILENAME) == 0)
+		{// 読み込むモデルのファイル名だった
+			LoadModel(pStr, nCntModel);
+			nCntModel++;
+		}
 		else if (CFunctionLib::Memcmp(pStr, EFFECT_FILENAME) == 0)
-		{// エフェクトファイル名だった
+		{// 読み込むエフェクトのファイル名だった
 			LoadEffectFileName(pStr);
 		}
 		else if (CFunctionLib::Memcmp(pStr, MAP_FILENAME) == 0)
-		{// マップファイル名だった
-			LoadMapFileName(pStr);
+		{// 読み込むマップファイル名だった
+			strcpy(m_aMapFileName, CFunctionLib::ReadString(pStr, m_aMapFileName, MAP_FILENAME));
+		}
+		else if (CFunctionLib::Memcmp(pStr, ITEMEVENT_FILENAME) == 0)
+		{// アイテムイベント用スクリプトファイル名だった
+			LoadItemEvent(pStr);
+		}
+		else if (CFunctionLib::Memcmp(pStr, BULLET_MODEL_IDX) == 0)
+		{// 弾が使用するモデルの番号だった
+			m_nBulletModelIdx = CFunctionLib::ReadInt(pStr, BULLET_MODEL_IDX);
+		}
+		else if (CFunctionLib::Memcmp(pStr, ITEM_MODEL_IDX) == 0)
+		{// アイテムが使用するモデルの番号だった
+			m_nItemModelIdx[nCntItemModel] = CFunctionLib::ReadInt(pStr, ITEM_MODEL_IDX);
+			nCntItemModel++;
+		}
+		else if (CFunctionLib::Memcmp(pStr, PLAYERDATA_FILENAME) == 0)
+		{// プレイヤーデータのスクリプトファイル名だった
+			LoadPlayerFileName(pStr, nCntPlayer);
+			nCntPlayer++;
+		}
+		else if (CFunctionLib::Memcmp(pStr, ENEMY_FILENAME) == 0)
+		{// 敵データのスクリプトファイル名だった
+			LoadEnemyFileName(pStr, nCntEnemy);
+			nCntEnemy++;
 		}
 		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
 		{// スクリプトファイル終了の合図だった
@@ -321,6 +599,30 @@ void CDemoplay::LoadTexture(char *pFileName, int nCntTex)
 }
 
 //=============================================================================
+// デモプレイの読み込むアイテムモデルを読み込む
+//=============================================================================
+void CDemoplay::LoadModel(char *pStr, int nCntModel)
+{
+	// モデルのファイルパス名を読み取る
+	LPD3DXMESH pMesh = NULL;
+	LPD3DXBUFFER pBuffMat = NULL;
+	DWORD nNumMat = 0;
+	char aModelFileName[256] = "\0";
+	strcpy(aModelFileName, CFunctionLib::ReadString(pStr, aModelFileName, MODEL_FILENAME));
+
+	// xファイルの読み込み
+	D3DXLoadMeshFromX(aModelFileName, D3DXMESH_SYSTEMMEM, CManager::GetRenderer()->GetDevice(), NULL,
+		&pBuffMat, NULL, &nNumMat, &pMesh);
+
+	// モデル管轄クラスに値を設定する
+	CModelCreate *pModelCreate = GetModelCreate();
+	if (pModelCreate == NULL)return;
+	pModelCreate->SetMesh(pMesh, nCntModel);
+	pModelCreate->SetMaterial(CManager::GetRenderer()->GetDevice(), pBuffMat, nNumMat, nCntModel);
+	pModelCreate->SetFileName(pStr, nCntModel);
+}
+
+//=============================================================================
 // エディターの読み込むエフェクトファイル名を読み込む
 //=============================================================================
 void CDemoplay::LoadEffectFileName(char *pStr)
@@ -334,6 +636,30 @@ void CDemoplay::LoadEffectFileName(char *pStr)
 }
 
 //=============================================================================
+// ゲームの読み込むプレイヤーデータファイル名を読み込む
+//=============================================================================
+void CDemoplay::LoadPlayerFileName(char *pStr, int nCntPlayer)
+{
+	char aPlayerFileName[256] = "\0";
+	strcpy(aPlayerFileName, CFunctionLib::ReadString(pStr, aPlayerFileName, PLAYERDATA_FILENAME));
+
+	if (m_pPlayerManager != NULL)return;
+	m_pPlayerManager = CPlayerManager::Create(aPlayerFileName);
+}
+
+//=============================================================================
+// ゲームの読み込む敵データファイル名を読み込む
+//=============================================================================
+void CDemoplay::LoadEnemyFileName(char *pStr, int nCntEnemy)
+{
+	char aEnemyFileName[256] = "\0";
+	strcpy(aEnemyFileName, CFunctionLib::ReadString(pStr, aEnemyFileName, ENEMY_FILENAME));
+
+	// キャラクター管轄クラスを作成
+	m_pEnemyManager[nCntEnemy] = CCharacterManager::Create(aEnemyFileName);
+}
+
+//=============================================================================
 // デモプレイの読み込むマップファイル名を読み込む
 //=============================================================================
 void CDemoplay::LoadMapFileName(char *pStr)
@@ -341,50 +667,92 @@ void CDemoplay::LoadMapFileName(char *pStr)
 	strcpy(m_aMapFileName, CFunctionLib::ReadString(pStr, m_aMapFileName, MAP_FILENAME));
 }
 
+//*****************************************************************************
+//
+// アイテムイベント用スクリプト読み込み処理
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
 //=============================================================================
-// デモプレイのシステム情報を保存する
+// デモプレイのアイテムイベントスクリプトを読み込む
 //=============================================================================
-void CDemoplay::SaveSystem(void)
+void CDemoplay::LoadItemEvent(char *pStr)
 {
-	char aStr[256] = "\0";
-	CFileSaver *pFileSaver = NULL;
-	pFileSaver = CFileSaver::Create(DEMOPLAY_SYSTEM_FILENAME);
-	if (pFileSaver != NULL)
+	char aFileName[256] = "\0";
+	strcpy(aFileName, CFunctionLib::ReadString(pStr, aFileName, ITEMEVENT_FILENAME));
+	CFileLoader *pFileLoader = NULL;
+	pFileLoader = CFileLoader::Create(aFileName);
+	if (pFileLoader != NULL)
 	{
-		// ファイルの冒頭分を書き込み
-		pFileSaver->Print("#==============================================================================\n");
-		pFileSaver->Print("#\n");
-		pFileSaver->Print("# デモプレイシステムファイル [demoplay.ini]\n");
-		pFileSaver->Print("# Author : Hodaka Niwa\n");
-		pFileSaver->Print("#\n");
-		pFileSaver->Print("#==============================================================================\n");
-		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
-		pFileSaver->Print("\n");
-
-		// 読み込むマップのファイル名を書き込み
-		SaveMapFileName(pFileSaver);
-
-		// スクリプト終了の合図を書き込み
-		pFileSaver->Print("%s		# この行は絶対消さないこと！\n", END_SCRIPT);
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, SCRIPT) == 0)
+		{// 読み込み開始の合図だった
+			LoadItemEventScript(pFileLoader, pStr);
+		}
 
 		// メモリの開放
-		if (pFileSaver != NULL)
+		if (pFileLoader != NULL)
 		{
-			pFileSaver->Uninit();
-			delete pFileSaver;
-			pFileSaver = NULL;
+			pFileLoader->Uninit();
+			delete pFileLoader;
+			pFileLoader = NULL;
 		}
 	}
 }
 
 //=============================================================================
-// デモプレイの読み込むマップファイル名を保存する
+// デモプレイのアイテムイベント情報をファイルから読み込む
 //=============================================================================
-void CDemoplay::SaveMapFileName(CFileSaver *pFileSaver)
+void CDemoplay::LoadItemEventScript(CFileLoader *pFileLoader, char *pStr)
 {
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-	pFileSaver->Print("# 読み込むマップのファイル名\n");
-	pFileSaver->Print("#------------------------------------------------------------------------------\n");
-	pFileSaver->Print("%s%s", MAP_FILENAME, m_aMapFileName);
-	pFileSaver->Print("\n");
+	while (1)
+	{// ループ開始
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, ENEMY_STOP) == 0)
+		{// 敵をどれくらい止めるか情報だった
+			m_ItemEventData.nStop = CFunctionLib::ReadInt(pStr, ENEMY_STOP);
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		{// スクリプトファイル終了の合図だった
+			break;
+		}
+	}
+}
+
+
+//*****************************************************************************
+//
+// 設定、取得等色々関数(外部との窓口も含めてここに書いてます)
+// Auther : Hodaka Niwa
+//
+//*****************************************************************************
+//=============================================================================
+// デモプレイの変数をクリアする
+//=============================================================================
+void CDemoplay::ClearVariable(void)
+{
+	m_pUI = NULL;
+	m_nGameCounter = 0;
+	m_nSpawnEnemyCount = 0;
+	m_nNumberTexIdx = 0;
+	m_nPlayerRespawnCounter = 0;
+	m_bEnemyMove = true;
+	m_nEnemyMoveCounter = 0;
+	m_pPlayer = NULL;
+	m_pPlayerManager = NULL;
+	m_nPlayerStock = 0;
+	for (int nCntEnemy = 0; nCntEnemy < CEnemy::TYPE_MAX; nCntEnemy++)
+	{
+		m_pEnemyManager[nCntEnemy] = NULL;
+	}
+}
+
+
+//=============================================================================
+// デモプレイの弾モデルを設定する処理
+//=============================================================================
+void CDemoplay::SetBulletModel(CBullet *pBullet)
+{
+	pBullet->BindModel(GetModelCreate()->GetMesh(m_nBulletModelIdx), GetModelCreate()->GetBuffMat(m_nBulletModelIdx),
+		GetModelCreate()->GetNumMat(m_nBulletModelIdx), GetModelCreate()->GetTexture(m_nBulletModelIdx));
 }

@@ -16,14 +16,15 @@
 //*****************************************************************************
 //     マクロ定義
 //*****************************************************************************
-#define EFFECT_PRIORITY     (6)       // エフェクトの処理優先順位
-#define MAX_EMMITER         (100)     // エミッタデータの最大数
-#define MAX_PARTICLEDATA    (100)     // パーティクルデータの最大数
-#define MAX_RINGEFFECTDATA  (100)     // リングエフェクトデータの最大数
+#define MAX_EMMITER         (150)     // エミッタデータの最大数
+#define MAX_PARTICLEDATA    (150)     // パーティクルデータの最大数
+#define MAX_RINGEFFECTDATA  (150)     // リングエフェクトデータの最大数
 
 //*****************************************************************************
 //     前方宣言
 //*****************************************************************************
+class CFileLoader;
+class CFileSaver;
 class CParData;
 class CEmitterData;
 class CRingData;
@@ -36,7 +37,14 @@ class CEmitter;
 class CEffectManager : CScene
 {
 public:   // 誰でもアクセス可能
-	CEffectManager(int nPriority = 1, OBJTYPE objType = OBJTYPE_EFFECTMANAGER);
+	typedef enum
+	{
+		EFFECT_TYPE_PARTICLE = 0,  // パーティクル
+		EFFECT_TYPE_RING,          // リング
+		EFFECT_TYPE_MAX
+	}EFFECT_TYPE;
+
+	CEffectManager(int nPriority = 3, OBJTYPE objType = OBJTYPE_EFFECTMANAGER);
 	~CEffectManager();
 
 	static CEffectManager *Create(char *pFileName);
@@ -49,19 +57,22 @@ public:   // 誰でもアクセス可能
 
 	void SetFileName(char *pFileName);
 	void SetEmitter(CEmitter *pEmitter);
-	void SetEmitterData(CEmitterData *pEmitterData, int nIdx);
-	void SetParData(CParData *pParData, int nIdx);
-	void SetRingEffectData(CRingData *pRingData, int nIdx);
+	void SetEmitterData(CEmitterData *pEmitterData, const int nIdx);
+	void SetParData(CParData *pParData, const int nIdx);
+	void SetRingEffectData(CRingData *pRingData, const int nIdx);
 	void SetTexManager(CTextureManager *pTexManager);
-	void SetNumEmitterData(int nNumEmitterData);
-	void SetNumParData(int nNumParData);
-	void SetNumRingEffectData(int nNumRingEffectData);
+	void SetNumEmitterData(const int nNumEmitterData);
+	void SetNumParData(const int nNumParData);
+	void SetNumRingEffectData(const int nNumRingEffectData);
 
-	LPDIRECT3DTEXTURE9 BindTexture(int nIdx);
 	CEmitter *GetEmitter(void);
-	CEmitterData *GetEmitterData(int nIdx);
-	CParData *GetParData(int nIdx);
-	CRingData *GetRingEffectData(int nIdx);
+	LPDIRECT3DTEXTURE9 GetTexture(const int nIdx);
+	CEmitterData **GetEmitterData(void);
+	CEmitterData *GetEmitterData(const int nIdx);
+	CParData **GetParData(void);
+	CParData *GetParData(const int nIdx);
+	CRingData **GetRingEffectData(void);
+	CRingData *GetRingEffectData(const int nIdx);
 	CTextureManager *GetTexManager(void);
 	int GetNumEmitterData(void);
 	int GetNumParData(void);
@@ -70,25 +81,37 @@ public:   // 誰でもアクセス可能
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:   // このクラスだけがアクセス可能
+	void CreateTextureManager(const int nNumTex);
+	void CreateEmitterDataMemory(const int nNumEmitterData);
+	void CreateParticleDataMemory(const int nNumParticleData);
+	void CreateRingEffectDataMemory(const int nNumRingEffectData);
+
+	void ReleaseTextureManager(void);
+	void ReleaseEmitterData(void);
+	void ReleaseParticleData(void);
+	void ReleaseRingEffectData(void);
+
+	HRESULT LoadScript(CFileLoader *pFileLoader, char *pStr);
+	void LoadTexture(char *pStr, const int nCntTex);
+	CEmitterData *LoadEmitterData(CFileLoader *pFileLoader, char *pStr, const int nCntEmitter);
+	CParData *LoadParticleData(CFileLoader *pFileLoader, char *pStr, const int nCntParData);
+	CRingData *LoadRingEffectData(CFileLoader *pFileLoader, char *pStr, const int nCntRingData);
+
 	void Save(void);
-	void SaveTextureData(FILE *pFile);
-	void SaveEmitterData(FILE *pFile);
-	void SaveParticleData(FILE *pFile);
-	void SaveRingEffectData(FILE *pFile);
+	void SaveTextureData(CFileSaver *pFileSaver);
+	void SaveEmitterData(CFileSaver *pFileSaver);
+	void SaveParticleData(CFileSaver *pFileSaver);
+	void SaveRingEffectData(CFileSaver *pFileSaver);
 
-	CEmitterData *ReadEmitterData(char *pLine, char *pStrCur, FILE *pFile, int nCntEmitter);
-	CParData *ReadParticleData(char *pLine, char *pStrCur, FILE *pFile, int nCntParData);
-	CRingData *ReadRingEffectData(char *pLine, char *pStrCur, FILE *pFile, int nCntRingData);
-
-	char            m_aFileName[256];                  // スクリプトファイル名
-	int             m_nNumEmitterData;                 // エミッタデータの個数
-	int             m_nNumParData;                     // パーティクルデータの個数
-	int             m_nNumRingEffectData;              // リングエフェクトデータの個数
-	CEmitter        *m_pEmitter;                       // 現在生成されているエミッタへのポインタ
-	CEmitterData    *m_apEmitterData[MAX_EMMITER];     // エミッタデータクラスへのポインタ
-	CParData        *m_apParData[MAX_PARTICLEDATA];    // パーティクルデータクラスへのポインタ
-	CRingData       *m_apRingData[MAX_RINGEFFECTDATA]; // リングエフェクトデータクラスへのポインタ
-	CTextureManager *m_pTextureManager;                // テクスチャ管理クラスへのポインタ
+	char            m_aFileName[256];         // スクリプトファイル名
+	CEmitter        *m_pEmitter;              // 最後に生成したエミッタクラスへのポインタ
+	int             m_nNumEmitterData;        // エミッタデータの個数
+	int             m_nNumParData;            // パーティクルデータの個数
+	int             m_nNumRingEffectData;     // リングエフェクトデータの個数
+	CEmitterData    **m_apEmitterData;        // エミッタデータクラスへのポインタ
+	CParData        **m_apParData;            // パーティクルデータクラスへのポインタ
+	CRingData       **m_apRingData;           // リングエフェクトデータクラスへのポインタ
+	CTextureManager *m_pTextureManager;       // テクスチャ管理クラスへのポインタ
 };
 
 #endif

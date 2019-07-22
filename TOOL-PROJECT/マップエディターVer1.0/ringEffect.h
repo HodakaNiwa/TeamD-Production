@@ -22,7 +22,8 @@ public:    // 誰でもアクセス可能
 	CRingData();
 	~CRingData();
 
-	void SetRot(const D3DXVECTOR3 Rot) { m_Rot = Rot; }
+	void SetMaxRot(const D3DXVECTOR3 MaxRot) { m_MaxRot = MaxRot; }
+	void SetMinRot(const D3DXVECTOR3 MinRot) { m_MinRot = MinRot; }
 	void SetMaxMove(const D3DXVECTOR3 MaxMove) { m_MaxMove = MaxMove; }
 	void SetMinMove(const D3DXVECTOR3 MinMove) { m_MinMove = MinMove; }
 	void SetChangeMove(const D3DXVECTOR3 ChangeMove) { m_ChangeMove = ChangeMove; }
@@ -43,7 +44,8 @@ public:    // 誰でもアクセス可能
 	void SetCulling(const bool bCulling) { m_bCulling = bCulling; }
 	void SetDrawAddtive(const bool bDrawAddtive) { m_bDrawAddtive = bDrawAddtive; }
 
-	D3DXVECTOR3 GetRot(void) { return m_Rot; }
+	D3DXVECTOR3 GetMaxRot(void) { return m_MaxRot; }
+	D3DXVECTOR3 GetMinRot(void) { return m_MinRot; }
 	D3DXVECTOR3 GetMaxMove(void) { return m_MaxMove; }
 	D3DXVECTOR3 GetMinMove(void) { return m_MinMove; }
 	D3DXVECTOR3 GetChangeMove(void) { return m_ChangeMove; }
@@ -67,7 +69,8 @@ public:    // 誰でもアクセス可能
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:   // このクラスだけがアクセス可能
-	D3DXVECTOR3 m_Rot;               // 向き
+	D3DXVECTOR3 m_MaxRot;            // 向きの最大値
+	D3DXVECTOR3 m_MinRot;            // 向きの最小値
 	D3DXVECTOR3 m_MaxMove;           // 移動量の最大値
 	D3DXVECTOR3 m_MinMove;           // 移動量の最小値
 	D3DXVECTOR3 m_ChangeMove;        // 移動量の変化量

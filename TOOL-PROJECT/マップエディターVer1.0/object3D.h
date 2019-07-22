@@ -37,11 +37,12 @@ public:	//誰からもアクセス可能
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
+	virtual void SetMtxWorld(LPDIRECT3DDEVICE9 pDevice);
 
 	void SetPos(D3DXVECTOR3 pos);
 	void SetRot(D3DXVECTOR3 rot);
 	void SetBoxCollider(CBoxCollider *pBoxCollider);
-	void SetMtxWorld(LPDIRECT3DDEVICE9 pDevice);
+	void SetMtxWorld(const D3DXMATRIX mtxWorld);
 	void SetColRange(D3DXVECTOR3 colRange);
 	void SetReturnFlag(bool bReturnFlag);
 

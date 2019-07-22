@@ -24,8 +24,9 @@
 //=============================================================================
 CCharacter::CCharacter(int nPrioriry, OBJTYPE objtype) : CObject3D(nPrioriry, objtype)
 {
-	m_apModel = NULL;		 // モデル情報へのポインタ
-	m_pMotionManager = NULL; // モーションクラスへのポインタ
+	m_apModel = NULL;		          // モデル情報へのポインタ
+	m_pMotionManager = NULL;          // モーションクラスへのポインタ
+	m_move = INITIALIZE_D3DXVECTOR3;  // 移動量
 }
 
 //=============================================================================
@@ -46,9 +47,6 @@ HRESULT CCharacter::Init(void)
 
 	// 変数をクリアする
 	ClearVariable();
-
-	// 種類の設置処理
-	SetObjType(OBJTYPE_CHARACTER);
 
 	return S_OK;
 }
@@ -93,6 +91,7 @@ void CCharacter::ClearVariable(void)
 {
 	m_fAccel = 0.0f;                            // 移動できるスピード量
 	m_fInertia = 0.0f;                          // 慣性量
+	m_fRivisionRot = 0.0f;                      // 向きを補正する倍率
 	m_posOld = INITIALIZE_D3DXVECTOR3;			// 過去の位置
 	m_move = INITIALIZE_D3DXVECTOR3;			// 移動量
 	m_bShoot = false;							// 撃っているかどうか
@@ -151,7 +150,7 @@ void CCharacter::ModelDraw(void)
 //=============================================================================
 void CCharacter::SetNumPart(const int nNumParts)
 {
-	m_nNumParts = 0;
+	m_nNumParts = nNumParts;
 }
 
 //=============================================================================
@@ -184,6 +183,14 @@ void CCharacter::SetAccel(const float fAccel)
 void CCharacter::SetInertia(const float fInertia)
 {
 	m_fInertia = fInertia;
+}
+
+//=============================================================================
+// 向きを補正する倍率を設定する
+//=============================================================================
+void CCharacter::SetRivisionRot(const float fRivisionRot)
+{
+	m_fRivisionRot = fRivisionRot;
 }
 
 //=============================================================================
@@ -256,6 +263,14 @@ float CCharacter::GetAccel(void)
 float CCharacter::GetInertia(void)
 {
 	return m_fInertia;
+}
+
+//=============================================================================
+// 向きを補正する倍率取得処理
+//=============================================================================
+float CCharacter::GetRivisionRot(void)
+{
+	return m_fRivisionRot;
 }
 
 //=============================================================================

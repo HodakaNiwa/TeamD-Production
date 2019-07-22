@@ -3974,7 +3974,7 @@ Mesh {
    0.000000;0.000000;0.000000;;
    0.000000;0.000000;0.000000;;
    TextureFilename {
-    "C:\\Users\\game112\\Desktop\\授業系\\チーム（たっぴー）\\作業物\\Eye.png";
+    "data/TEXTURE/HINADOLL/eye000.png";
    }
   }
   Material {

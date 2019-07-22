@@ -77,8 +77,6 @@ HRESULT CObject3D::Init()
 		m_pBoxCollider = CBoxCollider::Create(pos, m_colRange.x, m_colRange.y, m_colRange.z,m_bReturnFlag);
 	}
 
-	//種類の設置処理
-	SetObjType(OBJTYPE_3D);
 	return S_OK;
 }
 
@@ -166,7 +164,15 @@ void CObject3D::SetReturnFlag(bool bReturnFlag)
 }
 
 //=============================================================================
-// ワールドマトリックの設置処理
+// ワールドマトリックスの設定処理
+//=============================================================================
+void CObject3D::SetMtxWorld(const D3DXMATRIX mtxWorld)
+{
+	m_mtxWorld = mtxWorld;
+}
+
+//=============================================================================
+// ワールドマトリックスの設置処理
 //=============================================================================
 void CObject3D::SetMtxWorld(LPDIRECT3DDEVICE9 pDevice)
 {

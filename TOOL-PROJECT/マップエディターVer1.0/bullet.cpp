@@ -1,105 +1,101 @@
 //=============================================================================
 //
 // 弾の処理 [bullet.cpp]
-// Author : Jukiya Hayakawa
+// Author : Hodaka Niwa
 //
 //=============================================================================
 #include "bullet.h"
 #include "manager.h"
 #include "renderer.h"
-#include "debugproc.h"
-#include "input.h"
-#include "camera.h"
 #include "model.h"
+#include "modelcreate.h"
 #include "boxCollider.h"
-#include "debugproc.h"
-#include "enemy.h"
 #include "player.h"
+#include "enemy.h"
 #include "block.h"
+#include "headquarters.h"
+#include "demoplay.h"
+#include "effectManager.h"
+#include "debugproc.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
+#define BULLET_EFFECT_IDX (2)
 
-//=============================================================================
-// 静的メンバ変数宣言
-//=============================================================================
-LPD3DXMESH			CBullet::m_pMesh = NULL;
-LPD3DXBUFFER		CBullet::m_pBuffMat = NULL;
-DWORD				CBullet::m_nNumMat = NULL;
+//*****************************************************************************
+// 静的メンバ変数
+//*****************************************************************************
+int CBulletPlayer::m_nNumAll_0 = 0;
+int CBulletPlayer::m_nNumAll_1 = 0;
+int CBulletEnemy::m_nNumAll = 0;
 
+//*****************************************************************************
+// CBulletの処理
+//*****************************************************************************
 //=============================================================================
-// 弾のコンストラクタ
+// コンストラクタ
 //=============================================================================
-CBullet::CBullet()
+CBullet::CBullet(int nPriority, OBJTYPE objType) : CObject3D(nPriority, objType)
 {
-	m_posOld = INITIALIZE_D3DXVECTOR3;		//過去の位置
-	m_move = INITIALIZE_D3DXVECTOR3;		//移動量
-	m_type = BULLET_TYPE_NONE;				//弾の種類
-	m_pModel = NULL;						//モデルのポインタ
-	m_pScene = NULL;						//オブジェクトのポインタ
+	m_pModel = NULL;
+	m_pParent = NULL;
 }
+
 //=============================================================================
-// 弾のコンストラクタ
+// デストラクタ
 //=============================================================================
 CBullet::~CBullet()
 {
 
 }
-//=============================================================================
-// 弾の生成
-//=============================================================================
-CBullet *CBullet::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot,D3DXVECTOR3 move, BULLET_TYPE type,CScene *pScene)
-{
-	CBullet *pBullet = NULL;				//弾のポインタ
 
-	if (pBullet == NULL)
-	{//NULLの場合
-		pBullet = new CBullet;				//動的確保
-		if (pBullet != NULL)
-		{//NULLでない場合
-			pBullet->SetPos(pos);			//位置の設置処理
-			pBullet->SetRot(rot);			//向きの設置処理
-			pBullet->SetMove(move);			//移動量の設置処理
-			pBullet->SetBulletType(type);	//弾の種類の設置処理
-			pBullet->SetColRange(D3DXVECTOR3(18.75f, 18.75f, 18.75f));	//当たり判定の大きさの設置処理
-			pBullet->m_pScene = pScene;
-			pBullet->Init();				//初期化処理
-		}
-	}
-	return pBullet;
-}
 //=============================================================================
 // 初期化処理
 //=============================================================================
 HRESULT CBullet::Init(void)
 {
-	//レンダリングの取得
-	CRenderer *pRenderer;
-	pRenderer = CManager::GetRenderer();
+	// ボックスコライダー生成
+	CBoxCollider *pBoxCollider = CBoxCollider::Create(GetPos(), GetColRange().x, GetColRange().y, GetColRange().z, false);
+	SetBoxCollider(pBoxCollider);
 
-	//デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice;
-	pDevice = pRenderer->GetDevice();
+	// 弾のモデルを設定
+	if (CManager::GetMode() == CManager::MODE_DEMOPLAY)
+	{
+		CDemoplay *pDemoplay = CManager::GetDemoplay();
+		pDemoplay->SetBulletModel(this);
+	}
 
-	// Xファイルの読み込み
-	D3DXLoadMeshFromX("data\\MODEL\\bullet.x",
-		D3DXMESH_SYSTEMMEM,
-		pDevice,
-		NULL,
-		&m_pBuffMat,
-		NULL,
-		&m_nNumMat,
-		&m_pMesh);
+	// エフェクトを出す
+	D3DXVECTOR3 rot = INITIALIZE_D3DXVECTOR3;
+	if (m_Move.x > 0.0f)
+	{// 右側に動いている
+		rot.z = D3DX_PI * 0.5f;
+	}
+	else if(m_Move.x < 0.0f)
+	{// 左側に動いている
+		rot.z = -D3DX_PI * 0.5f;
+	}
+	else if (m_Move.z > 0.0f)
+	{// 奥側に動いている
+		rot.x = -D3DX_PI * 0.5f;
+	}
+	else if(m_Move.z < 0.0f)
+	{// 手前側に動いている
+		rot.x = D3DX_PI * 0.5f;
+	}
 
-	//モデルの生成
-	m_pModel = CModel::Create(D3DXVECTOR3(0.0f,0.0f,0.0f), D3DXVECTOR3(0.0f,0.0f,0.0f),
-		m_pMesh, m_pBuffMat, m_nNumMat);
+	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+	if (pEffectManager != NULL)
+	{
+		pEffectManager->SetEffect(GetPos() + m_Move, rot, BULLET_EFFECT_IDX);
+		pEffectManager->SetEffect(GetPos() - (m_Move / 2) + m_Move, rot, BULLET_EFFECT_IDX);
+		pEffectManager->SetEffect(GetPos() - m_Move + (m_Move * 2), rot, BULLET_EFFECT_IDX);
+		pEffectManager->SetEffect(GetPos() + (m_Move / 2) + m_Move, rot, BULLET_EFFECT_IDX);
+		pEffectManager->SetEffect(GetPos() + m_Move + m_Move, rot, BULLET_EFFECT_IDX);
+	}
+	SetPosOld(GetPos());
 
-	//オブジェクト3Dの初期化処理
-	CObject3D::Init();
-
-	SetObjType(OBJTYPE_BULLET);
 	return S_OK;
 }
 
@@ -108,7 +104,7 @@ HRESULT CBullet::Init(void)
 //=============================================================================
 void CBullet::Uninit(void)
 {
-	//モデルの終了処理
+	// モデルの終了処理
 	if (m_pModel != NULL)
 	{
 		m_pModel->Uninit();
@@ -116,11 +112,8 @@ void CBullet::Uninit(void)
 		m_pModel = NULL;
 	}
 
-	//終了処理
+	// 終了処理
 	CObject3D::Uninit();
-
-	//オブジェクトの破棄
-	Release();
 }
 
 //=============================================================================
@@ -128,15 +121,14 @@ void CBullet::Uninit(void)
 //=============================================================================
 void CBullet::Update(void)
 {
-	//過去の位置設置処理
+	// 過去の位置設置処理
 	SetPosOld(GetPos());
 
-	//移動処理
+	// 移動処理
 	Move();
 
-	//当たり判定処理
+	// 当たり判定処理
 	Collision();
-
 }
 
 //=============================================================================
@@ -144,93 +136,25 @@ void CBullet::Update(void)
 //=============================================================================
 void CBullet::Draw(void)
 {
-	//レンダリングの取得
+	// レンダリングの取得
 	CRenderer *pRenderer;
 	pRenderer = CManager::GetRenderer();
 
-	//デバイスの取得
+	// デバイスの取得
 	LPDIRECT3DDEVICE9 pDevice;
 	pDevice = pRenderer->GetDevice();
 
-	D3DXMATRIX mtxWorld;			//ワールドマトリックス
+	// ワールドマトリックスの設定処理
+	SetMtxWorld(pDevice);
 
-	//ワールドマトリックスの初期化
-	D3DXMatrixIdentity(&mtxWorld);
-
-	// ワールドマトリックスの設定
-	pDevice->SetTransform(D3DTS_WORLD, &mtxWorld);
-
-	//モデルの描画処理
+	// モデルの描画処理
 	if (m_pModel != NULL)
 	{
 		m_pModel->Draw();
 	}
 
+	// 共通の描画処理
 	CObject3D::Draw();
-}
-
-//=============================================================================
-// 弾の過去の位置設置処理
-//=============================================================================
-void CBullet::SetPosOld(D3DXVECTOR3 posOld)
-{
-	m_posOld = posOld;
-}
-
-//=============================================================================
-// 弾の移動量の設置処理
-//=============================================================================
-void CBullet::SetMove(D3DXVECTOR3 move)
-{
-	m_move = move;
-}
-
-//=============================================================================
-// 弾の設置処理
-//=============================================================================
-void CBullet::SetBulletType(CBullet::BULLET_TYPE type)
-{
-	m_type = type;
-}
-
-//=============================================================================
-// オブジェクトの設置処理
-//=============================================================================
-void CBullet::SetScene(CScene *pScene)
-{
-	m_pScene = pScene;
-}
-
-//=============================================================================
-// 弾の過去の位置取得処理
-//=============================================================================
-D3DXVECTOR3 CBullet::GetPosOld(void)
-{
-	return m_posOld;
-}
-
-//=============================================================================
-// 弾の移動量取得処理
-//=============================================================================
-D3DXVECTOR3 CBullet::GetMove(void)
-{
-	return m_move;
-}
-
-//=============================================================================
-// 弾の取得処理
-//=============================================================================
-CBullet::BULLET_TYPE CBullet::GetBulletType(void)
-{
-	return m_type;
-}
-
-//=============================================================================
-// オブジェクトの取得処理
-//=============================================================================
-CScene *CBullet::GetScene(void)
-{
-	return m_pScene;
 }
 
 //=============================================================================
@@ -238,220 +162,783 @@ CScene *CBullet::GetScene(void)
 //=============================================================================
 void CBullet::Move(void)
 {
-	D3DXVECTOR3 pos = GetPos();					//位置の取得処理
-	D3DXVECTOR3 move = GetMove();				//移動量の取得処理
-	pos += move;								//位置の代入
+	D3DXVECTOR3 pos = GetPos();
 
-	//当たり判定箱の取得処理
+	// 移動させる
+	pos += m_Move;
+
+	// 当たり判定用箱モデルの位置も設定する
 	CBoxCollider *pCollider = NULL;
 	pCollider = CObject3D::GetBoxCollider();
-
-	//当たり判定箱の位置設置処理
 	if (pCollider != NULL)
 	{
 		pCollider->SetPos(pos);
 	}
 
-	//位置の設置処理
+	// 座標の設定
 	SetPos(pos);
+}
 
-	//モデルの位置設置処理
-	if (m_pModel != NULL)
+//=============================================================================
+// ボックスコライダーの位置を設定させる
+//=============================================================================
+void CBullet::SetBoxColliderPos(void)
+{
+	D3DXVECTOR3 pos = GetPos();
+	if (GetBoxCollider() != NULL)
 	{
-		m_pModel->SetPos(pos);
+		GetBoxCollider()->SetPos(pos);
+	}
+}
+
+//=============================================================================
+// 弾のモデル割り当て処理
+//=============================================================================
+void CBullet::BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture)
+{
+	if (m_pModel == NULL)
+	{
+		m_pModel = CModel::Create(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, pMesh, pBuffMat, nNumMat, pTexture);
+	}
+}
+
+//=============================================================================
+// 弾の前回の位置設定処理
+//=============================================================================
+void CBullet::SetPosOld(D3DXVECTOR3 posOld)
+{
+	m_PosOld = posOld;
+}
+
+//=============================================================================
+// 弾の移動量の設定処理
+//=============================================================================
+void CBullet::SetMove(D3DXVECTOR3 move)
+{
+	m_Move = move;
+}
+
+//=============================================================================
+// 弾の番号の設定処理
+//=============================================================================
+void CBullet::SetIdx(const int nIdx)
+{
+	m_nIdx = nIdx;
+}
+
+//=============================================================================
+// 弾の種類の設定処理
+//=============================================================================
+void CBullet::SetType(const TYPE type)
+{
+	m_Type = type;
+}
+
+//=============================================================================
+// 弾の弾を発射したオブジェクトへのポインタの設定処理
+//=============================================================================
+void CBullet::SetParent(CScene *pParent)
+{
+	m_pParent = pParent;
+}
+
+//=============================================================================
+// 弾のモデルクラスへのポインタの設定処理
+//=============================================================================
+void CBullet::SetModel(CModel *pModel)
+{
+	m_pModel = pModel;
+}
+
+//=============================================================================
+// 弾の前回の位置取得処理
+//=============================================================================
+D3DXVECTOR3 CBullet::GetPosOld(void)
+{
+	return m_PosOld;
+}
+
+//=============================================================================
+// 弾の移動量取得処理
+//=============================================================================
+D3DXVECTOR3 CBullet::GetMove(void)
+{
+	return m_Move;
+}
+
+//=============================================================================
+// 弾の番号取得処理
+//=============================================================================
+int CBullet::GetIdx(void)
+{
+	return m_nIdx;
+}
+
+//=============================================================================
+// 弾の種類取得処理
+//=============================================================================
+CBullet::TYPE CBullet::GetType(void)
+{
+	return m_Type;
+}
+
+//=============================================================================
+// 弾の弾を発射したオブジェクトへのポインタ取得処理
+//=============================================================================
+CScene *CBullet::GetParent(void)
+{
+	return m_pParent;
+}
+
+//=============================================================================
+// 弾のモデルクラスへのポインタ取得処理
+//=============================================================================
+CModel *CBullet::GetModel(void)
+{
+	return m_pModel;
+}
+
+
+//*****************************************************************************
+// CBulletPlayerの処理
+//*****************************************************************************
+//=============================================================================
+// コンストラクタ
+//=============================================================================
+CBulletPlayer::CBulletPlayer(int nPriority, OBJTYPE objType) : CBullet(nPriority, objType)
+{
+
+}
+
+//=============================================================================
+// デストラクタ
+//=============================================================================
+CBulletPlayer::~CBulletPlayer()
+{
+
+}
+
+//=============================================================================
+// 弾の生成
+//=============================================================================
+CBulletPlayer *CBulletPlayer::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DXVECTOR3 move, TYPE type, CScene *pParent,
+	LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, int nPriority)
+{
+	CBulletPlayer *pBullet = NULL;
+
+	if (pBullet == NULL)
+	{
+		pBullet = new CBulletPlayer;
+		if (pBullet != NULL)
+		{
+			// 各種値の設定
+			pBullet->SetPos(pos);
+			pBullet->SetRot(rot);
+			pBullet->SetMove(move);
+			pBullet->SetType(type);
+			pBullet->SetColRange(D3DXVECTOR3(18.75f, 18.75f, 18.75f));
+			pBullet->SetParent(pParent);
+
+			if (FAILED(pBullet->Init()))
+			{
+				return NULL;
+			}
+		}
+	}
+	return pBullet;
+}
+
+//=============================================================================
+// 初期化処理
+//=============================================================================
+HRESULT CBulletPlayer::Init(void)
+{
+	// 共通の初期化処理
+	if (FAILED(CBullet::Init()))
+	{
+		return E_FAIL;
 	}
 
-	//範囲外に入った場合終了処理
-	if (pos.x > 712.5 || pos.x < -712.5 ||
-		pos.z > 562.5f || pos.z < -562.5f)
+	// 自身の種類によって処理わけ
+	switch (GetType())
 	{
-		//消滅処理
+	case TYPE_PLAYER_0:
+		SetIdx(m_nNumAll_0);
+		m_nNumAll_0++;
+		break;
+	case TYPE_PLAYER_1:
+		SetIdx(m_nNumAll_1);
+		m_nNumAll_1++;
+		break;
+	}
+
+	return S_OK;
+}
+
+//=============================================================================
+// 終了処理
+//=============================================================================
+void CBulletPlayer::Uninit(void)
+{
+	// 自身の種類によって処理わけ
+	switch (GetType())
+	{
+	case TYPE_PLAYER_0:
+		m_nNumAll_0--;
+		break;
+	case TYPE_PLAYER_1:
+		m_nNumAll_1--;
+		break;
+	}
+
+	CPlayer *pPlayer = NULL;	// プレイヤーのポインタ情報
+
+	// プレイヤーが弾を打てるように設定する
+	pPlayer = (CPlayer*)GetParent();
+	if (pPlayer != NULL)
+	{
+		pPlayer->SetShoot(false);
+	}
+
+	// 共通の終了処理
+	CBullet::Uninit();
+}
+
+//=============================================================================
+// 更新処理
+//=============================================================================
+void CBulletPlayer::Update(void)
+{
+	// 前回の位置設定
+	SetPosOld(GetPos());
+
+	// 移動処理
+	Move();
+
+	// 当たり判定処理
+	Collision();
+
+	// ボックスコライダーを移動させる
+	SetBoxColliderPos();
+}
+
+//=============================================================================
+// 描画処理
+//=============================================================================
+void CBulletPlayer::Draw(void)
+{
+	// 共通の描画処理
+	CBullet::Draw();
+}
+
+//=============================================================================
+// 当たり判定処理
+//=============================================================================
+void CBulletPlayer::Collision(void)
+{
+	bool bDeath = false;                  // 死亡したかどうか
+	D3DXVECTOR3 pos = GetPos();           // 今回の座標
+	D3DXVECTOR3 posDef = pos;             // デフォルトの今回の位置(戻されないように保存)
+	D3DXVECTOR3 posOld = GetPosOld();     // 前回の位置
+	D3DXVECTOR3 move = GetMove();         // 移動量
+	D3DXVECTOR3 colRange = GetColRange(); // 当たり判定を取る範囲
+
+	// 当たり判定開始
+	CScene *pScene = NULL;     // オブジェクトのポインタ
+	CScene *pSceneNext = NULL; // 次のオブジェクトのポインタ
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{
+			pSceneNext = pScene->GetNext();
+			CollisionCheck(&pos, &posOld, &move, colRange, pScene, &bDeath);
+			pos = posDef;
+			pScene = pSceneNext;
+		}
+	}
+
+	// 矩形の当たり判定
+	if (pos.x >= (MASS_SIZE_X * MASS_BLOCK_X) / 2)
+	{// 右側
+		bDeath = true;
+	}
+	if (pos.x <= (-MASS_SIZE_X * MASS_BLOCK_X) / 2)
+	{// 左側
+		bDeath = true;
+	}
+	if (pos.z >= (MASS_SIZE_Z * MASS_BLOCK_Z) / 2)
+	{// 奥側
+		bDeath = true;
+	}
+	if (pos.z <= (-MASS_SIZE_Z * MASS_BLOCK_Z) / 2)
+	{// 手前側
+		bDeath = true;
+	}
+
+
+	// 死亡判定チェック
+	if (bDeath == true)
+	{
 		Destroy();
 	}
 }
 
 //=============================================================================
-// 弾の当たり判定処理
+// 当たり判定チェック処理
 //=============================================================================
-void CBullet::Collision(void)
+void CBulletPlayer::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CScene *pScene, bool *pDeath)
 {
-	CScene *pScene = NULL;               // オブジェクトのポインタ
-	CScene *pSceneNext = NULL;           // 次のオブジェクトのポインタ
-	CObject3D *pObject = NULL;			 // オブジェクトのポインタ
-	CBoxCollider *pBoxCollider = NULL;	 //	当たり判定箱のポインタ
-	CEnemy *pEnemy = NULL;				 // 敵のポインタ
-	CPlayer *pPlayer = NULL;			 // プレイヤーのポインタ
-	CBullet *pBullet = NULL;			 // 弾のポインタ
-	CBlock *pBlock = NULL;				 // ブロックのポインタ
-
-	//位置の取得処理
-	D3DXVECTOR3 pos = GetPos();
-
-	//当たり判定の取得処理
-	D3DXVECTOR3 colRange = GetColRange();
-
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
-	{
-		pScene = CScene::GetTop(nCntPriority);
-		while (pScene != NULL)
-		{// NULLになるまで繰り返す
-			pSceneNext = pScene->GetNext();
-			if(m_type == BULLET_TYPE_PLAYER)
-			{//撃った弾がプレイヤーの場合
-				if (pScene->GetObjType() == OBJTYPE_ENEMY)
-				{// 種類が敵の場合
-					pEnemy = (CEnemy*)pScene;	//敵の動的確保
-					if (pEnemy != NULL)
-					{//NULLでない場合
-						pBoxCollider = pEnemy->GetBoxCollider();	//当たり判定箱の取得処理
-						if (pBoxCollider != NULL)
-						{//当たり判定箱がNULLでない場合
-							if (pBoxCollider->Collision(&pos, &m_posOld, &m_move,colRange / 2 , NULL) == true)
-							{//当たり判定箱に当たった場合
-								//終了処理
-								//Uninit();
-								//敵の終了処理
-								pEnemy->Uninit();
-								Destroy();
-							};
-						}
-					}
-				}
-				else if (pScene->GetObjType() == OBJTYPE_BULLET)
-				{// 種類が敵の場合
-					pBullet = (CBullet*)pScene;	//敵の動的確保
-					if (pBullet != NULL)
-					{//NULLでない場合
-						pBoxCollider = pBullet->GetBoxCollider();	//当たり判定箱の取得処理
-						if (pBoxCollider != NULL)
-						{//当たり判定箱がNULLでない場合
-							if (pBoxCollider->Collision(&pos, &m_posOld, &m_move, colRange / 2, NULL) == true)
-							{//当たり判定箱に当たった場合
-								//終了処理
-								//Uninit();
-								//敵の終了処理
-								pBullet->Destroy();
-								Destroy();
-							};
-						}
-					}
-				}
-				else if (pScene->GetObjType() == OBJTYPE_BLOCK)
-				{
-					pBlock = (CBlock*)pScene;	//ブロックの動的確保
-					if (pBlock != NULL)
-					{
-						pBoxCollider = pBlock->GetBoxCollider();	//当たり判定箱の取得処理
-						if (pBoxCollider != NULL)
-						{//当たり判定箱がNULLでない場合
-							if (pBoxCollider->Collision(&pos, &m_posOld, &m_move, colRange / 2, NULL) == true)
-							{//当たり判定箱に当たった場合
-							 //終了処理
-							 //Uninit();
-							 //敵の終了処理
-								pBlock->Hit(this);
-								Destroy();
-							};
-						}
-					}
-				}
-			}
-			else if(m_type == BULLET_TYPE_ENEMY)
-			{//撃った弾が敵の場合
-				if (pScene->GetObjType() == OBJTYPE_PLAYER)
-				{// 種類が敵の場合
-					pPlayer = (CPlayer*)pScene;	//敵の動的確保
-					if (pPlayer != NULL)
-					{//NULLでない場合
-						pBoxCollider = pPlayer->GetBoxCollider();	//当たり判定箱の取得処理
-						if (pBoxCollider != NULL)
-						{//当たり判定箱がNULLでない場合
-							if (pBoxCollider->Collision(&pos, &m_posOld, &m_move, colRange, NULL) == true)
-							{//当たり判定箱に当たった場合
-							 //終了処理
-								//Uninit();
-								//敵の終了処理
-								pPlayer->Uninit();
-								Destroy();
-							};
-						}
-					}
-				}
-				else if (pScene->GetObjType() == OBJTYPE_BULLET)
-				{// 種類が敵の場合
-					pBullet = (CBullet*)pScene;	//敵の動的確保
-					if (pBullet != NULL)
-					{//NULLでない場合
-						pBoxCollider = pBullet->GetBoxCollider();	//当たり判定箱の取得処理
-						if (pBoxCollider != NULL)
-						{//当たり判定箱がNULLでない場合
-							if (pBoxCollider->Collision(&pos, &m_posOld, &m_move, colRange, NULL) == true)
-							{//当たり判定箱に当たった場合
-							    //終了処理
-							    //Uninit();
-							    //敵の終了処理
-								pBullet->Destroy();
-								Destroy();
-							};
-						}
-					}
-				}
-				else if (pScene->GetObjType() == OBJTYPE_BLOCK)
-				{
-					pBlock = (CBlock*)pScene;	//ブロックの動的確保
-					if (pBlock != NULL)
-					{
-						pBoxCollider = pBlock->GetBoxCollider();	//当たり判定箱の取得処理
-						if (pBoxCollider != NULL)
-						{//当たり判定箱がNULLでない場合
-							if (pBoxCollider->Collision(&pos, &m_posOld, &m_move, colRange / 2, NULL) == true)
-							{//当たり判定箱に当たった場合
-							    //終了処理
-							    //Uninit();
-							    //敵の終了処理
-								pBlock->Hit(this);
-								Destroy();
-							};
-						}
-					}
-				}
-
-			}
-			// 次のオブジェクトへのポインタを取得
-			pScene = pSceneNext;
+	CObject3D *pObj = (CObject3D*)pScene;
+	if (pObj->GetObjType() == OBJTYPE_PLAYER)
+	{// プレイヤーだったら
+		if (CollisionPlayer(pPos, pPosOld, pMove, colRange, (CPlayer*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
 		}
 	}
+	else if (pObj->GetObjType() == OBJTYPE_ENEMY)
+	{// 敵だったら
+		if (CollisionEnemy(pPos, pPosOld, pMove, colRange, (CEnemy*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+	else if (pObj->GetObjType() == OBJTYPE_BULLET)
+	{// 弾だったら
+		if (CollisionBullet(pPos, pPosOld, pMove, colRange, (CBullet*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+	else if (pObj->GetObjType() == OBJTYPE_BLOCK)
+	{// ブロックだったら
+		if (CollisionBlock(pPos, pPosOld, pMove, colRange, (CBlock*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+	else if (pObj->GetObjType() == OBJTYPE_HEADQUARTERS)
+	{// 司令部だったら
+		if (CollisionHeadQuarters(pPos, pPosOld, pMove, colRange, (CHeadQuarters*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+}
+
+//=============================================================================
+// プレイヤーとの当たり判定処理
+//=============================================================================
+bool CBulletPlayer::CollisionPlayer(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CPlayer *pPlayer)
+{
+	CBoxCollider *pBoxCollider = pPlayer->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 敵との当たり判定処理
+//=============================================================================
+bool CBulletPlayer::CollisionEnemy(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CEnemy *pEnemy)
+{
+	CBoxCollider *pBoxCollider = pEnemy->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 弾との当たり判定処理
+//=============================================================================
+bool CBulletPlayer::CollisionBullet(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBullet *pBullet)
+{
+	CBoxCollider *pBoxCollider = pBullet->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// ブロックとの当たり判定処理
+//=============================================================================
+bool CBulletPlayer::CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBlock *pBlock)
+{
+	CBoxCollider *pBoxCollider = pBlock->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 司令部との当たり判定処理
+//=============================================================================
+bool CBulletPlayer::CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHead)
+{
+	CBoxCollider *pBoxCollider = pHead->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 死亡処理
+//=============================================================================
+void CBulletPlayer::Destroy(void)
+{
+	Uninit();
+}
+
+//=============================================================================
+// プレイヤーの弾の総数を取得する処理
+//=============================================================================
+int CBulletPlayer::GetNumAll_0(void)
+{
+	return m_nNumAll_0;
+}
+int CBulletPlayer::GetNumAll_1(void)
+{
+	return m_nNumAll_1;
+}
+
+//*****************************************************************************
+// CBulletEnemyの処理
+//*****************************************************************************
+//=============================================================================
+// コンストラクタ
+//=============================================================================
+CBulletEnemy::CBulletEnemy(int nPriority, OBJTYPE objType) : CBullet(nPriority, objType)
+{
 
 }
 
 //=============================================================================
-// 弾の破壊処理
+// デストラクタ
 //=============================================================================
-void CBullet::Destroy(void)
+CBulletEnemy::~CBulletEnemy()
 {
-	CPlayer *pPlayer = NULL;	//プレイヤーのポインタ情報
-	CEnemy *pEnemy = NULL;		//敵のポインタ情報
 
-	switch (m_pScene->GetObjType())
+}
+
+//=============================================================================
+// 弾の生成
+//=============================================================================
+CBulletEnemy *CBulletEnemy::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DXVECTOR3 move, CScene *pParent,
+	LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, int nPriority)
+{
+	CBulletEnemy *pBullet = NULL;
+
+	if (pBullet == NULL)
 	{
-	case OBJTYPE_PLAYER:
-		pPlayer = (CPlayer*) m_pScene;
-
-		if (pPlayer != NULL)
+		pBullet = new CBulletEnemy;
+		if (pBullet != NULL)
 		{
-			pPlayer->SetShoot(false);
+			// 各種値の設定
+			pBullet->SetPos(pos);
+			pBullet->SetRot(rot);
+			pBullet->SetMove(move);
+			pBullet->SetType(TYPE_ENEMY);
+			pBullet->SetColRange(D3DXVECTOR3(18.75f, 18.75f, 18.75f));
+			pBullet->SetParent(pParent);
+
+			if (FAILED(pBullet->Init()))
+			{
+				return NULL;
+			}
 		}
-
-		break;
-	case OBJTYPE_ENEMY:
-		pEnemy = (CEnemy*)m_pScene;
-
-		if (pEnemy != NULL)
-		{
-			pEnemy->SetShoot(false);
-		}
-
-		break;
 	}
+	return pBullet;
+}
+
+//=============================================================================
+// 初期化処理
+//=============================================================================
+HRESULT CBulletEnemy::Init(void)
+{
+	// 共通の初期化処理
+	if (FAILED(CBullet::Init()))
+	{
+		return E_FAIL;
+	}
+
+	// 番号を設定
+	SetIdx(m_nNumAll);
+
+	// 弾の総数を増やす
+	m_nNumAll++;
+
+	return S_OK;
+}
+
+//=============================================================================
+// 終了処理
+//=============================================================================
+void CBulletEnemy::Uninit(void)
+{
+	// 弾の総数を減らす
+	m_nNumAll--;
+
+	// 共通の終了処理
+	CBullet::Uninit();
+}
+
+//=============================================================================
+// 更新処理
+//=============================================================================
+void CBulletEnemy::Update(void)
+{
+	// 前回の位置設定
+	SetPosOld(GetPos());
+
+	// 移動処理
+	Move();
+
+	// 当たり判定処理
+	Collision();
+
+	// ボックスコライダーを動かす
+	SetBoxColliderPos();
+}
+
+//=============================================================================
+// 描画処理
+//=============================================================================
+void CBulletEnemy::Draw(void)
+{
+	// 共通の描画処理
+	CBullet::Draw();
+}
+
+//=============================================================================
+// 当たり判定処理
+//=============================================================================
+void CBulletEnemy::Collision(void)
+{
+	bool bDeath = false;                  // 死亡したかどうか
+	D3DXVECTOR3 pos = GetPos();           // 今回の座標
+	D3DXVECTOR3 posOld = GetPosOld();     // 前回の位置
+	D3DXVECTOR3 move = GetMove();         // 移動量
+	D3DXVECTOR3 colRange = GetColRange(); // 当たり判定を取る範囲
+
+	// 当たり判定開始
+	CScene *pScene = NULL;     // オブジェクトのポインタ
+	CScene *pSceneNext = NULL; // 次のオブジェクトのポインタ
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{
+			pSceneNext = pScene->GetNext();
+			CollisionCheck(&pos, &posOld, &move, colRange, pScene, &bDeath);
+			pScene = pSceneNext;
+		}
+	}
+
+	// 矩形の当たり判定
+	if (pos.x >= (MASS_SIZE_X * MASS_BLOCK_X) / 2)
+	{// 右側
+		bDeath = true;
+	}
+	if (pos.x <= (-MASS_SIZE_X * MASS_BLOCK_X) / 2)
+	{// 左側
+		bDeath = true;
+	}
+	if (pos.z >= (MASS_SIZE_Z * MASS_BLOCK_Z) / 2)
+	{// 奥側
+		bDeath = true;
+	}
+	if (pos.z <= (-MASS_SIZE_Z * MASS_BLOCK_Z) / 2)
+	{// 手前側
+		bDeath = true;
+	}
+
+	// 死亡判定チェック
+	if (bDeath == true)
+	{
+		Destroy();
+	}
+}
+
+//=============================================================================
+// 当たり判定チェック処理
+//=============================================================================
+void CBulletEnemy::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CScene *pScene, bool *pDeath)
+{
+	CObject3D *pObj = (CObject3D*)pScene;
+	if (pObj->GetObjType() == OBJTYPE_PLAYER)
+	{// プレイヤーだったら
+		if (CollisionPlayer(pPos, pPosOld, pMove, colRange, (CPlayer*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+	else if (pObj->GetObjType() == OBJTYPE_ENEMY)
+	{// 敵だったら
+		if (CollisionEnemy(pPos, pPosOld, pMove, colRange, (CEnemy*)pScene) == true)
+		{// 当たっている
+			*pDeath = true;
+		}
+	}
+	else if (pObj->GetObjType() == OBJTYPE_BULLET)
+	{// 弾だったら
+		if (CollisionBullet(pPos, pPosOld, pMove, colRange, (CBullet*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+	else if (pObj->GetObjType() == OBJTYPE_BLOCK)
+	{// ブロックだったら
+		if (CollisionBlock(pPos, pPosOld, pMove, colRange, (CBlock*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+	else if (pObj->GetObjType() == OBJTYPE_HEADQUARTERS)
+	{// 司令部だったら
+		if (CollisionHeadQuarters(pPos, pPosOld, pMove, colRange, (CHeadQuarters*)pScene) == true)
+		{// 当たっている
+			pObj->Hit(this);
+			*pDeath = true;
+		}
+	}
+}
+
+//=============================================================================
+// プレイヤーとの当たり判定処理
+//=============================================================================
+bool CBulletEnemy::CollisionPlayer(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CPlayer *pPlayer)
+{
+	CBoxCollider *pBoxCollider = pPlayer->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 敵との当たり判定処理
+//=============================================================================
+bool CBulletEnemy::CollisionEnemy(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CEnemy *pEnemy)
+{
+	CBoxCollider *pBoxCollider = pEnemy->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 弾との当たり判定処理
+//=============================================================================
+bool CBulletEnemy::CollisionBullet(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBullet *pBullet)
+{
+	CBoxCollider *pBoxCollider = pBullet->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// ブロックとの当たり判定処理
+//=============================================================================
+bool CBulletEnemy::CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBlock *pBlock)
+{
+	CBoxCollider *pBoxCollider = pBlock->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 司令部との当たり判定処理
+//=============================================================================
+bool CBulletEnemy::CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHead)
+{
+	CBoxCollider *pBoxCollider = pHead->GetBoxCollider();	//当たり判定箱の取得処理
+	if (pBoxCollider != NULL)
+	{//当たり判定箱がNULLでない場合
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//当たり判定箱に当たった場合
+			//return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 死亡処理
+//=============================================================================
+void CBulletEnemy::Destroy(void)
+{
 	Uninit();
+}
+
+//=============================================================================
+// 敵の弾の総数を取得する処理
+//=============================================================================
+int CBulletEnemy::GetNumAll(void)
+{
+	return m_nNumAll;
 }

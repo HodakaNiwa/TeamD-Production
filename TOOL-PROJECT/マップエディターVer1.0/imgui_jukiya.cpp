@@ -1590,6 +1590,9 @@ void CImGui_Jukiya::EnemyListDebug(CEditor *pEditor)
 	int nEnemyListRespawnTime = pEnemyData[m_nEnemyListIdx]->GetRespawnTime();
 	bool bEnemyListItem = pEnemyData[m_nEnemyListIdx]->GetItem();
 	int nEnemyListItemType = pEnemyData[m_nEnemyListIdx]->GetItemType();
+	int nEnemyListAI_Bullet = pEnemyData[m_nEnemyListIdx]->GetAI_BulletEva();
+	int nEnemyListAI_Mass = pEnemyData[m_nEnemyListIdx]->GetAI_MassEva();
+	int nEnemyListAI_Down = pEnemyData[m_nEnemyListIdx]->GetAI_DownEva();
 	ImGui::SliderInt(u8"リスポーン位置の番号", &nEnemyListRespawnIdx, 0, MAX_ENEMY_RESPAWN - 1);
 	ImGui::InputInt(u8"種類", &nEnemyListEnemyType);
 	ImGui::InputInt(u8"リスポーンする時間", &nEnemyListRespawnTime);
@@ -1598,6 +1601,10 @@ void CImGui_Jukiya::EnemyListDebug(CEditor *pEditor)
 	{
 		ImGui::InputInt(u8"出現させるアイテムの番号", &nEnemyListItemType);
 	}
+
+	ImGui::InputInt(u8"弾を打つ際のランダム評価値", &nEnemyListAI_Bullet);
+	ImGui::InputInt(u8"向きを変えさせるランダム評価値", &nEnemyListAI_Mass);
+	ImGui::InputInt(u8"下向きに動かせるランダム評価値", &nEnemyListAI_Down);
 
 	// データ判定
 	if (nEnemyListRespawnTime < 0)
@@ -1613,6 +1620,20 @@ void CImGui_Jukiya::EnemyListDebug(CEditor *pEditor)
 		nEnemyListItemType = 0;
 	}
 
+	// AIのデータ
+	if (nEnemyListAI_Bullet < 1)
+	{
+		nEnemyListAI_Bullet = 1;
+	}
+	if (nEnemyListAI_Mass < 1)
+	{
+		nEnemyListAI_Mass = 1;
+	}
+	if (nEnemyListAI_Down < 1)
+	{
+		nEnemyListAI_Down = 1;
+	}
+
 	// データ設定
 	CEnemy_ListData EnemyData;
 	EnemyData.SetRespawnIdx(nEnemyListRespawnIdx);
@@ -1620,6 +1641,9 @@ void CImGui_Jukiya::EnemyListDebug(CEditor *pEditor)
 	EnemyData.SetRespawnTime(nEnemyListRespawnTime);
 	EnemyData.SetItem(bEnemyListItem);
 	EnemyData.SetItemType(nEnemyListItemType);
+	EnemyData.SetAI_BulletEva(nEnemyListAI_Bullet);
+	EnemyData.SetAI_MassEva(nEnemyListAI_Mass);
+	EnemyData.SetAI_DownEva(nEnemyListAI_Down);
 	pEditor->GetMap()->GetEnemyListData(m_nEnemyListIdx)->Cpy(&EnemyData);
 
 	// ウィンドウ生成終了

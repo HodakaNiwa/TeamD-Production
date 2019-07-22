@@ -14,6 +14,7 @@
 #include "fileLoader.h"
 #include "functionlib.h"
 #include "object.h"
+#include "enemy.h"
 
 //*****************************************************************************
 //     マクロ定義
@@ -118,6 +119,7 @@ CCharacterManager::CCharacterManager()
 	m_pModelCreate = NULL;        // モデル管轄クラスへのポインタ
 	m_pTextureManager = NULL;     // テクスチャ管轄クラスへのポインタ
 	m_pParent = NULL;             // 親モデルの番号
+	m_pMotionManager = NULL;      // モーション管轄クラスへのポインタ
 }
 
 //=============================================================================
@@ -285,6 +287,74 @@ CObject *CCharacterManager::SetObject(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nTyp
 	}
 
 	return pObject;
+}
+
+//=============================================================================
+//    敵を作成する処理
+//=============================================================================
+CEnemy *CCharacterManager::SetEnemy(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nPriority)
+{
+	CModel **apModelCpy = NULL;                // モデルクラスコピー用
+	CMotionManager *pMotionManagerCpy = NULL;  // モーション管轄クラスコピー用
+
+	// モデルの数だけメモリ確保
+	apModelCpy = new CModel*[m_nNumModel];
+	if (apModelCpy == NULL) return NULL;
+	for (int nCntModel = 0; nCntModel < m_nNumModel; nCntModel++)
+	{
+		// メモリ確保
+		apModelCpy[nCntModel] = NULL;
+		apModelCpy[nCntModel] = new CModel;
+
+		// 値コピー
+		if (apModelCpy[nCntModel] != NULL)
+		{
+			apModelCpy[nCntModel]->Cpy(m_apModel[nCntModel]);
+			if (m_pParent[nCntModel] != -1)
+			{
+				apModelCpy[nCntModel]->SetParent(apModelCpy[m_pParent[nCntModel]]);
+			}
+		}
+	}
+
+	// モーションデータをコピーする
+	if (m_nNumMotionData > 0)
+	{
+		pMotionManagerCpy = CMotionManager::Create(m_nNumMotionData, m_nNumModel);
+		for (int nCntMotion = 0; nCntMotion < m_nNumMotionData; nCntMotion++)
+		{
+			pMotionManagerCpy->CpyMotion(m_pMotionManager->GetMotion()[nCntMotion], nCntMotion);
+		}
+	}
+
+	// 配置物を生成する
+	CEnemy *pEnemy = NULL;
+	switch (nType)
+	{
+	case CEnemy::TYPE_NORMAL:
+		pEnemy = CEnemyNormal::Create(pos, rot, (CEnemy::TYPE)nType);
+		break;
+	case CEnemy::TYPE_ARMORE:
+		pEnemy = CEnemyArmore::Create(pos, rot, (CEnemy::TYPE)nType);
+		break;
+	case CEnemy::TYPE_FAST:
+		pEnemy = CEnemyFast::Create(pos, rot, (CEnemy::TYPE)nType);
+		break;
+	case CEnemy::TYPE_HEAVY:
+		pEnemy = CEnemyHeavy::Create(pos, rot, (CEnemy::TYPE)nType);
+		break;
+	}
+	if (pEnemy != NULL)
+	{
+		pEnemy->SetAccel(m_CharaData.fAccel);
+		pEnemy->SetInertia(m_CharaData.fInertia);
+		pEnemy->SetRivisionRot(m_CharaData.fRivisionRot);
+		pEnemy->SetNumPart(m_CharaData.nNumParts);
+		pEnemy->SetModel(apModelCpy);
+		pEnemy->SetMotionManager(pMotionManagerCpy);
+	}
+
+	return pEnemy;
 }
 
 //=============================================================================

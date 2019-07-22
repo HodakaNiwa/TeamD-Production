@@ -61,6 +61,7 @@ int GetFPS(void);
 #define MASS_SIZE_X_HALF (MASS_SIZE_X / 2.0f)  // マスのサイズの半分(横)
 #define MASS_SIZE_Z_HALF (MASS_SIZE_Z / 2.0f)  // マスのサイズの半分(縦)
 #define INITIALIZE_D3DXVECTOR3 (D3DXVECTOR3(0.0f,0.0f,0.0f))
+#define MAX_NUM_PLAYER   (2)                   // プレイヤーの最大人数
 
 // 2Dポリゴン用頂点フォーマット( 頂点座標[2D] / 頂点カラー / テクスチャ座標 )
 #define FVF_VERTEX_2D	(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)

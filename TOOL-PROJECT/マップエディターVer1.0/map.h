@@ -66,12 +66,18 @@ public:    // 誰でもアクセス可能
 	void SetRespawnTime(const int nRespawnTime);
 	void SetItem(const bool bItem);
 	void SetItemType(const int nItemType);
+	void SetAI_BulletEva(const int nAI_BulletEva);
+	void SetAI_MassEva(const int nAI_MassEva);
+	void SetAI_DownEva(const int nAI_DownEva);
 
 	int GetRespawnIdx(void);
 	int GetEnemyType(void);
 	int GetRespawnTime(void);
 	bool GetItem(void);
 	int GetItemType(void);
+	int GetAI_BulletEva(void);
+	int GetAI_MassEva(void);
+	int GetAI_DownEva(void);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 
@@ -81,6 +87,9 @@ private:   // このクラスだけがアクセス可能
 	int m_nRespawnTime;    // 敵を出現させる時間(60FPS上で換算)
 	bool m_bItem;          // 倒した時にアイテムを出現させるか
 	int m_nItemType;       // 出現するアイテムの種類番号
+	int m_nAI_BulletEva;   // 弾を打つ際のランダム評価値
+	int m_nAI_MassEva;     // マスを移動した際に向きを変えさせるか判定するときのランダム評価値
+	int m_nAI_DownEva;     // 下向きに動かすかどうかを判定する際のランダム評価値
 };
 
 //*****************************************************************************
@@ -201,6 +210,7 @@ private:   // このクラスだけがアクセス可能
 	void LoadObjBill(char *pStr, CFileLoader *pFileLoader);
 	void LoadObjEffect(char *pStr, CFileLoader *pFileLoader, CEffectManager *pEffectManager);
 	void LoadItem(char *pStr, CFileLoader *pFileLoader, int nCntEnemyList);
+	void LoadEnemyAI(char *pStr, CFileLoader *pFileLoader, int nCntEnemyList);
 
 	void FieldDown(D3DXVECTOR3 pos, int nXBlock, int nZBlock, float fFieldDown);
 	void SetRiver(int nTexIdx, D3DXVECTOR3 pos, int nXBlock, int nZBlock, float fBoxColWidth, float fBoxColHeight, float fBoxColDepth);

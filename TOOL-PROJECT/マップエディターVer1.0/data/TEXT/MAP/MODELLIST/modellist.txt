@@ -1,6 +1,6 @@
 #==============================================================================
 #
-# モデルリスト情報スクリプトファイル [modellist.txt]
+# モデル情報スクリプトファイル [modellist.txt]
 # Author : Hodaka Niwa
 #
 #==============================================================================
@@ -9,27 +9,11 @@ SCRIPT			# この行は絶対消さないこと！
 #------------------------------------------------------------------------------
 # 読み込むモデル数
 #------------------------------------------------------------------------------
-NUM_MODEL = 17
+NUM_MODEL = 1
 
 #------------------------------------------------------------------------------
-# 読み込むモデルのファイル名
+# 読み込むモデルファイル名
 #------------------------------------------------------------------------------
-MODEL_FILENAME = data/MODEL/flag.x
 MODEL_FILENAME = data/MODEL/test000.x
-MODEL_FILENAME = data/MODEL/OBJECT/Choco01.x
-MODEL_FILENAME = data/MODEL/OBJECT/Choco02.x
-MODEL_FILENAME = data/MODEL/OBJECT/Choco03.x
-MODEL_FILENAME = data/MODEL/OBJECT/Choco04.x
-MODEL_FILENAME = data/MODEL/OBJECT/ChocoTira.x
-MODEL_FILENAME = data/MODEL/OBJECT/GreenTira.x
-MODEL_FILENAME = data/MODEL/OBJECT/FruitMochi.x
-MODEL_FILENAME = data/MODEL/OBJECT/HotCake01.x
-MODEL_FILENAME = data/MODEL/OBJECT/HotCake02.x
-MODEL_FILENAME = data/MODEL/OBJECT/HotCake03.x
-MODEL_FILENAME = data/MODEL/OBJECT/Hugashi01.x
-MODEL_FILENAME = data/MODEL/OBJECT/Hugashi02.x
-MODEL_FILENAME = data/MODEL/OBJECT/Mochi01.x
-MODEL_FILENAME = data/MODEL/OBJECT/Mochi02.x
-MODEL_FILENAME = data/MODEL/OBJECT/whip.x
 
 END_SCRIPT		# この行は絶対消さないこと！

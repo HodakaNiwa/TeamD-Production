@@ -14,11 +14,6 @@
 #include "sceneBillboard.h"
 
 //*****************************************************************************
-//    前方宣言
-//*****************************************************************************
-
-
-//*****************************************************************************
 //    パーティクルデータクラスの定義
 //*****************************************************************************
 class CParData
@@ -27,8 +22,6 @@ public:    // 誰でもアクセス可能
 	CParData();
 	~CParData();
 
-	void SetRange(const D3DXVECTOR3 Range) { m_Range = Range; }
-	void SetRangeMag(const float fRangeMag) { m_fRangeMag = fRangeMag; }
 	void SetMaxRot(const float fMaxRot) { m_fMaxRot = fMaxRot; }
 	void SetMinRot(const float fMinRot) { m_fMinRot = fMinRot; }
 	void SetMaxMove(const D3DXVECTOR3 MaxMove) { m_MaxMove = MaxMove; }
@@ -43,7 +36,6 @@ public:    // 誰でもアクセス可能
 	void SetSpread(const float fSpread) { m_fSpread = fSpread; }
 	void SetMaxLife(const int nMaxLife) { m_nMaxLife = nMaxLife; }
 	void SetMinLife(const int nMinLife) { m_nMinLife = nMinLife; }
-	void SetGravity(const float fGravity) { m_fGravity = fGravity; }
 	void SetBouncing(const float fBouncing) { m_fBouncing = fBouncing; }
 	void SetRotPattern(const int nRotPattern) { m_nRotPattern = nRotPattern; }
 	void SetRotSpeed(const float fRotSpeed) { m_fRotSpeed = fRotSpeed; }
@@ -51,8 +43,6 @@ public:    // 誰でもアクセス可能
 	void SetDrawAddtive(const bool bDrawAddtive) { m_bDrawAddtive = bDrawAddtive; }
 	void SetLighting(const bool bLighting) { m_bLighting = bLighting; }
 
-	D3DXVECTOR3 GetRange(void) { return m_Range; }
-	float GetRangeMag(void) { return m_fRangeMag; }
 	float GetMaxRot(void) { return m_fMaxRot; }
 	float GetMinRot(void) { return m_fMinRot; }
 	D3DXVECTOR3 GetMaxMove(void) { return m_MaxMove; }
@@ -67,7 +57,6 @@ public:    // 誰でもアクセス可能
 	float GetSpread(void) { return m_fSpread; }
 	int GetMaxLife(void) { return m_nMaxLife; }
 	int GetMinLife(void) { return m_nMinLife; }
-	float GetGravity(void) { return m_fGravity; }
 	float GetBouncing(void) { return m_fBouncing; }
 	int GetRotPattern(void) { return m_nRotPattern; }
 	float GetRotSpeed(void) { return m_fRotSpeed; }
@@ -78,8 +67,6 @@ public:    // 誰でもアクセス可能
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:   // このクラスだけがアクセス可能
-	D3DXVECTOR3 m_Range;         // 生成する範囲(オフセット)
-	float       m_fRangeMag;     // 生成する範囲の倍率
 	float       m_fMaxRot;       // 生成時の向き(最大値)
 	float       m_fMinRot;       // 生成時の向き(最小値)
 	D3DXVECTOR3 m_MaxMove;       // 移動量の最大値
@@ -94,7 +81,6 @@ private:   // このクラスだけがアクセス可能
 	float       m_fSpread;       // 大きさの変化量
 	int         m_nMaxLife;      // 寿命の最大値
 	int         m_nMinLife;      // 寿命の最小値
-	float       m_fGravity;      // 毎フレームかける重力
 	float       m_fBouncing;     // バウンド量
 	int         m_nRotPattern;   // 回転の種類[ 0:時計回り 1:反時計回り 2:ランダム ]
 	float       m_fRotSpeed;     // 回転するスピード
@@ -113,26 +99,25 @@ public:    // 誰でもアクセス可能
 	~CParticle();
 
 	static CParticle *Create(D3DXVECTOR3 pos, D3DXVECTOR3 move, D3DXVECTOR3 ChangeMove, D3DXCOLOR col, float fWidth,
-		float fHeight, float fRot, D3DXCOLOR ChangeCol, float fGravity, float fSpread,
+		float fHeight, float fRot, D3DXCOLOR ChangeCol, float fSpread,
 		float fChangeRot, float fBouncing, int nLife, int nRotPattern,
 		bool bCol, bool bDrawAddtive, bool bLighting, int nPriority = 3);
 
 	HRESULT Init(D3DXVECTOR3 pos, D3DXVECTOR3 move, D3DXVECTOR3 ChangeMove, D3DXCOLOR col,
-		float fWidth, float fHeight, float fRot, D3DXCOLOR ChangeCol, float fGravity, float fSpread,
+		float fWidth, float fHeight, float fRot, D3DXCOLOR ChangeCol, float fSpread,
 		float fChangeRot, float fBouncing, int nLife, int nRotPattern,
 		bool bCol, bool bDrawAddtive, bool bLighting);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
 	void MakeVertex(const LPDIRECT3DDEVICE9 pDevice);
-	void ChangeVertex(D3DXVECTOR3 pos, D3DXCOLOR col, float fRot, float fLength);
+	void ChangeVertex(void);
 
 	void SetMove(const D3DXVECTOR3 move);
 	void SetChangeMove(const D3DXVECTOR3 ChangeMove);
 	void SetChangeCol(const D3DXCOLOR ChangeCol);
 	void SetLife(const int nLife);
 	void SetRotPattern(const int nRotPattern);
-	void SetGravity(const float fGravity);
 	void SetSpread(const float fSpread);
 	void SetChangeRot(const float fChangeRot);
 	void SetBouncing(const float fBouncing);
@@ -144,7 +129,6 @@ public:    // 誰でもアクセス可能
 	D3DXCOLOR GetChangeCol(void);
 	int GetLife(void);
 	int GetRotPattern(void);
-	float GetGravity(void);
 	float GetSpread(void);
 	float GetChangeRot(void);
 	float GetBouncing(void);
@@ -159,12 +143,12 @@ private:   // このクラスだけがアクセス可能
 	D3DXCOLOR   m_ChangeCol;      // 色の変化量
 	int         m_nLife;          // 寿命
 	int         m_nRotPattern;    // 回転の種類
-	float       m_fGravity;       // 重力
 	float       m_fSpread;        // 大きさの変化量
 	float       m_fChangeRot;     // 回転の変化量
 	float       m_fBouncing;      // バウンド量
 	bool        m_bCollision;     // 当たり判定を取るかどうか
 	bool        m_bDrawAddtive;   // 加算合成で描画するかしないか
+	bool        m_bLighting;      // ライティングするかしないか
 };
 
 #endif

@@ -59,6 +59,10 @@ void CTextureManager::Init(void)
 	{
 		//テクスチャの動的確保
 		m_pTexture = new LPDIRECT3DTEXTURE9[m_nNumTexture];
+		for (int nCntTexture = 0; nCntTexture < m_nNumTexture; nCntTexture++)
+		{//文字列の動的確保
+			m_pTexture[nCntTexture] = NULL;
+		}
 	}
 
 	if (m_pFileName == NULL)
@@ -84,8 +88,11 @@ void CTextureManager::Uninit(void)
 	{
 		for (int nCntTexture = 0; nCntTexture < m_nNumTexture; nCntTexture++)
 		{
-			m_pTexture[nCntTexture]->Release();
-			m_pTexture[nCntTexture] = NULL;
+			if (m_pTexture[nCntTexture] != NULL)
+			{
+				m_pTexture[nCntTexture]->Release();
+				m_pTexture[nCntTexture] = NULL;
+			}
 		}
 		delete[] m_pTexture;
 		m_pTexture = NULL;

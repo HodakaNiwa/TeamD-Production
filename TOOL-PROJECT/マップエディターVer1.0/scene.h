@@ -48,6 +48,8 @@ public:	//誰からもアクセス可能
 		OBJTYPE_RINGEMITTER,    // リングエフェクトエミッター
 		OBJTYPE_PARTICLE,       // パーティクル
 		OBJTYPE_OBJBILLBOARD,   // ビルボードオブジェクト
+		OBJTYPE_ITEM,           // アイテム
+		OBJTYPE_HEADQUARTERS,   // 司令部
 		OBJTYPE_MAX,
 	} OBJTYPE;
 

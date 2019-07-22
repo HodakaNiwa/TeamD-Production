@@ -44,6 +44,7 @@ public:	//誰からもアクセス可能
 	void SetMotionManager(CMotionManager *pMotionManager);
 	void SetAccel(const float fAccel);
 	void SetInertia(const float fInertia);
+	void SetRivisionRot(const float fRivisionRot);
 	void SetPosOld(D3DXVECTOR3 posOld);
 	void SetMove(D3DXVECTOR3 move);
 	void SetShoot(bool bHit);
@@ -54,6 +55,7 @@ public:	//誰からもアクセス可能
 	CMotionManager *GetMotionManager(void);
 	float GetAccel(void);
 	float GetInertia(void);
+	float GetRivisionRot(void);
 	D3DXVECTOR3 GetPosOld(void);
 	D3DXVECTOR3 GetMove(void);
 	bool GetShoot(void);
@@ -71,6 +73,7 @@ private:	//自分だけがアクセス可能
 	CMotionManager              *m_pMotionManager;                  // モーション管轄クラスへのポインタ
 	float                       m_fAccel;                           // 移動できるスピード量
 	float                       m_fInertia;                         // 慣性量
+	float                       m_fRivisionRot;                     // 向きを補正する倍率
 	D3DXVECTOR3					m_posOld;							// 前回の位置
 	D3DXVECTOR3					m_move;								// 移動量
 	bool						m_bShoot;							// 撃っているかどうか

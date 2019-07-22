@@ -151,6 +151,11 @@
 #define TIME "TIME = "
 #define ITEM "ITEM"
 #define END_ITEM "END_ITEM"
+#define AISET "AISET"
+#define END_AISET "END_AISET"
+#define BULLET "BULLET = "
+#define MASS "MASS = "
+#define DOWN "DOWN = "
 
 //*****************************************************************************
 //    静的メンバ変数宣言
@@ -1677,6 +1682,10 @@ HRESULT CMap::LoadEnemyListInfo(char *pStr, CFileLoader *pFileLoader, int nCntEn
 			m_pEnemyListData[nCntEnemyList]->SetItemType(true);
 			LoadItem(pStr, pFileLoader, nCntEnemyList);
 		}
+		else if (CFunctionLib::Memcmp(pStr, AISET) == 0)
+		{// 敵のAI情報だった
+			LoadEnemyAI(pStr, pFileLoader, nCntEnemyList);
+		}
 		else if (CFunctionLib::Memcmp(pStr, END_ENEMYLISTSET) == 0)
 		{// 敵の生成情報読み込み終了の合図だった
 			break;
@@ -1700,6 +1709,33 @@ void CMap::LoadItem(char *pStr, CFileLoader *pFileLoader, int nCntEnemyList)
 		}
 		else if (CFunctionLib::Memcmp(pStr, END_ITEM) == 0)
 		{// 敵のアイテム生成情報読み込み終了の合図があった
+			break;
+		}
+	}
+}
+
+//=============================================================================
+//    敵のAI情報を読み込む処理
+//=============================================================================
+void CMap::LoadEnemyAI(char *pStr, CFileLoader *pFileLoader, int nCntEnemyList)
+{
+	while (1)
+	{// 抜けるまでループ
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, BULLET) == 0)
+		{// 弾を打つ際のランダム評価値だった
+			m_pEnemyListData[nCntEnemyList]->SetAI_BulletEva(CFunctionLib::ReadInt(pStr, BULLET));
+		}
+		else if (CFunctionLib::Memcmp(pStr, MASS) == 0)
+		{// 向きを変えさせるランダム評価値だった
+			m_pEnemyListData[nCntEnemyList]->SetAI_MassEva(CFunctionLib::ReadInt(pStr, MASS));
+		}
+		else if (CFunctionLib::Memcmp(pStr, DOWN) == 0)
+		{// 下向きに動かせるランダム評価値だった
+			m_pEnemyListData[nCntEnemyList]->SetAI_DownEva(CFunctionLib::ReadInt(pStr, DOWN));
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_AISET) == 0)
+		{// 敵のAI情報読み込み終了の合図があった
 			break;
 		}
 	}
@@ -2669,6 +2705,11 @@ void CMap::SaveEnemyListInfo(CFileSaver *pFileSaver)
 			pFileSaver->Print("		%s%d		# 出現させるアイテムの種類\n", TYPE, m_pEnemyListData[nCnt]->GetItemType());
 			pFileSaver->Print("	%s\n", END_ITEM);
 		}
+		pFileSaver->Print("	%s\n", AISET);
+		pFileSaver->Print("		%s%d	# 弾を打つ際のランダム評価値\n", BULLET, m_pEnemyListData[nCnt]->GetAI_BulletEva());
+		pFileSaver->Print("		%s%d		# 向きを変えさせるランダム評価値\n", MASS, m_pEnemyListData[nCnt]->GetAI_MassEva());
+		pFileSaver->Print("		%s%d		# 下向きに動かせるランダム評価値\n", DOWN, m_pEnemyListData[nCnt]->GetAI_DownEva());
+		pFileSaver->Print("	%s\n", END_AISET);
 		pFileSaver->Print("%s\n", END_ENEMYLISTSET);
 		pFileSaver->Print("\n");
 	}
@@ -3410,6 +3451,9 @@ CEnemy_ListData::CEnemy_ListData()
 	m_nRespawnTime = 0;
 	m_bItem = false;
 	m_nItemType = 0;
+	m_nAI_BulletEva = 0;
+	m_nAI_MassEva = 0;
+	m_nAI_DownEva = 0;
 }
 
 //=============================================================================
@@ -3430,6 +3474,9 @@ void CEnemy_ListData::Cpy(CEnemy_ListData *pEnemyData)
 	m_nRespawnTime = pEnemyData->GetRespawnTime();
 	m_bItem = pEnemyData->GetItem();
 	m_nItemType = pEnemyData->GetItemType();
+	m_nAI_BulletEva = pEnemyData->GetAI_BulletEva();
+	m_nAI_MassEva = pEnemyData->GetAI_MassEva();
+	m_nAI_DownEva = pEnemyData->GetAI_DownEva();
 }
 
 //=============================================================================
@@ -3473,6 +3520,30 @@ void CEnemy_ListData::SetItemType(const int nItemType)
 }
 
 //=============================================================================
+//    弾を打つ際のランダム評価値を設定する
+//=============================================================================
+void CEnemy_ListData::SetAI_BulletEva(const int nAI_BulletEva)
+{
+	m_nAI_BulletEva = nAI_BulletEva;
+}
+
+//=============================================================================
+//    マスを移動した際に向きを変えさせるか判定する時のランダム評価値を設定する
+//=============================================================================
+void CEnemy_ListData::SetAI_MassEva(const int nAI_MassEva)
+{
+	m_nAI_MassEva = nAI_MassEva;
+}
+
+//=============================================================================
+//    下向きに動かすかどうかを判定する際のランダム評価値を設定する
+//=============================================================================
+void CEnemy_ListData::SetAI_DownEva(const int nAI_DownEva)
+{
+	m_nAI_DownEva = nAI_DownEva;
+}
+
+//=============================================================================
 //    敵のリスポーン位置の番号を取得する
 //=============================================================================
 int CEnemy_ListData::GetRespawnIdx(void)
@@ -3510,4 +3581,28 @@ bool CEnemy_ListData::GetItem(void)
 int CEnemy_ListData::GetItemType(void)
 {
 	return m_nItemType;
+}
+
+//=============================================================================
+//    弾を打つ際のランダム評価値を取得する
+//=============================================================================
+int CEnemy_ListData::GetAI_BulletEva(void)
+{
+	return m_nAI_BulletEva;
+}
+
+//=============================================================================
+//    マスを移動した際に向きを変えさせるか判定する時のランダム評価値を取得する
+//=============================================================================
+int CEnemy_ListData::GetAI_MassEva(void)
+{
+	return m_nAI_MassEva;
+}
+
+//=============================================================================
+//    下向きに動かすかどうかを判定する際のランダム評価値を取得する
+//=============================================================================
+int CEnemy_ListData::GetAI_DownEva(void)
+{
+	return m_nAI_DownEva;
 }
