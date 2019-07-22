@@ -1,6 +1,6 @@
 #==============================================================================
 #
-# 敵の生成情報スクリプトファイル [enemylist000.txt]
+# 敵の生成情報スクリプトファイル [enemylist042.txt]
 # Author : Hodaka Niwa
 #
 #==============================================================================
@@ -23,13 +23,13 @@ END_ENEMYLISTSET
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 90			# 出現させる時間
+	TIME = 60			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 120			# 出現させる時間
+	TIME = 60			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
@@ -41,13 +41,13 @@ END_ENEMYLISTSET
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 180			# 出現させる時間
+	TIME = 150			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 210			# 出現させる時間
+	TIME = 150			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
@@ -59,13 +59,13 @@ END_ENEMYLISTSET
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 270			# 出現させる時間
+	TIME = 240			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 300			# 出現させる時間
+	TIME = 240			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
@@ -77,19 +77,19 @@ END_ENEMYLISTSET
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 360			# 出現させる時間
+	TIME = 330			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 390			# 出現させる時間
+	TIME = 330			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 420			# 出現させる時間
+	TIME = 330			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
@@ -101,13 +101,13 @@ END_ENEMYLISTSET
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 480			# 出現させる時間
+	TIME = 450			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 510			# 出現させる時間
+	TIME = 450			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
@@ -119,19 +119,19 @@ END_ENEMYLISTSET
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 570			# 出現させる時間
+	TIME = 540			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 600			# 出現させる時間
+	TIME = 540			# 出現させる時間
 END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
-	TIME = 630			# 出現させる時間
+	TIME = 540			# 出現させる時間
 END_ENEMYLISTSET
 
 

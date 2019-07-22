@@ -9,7 +9,7 @@ SCRIPT			# この行は絶対消さないこと！
 #------------------------------------------------------------------------------
 # 読み込むモデル数
 #------------------------------------------------------------------------------
-NUM_MODEL = 16
+NUM_MODEL = 17
 
 #------------------------------------------------------------------------------
 # 読み込むモデルのファイル名
@@ -30,5 +30,6 @@ MODEL_FILENAME = data/MODEL/Hugashi01.x
 MODEL_FILENAME = data/MODEL/Hugashi02.x
 MODEL_FILENAME = data/MODEL/Mochi01.x
 MODEL_FILENAME = data/MODEL/Mochi02.x
+MODEL_FILENAME = data/MODEL/whip.x
 
 END_SCRIPT		# この行は絶対消さないこと！

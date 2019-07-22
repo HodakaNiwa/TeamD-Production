@@ -40,7 +40,7 @@ ENEMY_RESPAWN = 16 2
 SKYSET
 	TEX_IDX = 3						# 種類
 	POS = -1500.0 -3000.0 4000.0	# 座標
-	ROT = 0.0 2.7 0.0				# 向き
+	ROT = 0.0 1.8 0.0				# 向き
 	ROLLSPEED = 0.000010			# 回転スピード
 	XBLOCK = 20						# 横の分割数
 	YBLOCK = 20						# 縦の分割数

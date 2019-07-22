@@ -1,6 +1,6 @@
 #==============================================================================
 #
-# テクスチャリスト情報スクリプトファイル [texlist.txt]
+# テクスチャ情報スクリプトファイル [texlist.txt]
 # Author : Hodaka Niwa
 #
 #==============================================================================
@@ -9,15 +9,11 @@ SCRIPT			# この行は絶対消さないこと！
 #------------------------------------------------------------------------------
 # 読み込むテクスチャ数
 #------------------------------------------------------------------------------
-NUM_TEXTURE = 5
+NUM_TEXTURE = 1
 
 #------------------------------------------------------------------------------
-# 読み込むテクスチャのファイル名
+# 読み込むテクスチャファイル名
 #------------------------------------------------------------------------------
-TEXTURE_FILENAME = data/TEXTURE/FIELD/field000.jpg
-TEXTURE_FILENAME = data/TEXTURE/FIELD/field001.jpg
-TEXTURE_FILENAME = data/TEXTURE/FIELD/field002.jpg
-TEXTURE_FILENAME = data/TEXTURE/FIELD/field003.jpg
-TEXTURE_FILENAME = data/TEXTURE/FIELD/field004.jpg
+TEXTURE_FILENAME = data/TEXTURE/field000.jpg
 
 END_SCRIPT		# この行は絶対消さないこと！
