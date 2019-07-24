@@ -79,6 +79,9 @@ ENEMYLISTSET
 	RESPAWN = 2			# リスポーン位置の番号
 	TYPE = 0			# 種類
 	TIME = 950			# 出現させる時間
+	ITEM
+		TYPE = 1		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 300	# 弾を打つ際のランダム評価値
 		MASS = 10		# 向きを変えさせるランダム評価値
@@ -148,6 +151,9 @@ ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 0			# 種類
 	TIME = 2150			# 出現させる時間
+	ITEM
+		TYPE = 1		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 300	# 弾を打つ際のランダム評価値
 		MASS = 10		# 向きを変えさせるランダム評価値
