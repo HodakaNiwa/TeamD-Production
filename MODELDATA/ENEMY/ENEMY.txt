@@ -30,21 +30,21 @@ CHARACTERSET
 	PARTSSET
 		INDEX = 0					# 体
 		PARENT = -1					# (親)NULL
-		POS = 0.0 53.0 0.0
+		POS = 0.0 30.0 0.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
 	PARTSSET
 		INDEX = 1					# 前タイヤ
 		PARENT = 0					# (親)体
-		POS = 0.0 -30.0 -28.0
+		POS = 0.0 -18.0 -20.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
 	PARTSSET
 		INDEX = 2					# 後ろタイヤ
 		PARENT = 0					# (親)体
-		POS = 0.0 -30.0 28.0
+		POS = 0.0 -18.0 20.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
