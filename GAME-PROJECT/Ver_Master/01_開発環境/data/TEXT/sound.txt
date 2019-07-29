@@ -1,0 +1,67 @@
+#==============================================================================
+#
+# サウンドデータ [sound.txt]
+# Author : HODAKA NIWA
+#
+#==============================================================================
+SCRIPT				#この行は絶対に消さないこと！
+
+#------------------------------------------------------------------------------
+#  使用するサウンド数
+#------------------------------------------------------------------------------
+NUM_SOUND = 10
+
+#------------------------------------------------------------------------------
+#  サウンド情報
+#------------------------------------------------------------------------------
+SOUNDSET		# タイトルのBGM[0]
+	FILENAME = data/BGM/title.wav
+	LOOP = -1
+END_SOUNDSET
+
+SOUNDSET		# キャラセレクトのBGM[1]
+	FILENAME = data/BGM/charaselect.wav
+	LOOP = -1
+END_SOUNDSET
+
+SOUNDSET		# チュートリアルのBGM[2]
+	FILENAME = data/BGM/tutorial.wav
+	LOOP = -1
+END_SOUNDSET
+
+SOUNDSET		# ゲームのBGM[3]
+	FILENAME = data/BGM/game_hina.wav
+	LOOP = -1
+END_SOUNDSET
+
+SOUNDSET		# リザルトのBGM[4]
+	FILENAME = data/BGM/result.wav
+	LOOP = -1
+END_SOUNDSET
+
+SOUNDSET		# ゲームでステージが始まるときのSE[5]
+	FILENAME = data/SE/Fanfare.wav
+	LOOP = 0
+END_SOUNDSET
+
+SOUNDSET		# 弾発射時のSE[6]
+	FILENAME = data/SE/bullet.wav
+	LOOP = 0
+END_SOUNDSET
+
+SOUNDSET		# タイトルでチームロゴを出すときのSE[7]
+	FILENAME = data/SE/title_teamLogo.wav
+	LOOP = 0
+END_SOUNDSET
+
+SOUNDSET		# 選択したときのSE[8]
+	FILENAME = data/SE/select.wav
+	LOOP = 0
+END_SOUNDSET
+
+SOUNDSET		# 決定ボタンを押した時のSE[9]
+	FILENAME = data/SE/decide.wav
+	LOOP = 0
+END_SOUNDSET
+
+END_SCRIPT			#この行は絶対に消さないこと！

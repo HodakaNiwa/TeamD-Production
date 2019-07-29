@@ -1,0 +1,27 @@
+#==============================================================================
+#
+# テクスチャリスト情報スクリプトファイル [autosave_texlist.txt]
+# Author : Hodaka Niwa
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# 読み込むテクスチャ数
+#------------------------------------------------------------------------------
+NUM_TEXTURE = 9
+
+#------------------------------------------------------------------------------
+# 読み込むテクスチャのファイル名
+#------------------------------------------------------------------------------
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field000.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field001.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field002.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field003.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field004.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field005.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field006.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field007.jpg
+TEXTURE_FILENAME = data/TEXTURE/FIELD/field008.jpg
+
+END_SCRIPT		# この行は絶対消さないこと！
