@@ -22,6 +22,7 @@ class CGoalCylinder;
 class CRiver;
 class CIceField;
 class CHeadQuarters;
+class CHinaarare;
 
 //*****************************************************************************
 // クラス定義
@@ -65,6 +66,7 @@ public:	//誰からもアクセス可能
 	void Update(void);
 	void Draw(void);
 	void Hit(CScene *pScene);
+	void SetDeathEffect(void);
 
 	void SetPlayer(CPlayer *pPlayer);
 	void SetPlayerIdx(int nPlayerIdx);
@@ -106,6 +108,7 @@ private:	//自分だけがアクセス可能
 	bool CollisionRiver(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CRiver *pRiver);
 	void CollisionIceField(D3DXVECTOR3 pos ,CIceField *pIceField);
 	bool CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHeadQuarters);
+	bool CollisionHinaarare(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHeadQuarters);
 
 	//メンバ変数
 	CPlayer						*m_pPlayer;					//プレイヤー

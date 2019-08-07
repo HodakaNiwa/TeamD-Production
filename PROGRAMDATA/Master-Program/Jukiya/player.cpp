@@ -242,6 +242,19 @@ void CPlayer::Hit(CScene *pScene)
 }
 
 //=============================================================================
+// プレイヤーの死んだときのエフェクト生成処理
+//=============================================================================
+void CPlayer::SetDeathEffect(void)
+{
+	D3DXVECTOR3 EffectPos = GetPos();
+	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+	if (pEffectManager != NULL)
+	{
+		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, PLAYER_DEATH_EFFECT_IDX);
+	}
+}
+
+//=============================================================================
 // プレイヤーの設置処理
 //=============================================================================
 void CPlayer::SetPlayer(CPlayer *pPlayer)
