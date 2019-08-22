@@ -15,6 +15,7 @@
 class CFileLoader;
 class CFileSaver;
 class CScene2D;
+class CNumber;
 class CScene2DFlash;
 class CScene2DPress;
 class CSky;
@@ -101,6 +102,9 @@ public:	// 誰からもアクセス可能
 	static CTitle *Create(void);
 	static int GetGameMode(void);
 
+	static void SetHighScore(const int nHighScore);
+	static int GetHighScore(void);
+
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:	// 自分だけがアクセス可能
@@ -114,6 +118,7 @@ private:	// 自分だけがアクセス可能
 	void ClearField(void);
 	void ClearLight(void);
 	void ClearPlayer(void);
+	void ClearHighScore(void);
 
 	void CreateTexture(int nNumTex);
 	void CreateCamera(void);
@@ -130,6 +135,7 @@ private:	// 自分だけがアクセス可能
 	void CreatePlayerManager(void);
 	void CreatePlayerDataPointer(void);
 	void CreateLightDataPointer(void);
+	void CreateHighScore(void);
 
 	void ReleaseFadePolygon(void);
 	void ReleaseTeamLogoPolygon(void);
@@ -146,6 +152,7 @@ private:	// 自分だけがアクセス可能
 	void ReleasePlayerManager(void);
 	void ReleasePlayerDataPointer(void);
 	void ReleaseLightDataPointer(void);
+	void ReleaseHighScore(void);
 
 	void TeamLogoUpdate(void);
 	void FadeOutUpdate(void);
@@ -179,12 +186,17 @@ private:	// 自分だけがアクセス可能
 	void LoadSky(CFileLoader *pFileLoader, char *pStr);
 
 	static int m_nGameMode;            // ゲームモード(各種プログラムで更新する)
+	static int m_nHighScore;           // ゲームのハイスコア(更新はCGameクラスが行う)
 	STATE m_State;                     // 状態
 	CScene2D *m_pFade;                 // フェードに使用するポリゴン
 	CScene2D *m_pTeamLogo;             // チームロゴ用ポリゴンクラス型のポインタ
 	CScene2D *m_pTeamBg;               // チームロゴ背景用ポリゴンクラス型のポインタ
 	CTitleLogo *m_pTitleLogo;          // タイトルロゴクラス型のポインタ
 	int m_nStateCounter;               // 状態を管理するカウンター
+
+	// ハイスコア用データ
+	CScene2D *m_pHighScoreLogo;
+	CNumber *m_pHighScore;
 
 	// プレスポリゴン用データ
 	typedef struct

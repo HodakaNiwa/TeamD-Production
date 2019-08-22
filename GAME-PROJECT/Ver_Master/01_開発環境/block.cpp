@@ -13,6 +13,7 @@
 #include "game.h"
 #include "charaselect.h"
 #include "tutorial.h"
+#include "bullet.h"
 #include "effectManager.h"
 
 //*****************************************************************************
@@ -717,7 +718,20 @@ void CBlockType2::RemakeBoxCollider(float fBoxWidth, float fBoxHeight, float fBo
 //=============================================================================
 void CBlockType2::Hit(CScene *pScene)
 {
+	// 当たってきたオブジェクトの種類で処理わけ
+	if (pScene->GetObjType() == OBJTYPE_BULLET)
+	{// 弾だった
+		CBullet *pBullet = (CBullet*)pScene;
+		if (pBullet->GetType() == CBullet::TYPE_ENEMY) { return; }
 
+		// プレイヤーの弾の場合最大強化時ならば壊れるようにする
+		CPlayer *pPlayer = (CPlayer*)pBullet->GetParent();
+		if (pPlayer == NULL || pPlayer->GetObjType() != OBJTYPE_PLAYER) { return; }
+		if (pPlayer->GetAllBlockDestroy() == true)
+		{
+			Uninit();
+		}
+	}
 }
 
 //*****************************************************************************
@@ -851,5 +865,18 @@ void CBlockType3::Hit(CScene *pScene)
 	else if (pScene->GetObjType() == OBJTYPE_ENEMY)
 	{// 敵だった
 		// 敵AIパターン変化
+	}
+	else if (pScene->GetObjType() == OBJTYPE_BULLET)
+	{// 弾だった
+		CBullet *pBullet = (CBullet*)pScene;
+		if (pBullet->GetType() == CBullet::TYPE_ENEMY) { return; }
+
+		// プレイヤーの弾の場合最大強化時ならば壊れるようにする
+		CPlayer *pPlayer = (CPlayer*)pBullet->GetParent();
+		if (pPlayer == NULL || pPlayer->GetObjType() != OBJTYPE_PLAYER) { return;}
+		if (pPlayer->GetAllBlockDestroy() == true)
+		{
+			Uninit();
+		}
 	}
 }

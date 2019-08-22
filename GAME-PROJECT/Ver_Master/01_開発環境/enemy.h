@@ -19,7 +19,11 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define ENEMY_PRIORITY (4)
+#define ENEMY_PRIORITY          (4)
+#define ENEMY_SCORE_NORMAL      (100)
+#define ENEMY_SCORE_ARMORE      (250)
+#define ENEMY_SCORE_FAST        (250)
+#define ENEMY_SCORE_HEAVY       (500)
 
 //*****************************************************************************
 // 前方宣言
@@ -70,6 +74,8 @@ public:	// 誰からもアクセス可能
 	void Hit(CScene *pScene);
 	void SetItemData(const int nItemType);
 	void SetAIData(const int nBulletEva, const int nMassEva, const int nDownEva);
+	void SetSpawnEffect(void);
+	void SetDeathEffect(void);
 
 	void SetIdx(const int nIdx);
 	void SetLife(const int nLife);
@@ -124,6 +130,8 @@ private:	// 自分だけがアクセス可能
 	bool CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBlock *pBlock);
 	bool CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHead);
 	void Destroy(void);
+	void ScoreUp(CBullet *pBullet);
+	void DeleteParts(void);
 
 	// 静的メンバ変数
 	static int m_nNumAll;

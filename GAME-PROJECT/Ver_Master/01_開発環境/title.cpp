@@ -19,6 +19,7 @@
 #include "fade.h"
 #include "sound.h"
 #include "scene2D.h"
+#include "number.h"
 #include "sky.h"
 #include "meshfield.h"
 #include "light.h"
@@ -31,74 +32,91 @@
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define TITLE_SYSTEM_FILENAME          "data/TEXT/MODE/title.ini"    // 初期化に使用するシステムファイル名
-#define TITLE_TEAMLOGO_SOUND_TIMING    (1)                           // チームロゴを出している時にサウンドを鳴らすタイミング
-#define TITLE_FADE_SPEED               (0.015f)                      // フェードのスピード
-#define TITLE_FADEOUT_TIMING           (180)                         // チームロゴ状態からフェードアウト状態に移る時間
-#define TITLE_CHANGEMODE_TIMING        (1200)                        // 通常状態から画面遷移するまでの時間
-#define TITLE_BG_SLIDE_UV              (0.001f)                      // 背景のテクスチャ座標をどれくらい動かすか
-#define TITLE_PLAYER_PRIORITY          (6)                           // プレイヤーの処理優先順位
-#define TITLE_BGM_IDX                  (0)                           // タイトルのBGMの音番号
-#define TITLE_SE_TEAMLOGO_IDX          (7)                           // チームロゴを出すときのSEの音番号
-#define TITLE_SE_SELECT_IDX            (8)                           // 項目を選択している時のSEの音番号
-#define TITLE_SE_DECIDE_IDX            (9)                           // 決定ボタンを押された時のSEの音番号
+#define TITLE_SYSTEM_FILENAME              "data/TEXT/MODE/title.ini"    // 初期化に使用するシステムファイル名
+#define TITLE_TEAMLOGO_SOUND_TIMING        (1)                           // チームロゴを出している時にサウンドを鳴らすタイミング
+#define TITLE_FADE_SPEED                   (0.015f)                      // フェードのスピード
+#define TITLE_FADEOUT_TIMING               (180)                         // チームロゴ状態からフェードアウト状態に移る時間
+#define TITLE_CHANGEMODE_TIMING            (1200)                        // 通常状態から画面遷移するまでの時間
+#define TITLE_BG_SLIDE_UV                  (0.001f)                      // 背景のテクスチャ座標をどれくらい動かすか
+#define TITLE_PLAYER_PRIORITY              (6)                           // プレイヤーの処理優先順位
+#define TITLE_BGM_IDX                      (0)                           // タイトルのBGMの音番号
+#define TITLE_SE_TEAMLOGO_IDX              (7)                           // チームロゴを出すときのSEの音番号
+#define TITLE_SE_SELECT_IDX                (8)                           // 項目を選択している時のSEの音番号
+#define TITLE_SE_DECIDE_IDX                (9)                           // 決定ボタンを押された時のSEの音番号
+#define TITLE_DASHEFFECT_IDX               (10)                          // プレイヤーが走っているときのエフェクト
 
 // カメラ用
-#define TITLECAMERA_POSV_INI           (D3DXVECTOR3(0.0f, 900.0f, -400.0f))
-#define TITLECAMERA_POSR_UNDER_Y       (40.0f)
-#define TITLECAMERA_POSR_INI           (D3DXVECTOR3(0.0f, 900.0f - TITLECAMERA_POSR_UNDER_Y, 0.0f))
-#define TITLECAMERA_POS_DOWN           (3.8f)
-#define TITLECAMERA_POSV_MIN_Y         (80.0f)
+#define TITLECAMERA_POSV_INI               (D3DXVECTOR3(0.0f, 1000.0f, -320.0f))
+#define TITLECAMERA_POSR_UNDER_Y           (60.0f)
+#define TITLECAMERA_POSR_INI               (D3DXVECTOR3(0.0f, 1000.0f - TITLECAMERA_POSR_UNDER_Y, 0.0f))
+#define TITLECAMERA_POS_DOWN               (3.8f)
+#define TITLECAMERA_POSV_MIN_Y             (120.0f)
 
 // チームロゴ用背景ポリゴン初期化用
-#define TITLETEAMBG_POS_INI            (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define TITLETEAMBG_COL_INI            (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define TITLETEAMBG_WIDTH_INI          (SCREEN_WIDTH / 2.0f)
-#define TITLETEAMBG_HEIGHT_INI         (SCREEN_HEIGHT / 2.0f)
-#define TITLETEAMBG_PRIORITY           (6)
+#define TITLETEAMBG_POS_INI                (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define TITLETEAMBG_COL_INI                (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLETEAMBG_WIDTH_INI              (SCREEN_WIDTH / 2.0f)
+#define TITLETEAMBG_HEIGHT_INI             (SCREEN_HEIGHT / 2.0f)
+#define TITLETEAMBG_PRIORITY               (6)
 
 // フェード用ポリゴン初期化用
-#define TITLEFADE_POS_INI              (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define TITLEFADE_COL_INI              (D3DXCOLOR(0.0f,0.0f,0.0f,0.0f))
-#define TITLEFADE_WIDTH_INI            (SCREEN_WIDTH / 2.0f)
-#define TITLEFADE_HEIGHT_INI           (SCREEN_HEIGHT / 2.0f)
-#define TITLEFADE_PRIORITY             (6)
+#define TITLEFADE_POS_INI                  (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define TITLEFADE_COL_INI                  (D3DXCOLOR(0.0f,0.0f,0.0f,0.0f))
+#define TITLEFADE_WIDTH_INI                (SCREEN_WIDTH / 2.0f)
+#define TITLEFADE_HEIGHT_INI               (SCREEN_HEIGHT / 2.0f)
+#define TITLEFADE_PRIORITY                 (6)
 
 // チームロゴ用ポリゴン初期化用
-#define TITLETEAMLOGO_POS_INI          (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define TITLETEAMLOGO_COL_INI          (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define TITLETEAMLOGO_WIDTH_INI        (100.0f)
-#define TITLETEAMLOGO_HEIGHT_INI       (100.0f)
-#define TITLETEAMLOGO_PRIORITY         (6)
+#define TITLETEAMLOGO_POS_INI              (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define TITLETEAMLOGO_COL_INI              (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLETEAMLOGO_WIDTH_INI            (100.0f)
+#define TITLETEAMLOGO_HEIGHT_INI           (100.0f)
+#define TITLETEAMLOGO_PRIORITY             (6)
 
 // タイトルロゴ初期化用
-#define TITLELOGO_POS_INI              (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 280.0f, 0.0f))
-#define TITLELOGO_COL_INI              (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define TITLELOGO_WIDTH_INI            (200.0f)
-#define TITLELOGO_HEIGHT_INI           (120.0f)
-#define TITLELOGO_PRIORITY             (7)
+#define TITLELOGO_POS_INI                  (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 120.0f, 0.0f))
+#define TITLELOGO_COL_INI                  (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLELOGO_WIDTH_INI                (200.0f)
+#define TITLELOGO_HEIGHT_INI               (120.0f)
+#define TITLELOGO_PRIORITY                 (7)
 
 // プレス待機初期化用
-#define TITLEPRESS_POS_INI             (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 500.0f, 0.0f))
-#define TITLEPRESS_COL_INI             (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define TITLEPRESS_WIDTH_INI           (150.0f)
-#define TITLEPRESS_HEIGHT_INI          (60.0f)
-#define TITLEPRESS_PRIORITY            (6)
+#define TITLEPRESS_POS_INI                 (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 500.0f, 0.0f))
+#define TITLEPRESS_COL_INI                 (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLEPRESS_WIDTH_INI               (150.0f)
+#define TITLEPRESS_HEIGHT_INI              (60.0f)
+#define TITLEPRESS_PRIORITY                (6)
 
 // ゲームモード背景ポリゴン初期化用
-#define TITLEGAMEMODEBG_POS_INI        (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define TITLEGAMEMODEBG_COL_INI        (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define TITLEGAMEMODEBG_WIDTH_INI      (SCREEN_WIDTH / 2.0f)
-#define TITLEGAMEMODEBG_HEIGHT_INI     (SCREEN_HEIGHT / 2.0f)
-#define TITLEGAMEMODEBG_PRIORITY       (7)
+#define TITLEGAMEMODEBG_POS_INI             (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define TITLEGAMEMODEBG_COL_INI             (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLEGAMEMODEBG_WIDTH_INI           (SCREEN_WIDTH / 2.0f)
+#define TITLEGAMEMODEBG_HEIGHT_INI          (SCREEN_HEIGHT / 2.0f)
+#define TITLEGAMEMODEBG_PRIORITY            (7)
 
 // ゲームモードロゴポリゴン初期化用
-#define TITLEGAMEMODELOGO_POS_INI      (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 200.0f, 0.0f))
-#define TITLEGAMEMODELOGO_COL_INI      (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define TITLEGAMEMODELOGO_WIDTH_INI    (150.0f)
-#define TITLEGAMEMODELOGO_HEIGHT_INI   (60.0f)
-#define TITLEGAMEMODELOGO_INTERVAL_INI (100.0f)
-#define TITLEGAMEMODELOGO_PRIORITY     (7)
+#define TITLEGAMEMODELOGO_POS_INI           (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 200.0f, 0.0f))
+#define TITLEGAMEMODELOGO_COL_INI           (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLEGAMEMODELOGO_WIDTH_INI         (150.0f)
+#define TITLEGAMEMODELOGO_HEIGHT_INI        (60.0f)
+#define TITLEGAMEMODELOGO_INTERVAL_INI      (100.0f)
+#define TITLEGAMEMODELOGO_PRIORITY          (7)
+
+// タイトルハイスコアロゴ初期化用
+#define TITLE_HIGHSCORE_FALSH_COL           (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLE_HIGHSCORELOGO_POS_INI         (D3DXVECTOR3(970.0f, 20.0f, 0.0f))
+#define TITLE_HIGHSCORELOGO_COL_INI         (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLE_HIGHSCORELOGO_WIDTH_INI       (120.0f)
+#define TITLE_HIGHSCORELOGO_HEIGHT_INI      (20.0f)
+#define TITLE_HIGHSCORELOGO_PRIORITY        (7)
+
+// タイトルハイスコアロゴ初期化用
+#define TITLE_HIGHSCORENUMBER_POS_INI       (D3DXVECTOR3(SCREEN_WIDTH - 20.0f, 20.0f, 0.0f))
+#define TITLE_HIGHSCORENUMBER_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLE_HIGHSCORENUMBER_WIDTH_INI     (15.0f)
+#define TITLE_HIGHSCORENUMBER_HEIGHT_INI    (15.0f)
+#define TITLE_HIGHSCORENUMBER_INTERVAL_INI  (D3DXVECTOR3(-29.0f, 0.0f, 0.0f))
+#define TITLE_HIGHSCORENUMBER_PRIORITY      (7)
 
 // 値読み込み用のパス
 // テクスチャ用
@@ -177,6 +195,7 @@
 // 静的メンバ変数宣言
 //=============================================================================
 int CTitle::m_nGameMode = CTitle::GAMEMODE_LOCAL1P;   // ゲームモード
+int CTitle::m_nHighScore = 10000;                         // ゲームのハイスコア
 
 //*****************************************************************************
 // CTitleの処理
@@ -273,6 +292,7 @@ void CTitle::Uninit(void)
 	ReleasePlayerManagerPointer();
 	ReleasePlayerDataPointer();
 	ReleaseLightDataPointer();
+	ReleaseHighScore();
 
 	// 全てのオブジェクト開放
 	CScene::ReleaseAll();
@@ -433,7 +453,7 @@ void CTitle::CreateGameModeLogo(void)
 		// ポリゴンを生成
 		m_apGameModeLogo[nCntLogo] = CScene2DFlash::Create(GameModeLogoPos, GameModeLogoCol,
 			fGameModeLogoWidth, fGameModeLogoHeight, 0.0f, GameModeLogoState, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f),
-			D3DXCOLOR(0.5f, 0.5f, 0.5f, 0.5f), 0.001f, 4, TITLEGAMEMODELOGO_PRIORITY);
+			D3DXCOLOR(0.5f, 0.5f, 0.5f, 0.5f), 0.01f, 4, TITLEGAMEMODELOGO_PRIORITY);
 		if (m_apGameModeLogo[nCntLogo] != NULL && GetTextureManager() != NULL)
 		{
 			m_apGameModeLogo[nCntLogo]->BindTexture(GetTextureManager()->GetTexture(nGameModeTexIdx));
@@ -570,6 +590,36 @@ void CTitle::CreateLightDataPointer(void)
 		m_pLightData[nCntLight].Diffuse = D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);
 		m_pLightData[nCntLight].Ambient = D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);
 		m_pLightData[nCntLight].Specular = D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+}
+
+//=============================================================================
+// タイトルのハイスコアを生成する処理
+//=============================================================================
+void CTitle::CreateHighScore(void)
+{
+	// ロゴポリゴン生成
+	if (m_pHighScoreLogo == NULL)
+	{
+		m_pHighScoreLogo = CScene2D::Create(TITLE_HIGHSCORELOGO_POS_INI, TITLE_HIGHSCORELOGO_COL_INI,
+			TITLE_HIGHSCORELOGO_WIDTH_INI, TITLE_HIGHSCORELOGO_HEIGHT_INI, TITLE_HIGHSCORELOGO_PRIORITY);
+		if (m_pHighScoreLogo != NULL && GetTextureManager() != NULL)
+		{
+			m_pHighScoreLogo->BindTexture(GetTextureManager()->GetTexture(9));
+		}
+	}
+
+	// 数字ポリゴン生成
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (GetTextureManager() != NULL)
+	{
+		pTexture = GetTextureManager()->GetTexture(10);
+	}
+	if (m_pHighScore == NULL)
+	{
+		m_pHighScore = CNumber::Create(TITLE_HIGHSCORENUMBER_POS_INI, TITLE_HIGHSCORENUMBER_COL_INI,
+			TITLE_HIGHSCORENUMBER_WIDTH_INI, TITLE_HIGHSCORENUMBER_HEIGHT_INI, TITLE_HIGHSCORENUMBER_INTERVAL_INI,
+			pTexture, CTitle::GetHighScore(), CNumberPolygon::STATE_NONE, 3, 0.0f, TITLE_HIGHSCORENUMBER_PRIORITY);
 	}
 }
 
@@ -778,6 +828,26 @@ void CTitle::ReleaseField(void)
 }
 
 //=============================================================================
+// タイトルのハイスコア開放処理
+//=============================================================================
+void CTitle::ReleaseHighScore(void)
+{
+	// ロゴポリゴン開放
+	if (m_pHighScoreLogo != NULL)
+	{
+		m_pHighScoreLogo->Uninit();
+		m_pHighScoreLogo = NULL;
+	}
+
+	// 数字ポリゴン開放
+	if (m_pHighScore != NULL)
+	{
+		m_pHighScore->Uninit();
+		m_pHighScore = NULL;
+	}
+}
+
+//=============================================================================
 // タイトルのチームロゴ状態の更新処理
 //=============================================================================
 void CTitle::TeamLogoUpdate(void)
@@ -879,17 +949,30 @@ void CTitle::NormalUpdate(void)
 			{
 				CreatePress();
 			}
+
+			// ハイスコアを生成
+			CreateHighScore();
 		}
 
 		// 決定ボタンが押されたらカメラの位置を下にする
 		CInputKeyboard *pKeyboard = CManager::GetKeyboard();
 		CXInput *pXInput = CManager::GetXInput();
 		if (pKeyboard == NULL || pXInput == NULL) { return; }
-		if (pKeyboard->GetTrigger(DIK_RETURN) == true ||
-			pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
-		{
+		if (pKeyboard->GetTrigger(DIK_RETURN) == true)
+		{// 決定ボタンが押された
 			CameraPosV.y = TITLECAMERA_POSV_MIN_Y;
 			CameraPosR.y = TITLECAMERA_POSV_MIN_Y - TITLECAMERA_POSR_UNDER_Y;
+		}
+		else
+		{// キーボードが押されていない
+			for (int nCntButton = CXInput::XIJS_BUTTON_8; nCntButton < CXInput::XIJS_BUTTON_16; nCntButton++)
+			{// 判定するボタンの数だけ繰り返し
+				if (CManager::GetXInput()->GetTrigger(0, (CXInput::XIJS_BUTTON)nCntButton) == true)
+				{// 何かボタンが押された
+					CameraPosV.y = TITLECAMERA_POSV_MIN_Y;
+					CameraPosR.y = TITLECAMERA_POSV_MIN_Y - TITLECAMERA_POSR_UNDER_Y;
+				}
+			}
 		}
 
 		pCamera->SetPosV(CameraPosV);
@@ -978,12 +1061,25 @@ void CTitle::WaitInputToNormal(void)
 	CFade *pFade = CManager::GetFade();
 	if (pKey == NULL || pFade == NULL) return;
 
-	if (pKey->GetTrigger(DIK_RETURN) == true ||
-		CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
+	if (pFade->GetFade() != CFade::FADE_NONE) { return; }
+
+	if (pKey->GetTrigger(DIK_RETURN) == true)
 	{// 決定ボタンが押された
 		m_nStateCounter = 0;
 		CreateFadePolygon();
 		m_State = STATE_FADEOUT;
+	}
+	else
+	{// キーボードが押されていない
+		for (int nCntButton = CXInput::XIJS_BUTTON_8; nCntButton < CXInput::XIJS_BUTTON_16; nCntButton++)
+		{// 判定するボタンの数だけ繰り返し
+			if (CManager::GetXInput()->GetTrigger(0, (CXInput::XIJS_BUTTON)nCntButton) == true)
+			{// 何かボタンが押された
+				m_nStateCounter = 0;
+				CreateFadePolygon();
+				m_State = STATE_FADEOUT;
+			}
+		}
 	}
 }
 
@@ -996,18 +1092,30 @@ void CTitle::WaitInputToGameMode(void)
 	CFade *pFade = CManager::GetFade();
 	if (pKey == NULL || pFade == NULL) return;
 
+	if (pFade->GetFade() != CFade::FADE_NONE) { return; }
 
-	if (pFade->GetFade() == CFade::FADE_NONE)
-	{// フェードが使用されていない
-		if (pKey->GetTrigger(DIK_RETURN) == true ||
-			CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
-		{// 決定ボタンが押された
-			m_nStateCounter = 0;
-			SetState(STATE_GAMEMODE);
-			ReleasePress();
-			CreateGameModeBg();
-			CreateGameModeLogo();
-			CManager::GetSound()->PlaySound(TITLE_SE_DECIDE_IDX);
+	if (pKey->GetTrigger(DIK_RETURN) == true)
+	{// 決定ボタンが押された
+		m_nStateCounter = 0;
+		SetState(STATE_GAMEMODE);
+		ReleasePress();
+		CreateGameModeBg();
+		CreateGameModeLogo();
+		CManager::GetSound()->PlaySound(TITLE_SE_DECIDE_IDX);
+	}
+	else
+	{// キーボードが押されていない
+		for (int nCntButton = CXInput::XIJS_BUTTON_8; nCntButton < CXInput::XIJS_BUTTON_16; nCntButton++)
+		{// 判定するボタンの数だけ繰り返し
+			if (CManager::GetXInput()->GetTrigger(0, (CXInput::XIJS_BUTTON)nCntButton) == true)
+			{// 何かボタンが押された
+				m_nStateCounter = 0;
+				SetState(STATE_GAMEMODE);
+				ReleasePress();
+				CreateGameModeBg();
+				CreateGameModeLogo();
+				CManager::GetSound()->PlaySound(TITLE_SE_DECIDE_IDX);
+			}
 		}
 	}
 }
@@ -1112,9 +1220,9 @@ void CTitle::CreateDashEffect(void)
 		D3DXVECTOR3 EffectPos = m_pPlayerData[nCntPlayer].pos;
 		EffectPos.x += 20.0f + (m_pPlayerData[nCntPlayer].pos.x * 0.05f);
 		EffectPos.z += 40.0f;
-		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, 10);
+		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, TITLE_DASHEFFECT_IDX);
 		EffectPos.x -= 40.0f - (m_pPlayerData[nCntPlayer].pos.x * 0.05f);
-		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, 10);
+		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, TITLE_DASHEFFECT_IDX);
 	}
 }
 
@@ -1740,6 +1848,7 @@ void CTitle::ClearVariable(void)
 	ClearGameModeLogo_PolyNone();
 	ClearGameModeLogo_PolySelect();
 	ClearPlayer();
+	ClearHighScore();
 }
 
 //=============================================================================
@@ -1862,6 +1971,15 @@ void CTitle::ClearPlayer(void)
 }
 
 //=============================================================================
+// タイトルのハイスコア用変数を初期化する
+//=============================================================================
+void CTitle::ClearHighScore(void)
+{
+	m_pHighScore = NULL;
+	m_pHighScoreLogo = NULL;
+}
+
+//=============================================================================
 // タイトルの状態を設定する
 //=============================================================================
 void CTitle::SetState(const STATE state)
@@ -1884,6 +2002,24 @@ int CTitle::GetGameMode(void)
 {
 	return m_nGameMode;
 }
+
+//=============================================================================
+// タイトルのハイスコアを設定する
+//=============================================================================
+void CTitle::SetHighScore(const int nHighScore)
+{
+	m_nHighScore = nHighScore;
+}
+
+//=============================================================================
+// タイトルのハイスコアを取得する
+//=============================================================================
+int CTitle::GetHighScore(void)
+{
+	return m_nHighScore;
+}
+
+
 
 //*****************************************************************************
 // CTitleLogoの処理

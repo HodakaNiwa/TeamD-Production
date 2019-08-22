@@ -47,6 +47,7 @@ public:    // 誰でもアクセス可能
 	void Update(void);
 	void Draw(void);
 	void BindModel(LPD3DXMESH pMesh = NULL, LPD3DXBUFFER pBuffMat = NULL, DWORD nNumMat = 0, LPDIRECT3DTEXTURE9 *pTexture = NULL);
+	void Hit(CScene *pScene);
 
 	void SetPosOld(const D3DXVECTOR3 posold);
 	void SetMove(const D3DXVECTOR3 move);

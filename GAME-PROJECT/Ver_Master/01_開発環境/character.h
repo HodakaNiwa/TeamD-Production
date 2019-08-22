@@ -49,6 +49,7 @@ public:	//誰からもアクセス可能
 	void SetMove(D3DXVECTOR3 move);
 	void SetShoot(bool bHit);
 	void SetNowRotInfo(NOW_ROT_INFO nowRotInfo);
+	void SetCntBullet(int nCntBullet);
 
 	int GetNumPart(void);
 	CModel **GetModel(void);
@@ -60,6 +61,7 @@ public:	//誰からもアクセス可能
 	D3DXVECTOR3 GetMove(void);
 	bool GetShoot(void);
 	NOW_ROT_INFO GetNowRotInfo(void);
+	int GetCntBullet(void);
 
 private:	//自分だけがアクセス可能
 	void ClearVariable(void);
@@ -78,5 +80,6 @@ private:	//自分だけがアクセス可能
 	D3DXVECTOR3					m_move;								// 移動量
 	bool						m_bShoot;							// 撃っているかどうか
 	NOW_ROT_INFO				m_nowRotInfo;						// 現在の向き情報
+	int							m_nCntBullet;						// 弾のカウンター
 };
 #endif

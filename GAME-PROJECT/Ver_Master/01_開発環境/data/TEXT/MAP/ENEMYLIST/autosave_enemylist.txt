@@ -27,7 +27,7 @@ END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 1			# リスポーン位置の番号
-	TYPE = 0			# 種類
+	TYPE = 1			# 種類
 	TIME = 150			# 出現させる時間
 	ITEM
 		TYPE = 0		# 出現させるアイテムの種類
@@ -41,7 +41,7 @@ END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 2			# リスポーン位置の番号
-	TYPE = 0			# 種類
+	TYPE = 3			# 種類
 	TIME = 250			# 出現させる時間
 	AISET
 		BULLET = 300	# 弾を打つ際のランダム評価値
@@ -52,7 +52,7 @@ END_ENEMYLISTSET
 
 ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
-	TYPE = 0			# 種類
+	TYPE = 2			# 種類
 	TIME = 750			# 出現させる時間
 	AISET
 		BULLET = 300	# 弾を打つ際のランダム評価値

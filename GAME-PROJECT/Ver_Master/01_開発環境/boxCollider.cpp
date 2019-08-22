@@ -282,6 +282,13 @@ bool CBoxCollider::Collision(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR
 		}
 	}
 
+	// ” ‚Ì“à‘¤‚É‚¢‚é‚©‚Ç‚¤‚©”»’è
+	if (pPos->x + ColRange.x >= m_Pos.x - (m_fWidth / 2) && pPos->x - ColRange.x <= m_Pos.x + (m_fWidth / 2)
+		&& pPos->z + ColRange.z >= m_Pos.z - (m_fDepth / 2) && pPos->z - ColRange.z <= m_Pos.z + (m_fDepth / 2))
+	{
+		bHit = true;
+	}
+
 	if (pPosOld->y >= m_Pos.y + m_fHeight && pPos->y < m_Pos.y + m_fHeight)
 	{// ‚‚³‚ªã‚©‚ç” ‚Ì“à‘¤‚É“ü‚Á‚Ä‚µ‚Ü‚Á‚½
 		if (pPos->x + ColRange.x >= m_Pos.x - (m_fWidth / 2) && pPos->x - ColRange.x <= m_Pos.x + (m_fWidth / 2)
