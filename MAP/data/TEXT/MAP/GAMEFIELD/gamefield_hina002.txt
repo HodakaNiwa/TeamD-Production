@@ -3577,30 +3577,6 @@ END_BLOCKSET
 # 川配置情報
 #------------------------------------------------------------------------------
 RIVERSET
-	TEX_IDX = 10					# 使用するテクスチャの番号
-	POS = 0.0 -5.0 -37.5		# 座標
-	XBLOCK = 5					# 横の分割数
-	ZBLOCK = 2					# 奥行の分割数
-	COLLISION
-		WIDTH = 375.0			# 当たり判定の幅
-		HEIGHT = 75.0			# 当たり判定の高さ
-		DEPTH = 150.0			# 当たり判定の奥行
-	END_COLLISION
-END_RIVERSET
-
-RIVERSET
-	TEX_IDX = 10					# 使用するテクスチャの番号
-	POS = 0.0 -5.0 -150.0		# 座標
-	XBLOCK = 3					# 横の分割数
-	ZBLOCK = 1					# 奥行の分割数
-	COLLISION
-		WIDTH = 225.0			# 当たり判定の幅
-		HEIGHT = 75.0			# 当たり判定の高さ
-		DEPTH = 75.0			# 当たり判定の奥行
-	END_COLLISION
-END_RIVERSET
-
-RIVERSET
 	TEX_IDX = 9					# 使用するテクスチャの番号
 	POS = 562.5 -5.0 -337.5		# 座標
 	XBLOCK = 4					# 横の分割数
@@ -3639,6 +3615,30 @@ END_RIVERSET
 #------------------------------------------------------------------------------
 # 氷配置情報
 #------------------------------------------------------------------------------
+ICESET
+	TEX_IDX = 10					# 使用するテクスチャの番号
+	POS = 0.0 -5.0 -37.5		# 座標
+	XBLOCK = 5					# 横の分割数
+	ZBLOCK = 2					# 奥行の分割数
+	COLLISION
+		WIDTH = 375.0			# 当たり判定の幅
+		HEIGHT = 75.0			# 当たり判定の高さ
+		DEPTH = 150.0			# 当たり判定の奥行
+	END_COLLISION
+END_ICESET
+
+ICESET
+	TEX_IDX = 10					# 使用するテクスチャの番号
+	POS = 0.0 -5.0 -150.0		# 座標
+	XBLOCK = 3					# 横の分割数
+	ZBLOCK = 1					# 奥行の分割数
+	COLLISION
+		WIDTH = 225.0			# 当たり判定の幅
+		HEIGHT = 75.0			# 当たり判定の高さ
+		DEPTH = 75.0			# 当たり判定の奥行
+	END_COLLISION
+END_ICESET
+
 ICESET
 	TEX_IDX = 10					# 使用するテクスチャの番号
 	POS = 0.0 -5.0 75.0		# 座標
