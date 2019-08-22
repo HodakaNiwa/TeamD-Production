@@ -9,8 +9,10 @@
 
 #include "main.h"
 
-#define MAX_SCENE (2000)		//Sceneの最大数
-#define NUM_PRIORITY (8)		//優先順位の総数
+//*****************************************************************************
+// マクロ定義
+//*****************************************************************************
+#define NUM_PRIORITY (10)		//優先順位の総数
 
 //*****************************************************************************
 // クラス定義
@@ -28,10 +30,12 @@ public:	//誰からもアクセス可能
 		OBJTYPE_BLOSSOMS,       // 花びら
 		OBJTYPE_SCENE3D,		// オブジェクト3D
 		OBJTYPE_SCENEX,			// オブジェクトX
+		OBJTYPE_NUMBER,         // 数字
 		OBJTYPE_FADE,			// フェード
 		OBJTYPE_MESHFIELD,		// メッシュフィールド
 		OBJTYPE_MESHCYLINDER,   // メッシュシリンダー
 		OBJTYPE_GOALCYLINDER,   // ゴール用円筒
+		OBJTYPE_ITEMCYLINDER,   // アイテム用円筒
 		OBJTYPE_BILLBOARD,		// ビルボード
 		OBJTYPE_OBJECT,			// オブジェクト
 		OBJTYPE_3D,             // 3Dオブジェクト
@@ -54,6 +58,7 @@ public:	//誰からもアクセス可能
 		OBJTYPE_RINGEMITTER,    // リングエフェクトエミッター
 		OBJTYPE_PARTICLE,       // パーティクル
 		OBJTYPE_EFFECTMANAGER,  // エフェクトマネージャー
+		OBJTYPE_HINAARARE,      // ひなあられ
 		OBJTYPE_MAX,
 	} OBJTYPE;
 
@@ -63,6 +68,7 @@ public:	//誰からもアクセス可能
 	OBJTYPE GetObjType(void);
 	CScene *GetNext(void);
 	CScene *GetPrev(void);
+	int GetPriority(void);
 
 	//純粋仮想関数
 	virtual ~CScene();

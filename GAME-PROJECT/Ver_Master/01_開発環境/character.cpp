@@ -28,6 +28,7 @@ CCharacter::CCharacter(int nPrioriry, OBJTYPE objtype) : CObject3D(nPrioriry, ob
 	m_pMotionManager = NULL;          // モーションクラスへのポインタ
 	m_move = INITIALIZE_D3DXVECTOR3;  // 移動量
 	m_bShoot = false;                 // 弾を打っているかどうか
+	m_nCntBullet = 0;
 }
 
 //=============================================================================
@@ -96,6 +97,7 @@ void CCharacter::ClearVariable(void)
 	m_posOld = INITIALIZE_D3DXVECTOR3;			// 過去の位置
 	m_move = INITIALIZE_D3DXVECTOR3;			// 移動量
 	m_bShoot = false;							// 撃っているかどうか
+	m_nCntBullet = 0;							// 弾のカウンター
 }
 
 //=============================================================================
@@ -227,6 +229,14 @@ void CCharacter::SetNowRotInfo(CCharacter::NOW_ROT_INFO nowRotInfo)
 }
 
 //=============================================================================
+// 弾のカウンター設置処理
+//=============================================================================
+void CCharacter::SetCntBullet(int nCntBullet)
+{
+	m_nCntBullet = nCntBullet;
+}
+
+//=============================================================================
 // パーツ数取得処理
 //=============================================================================
 int CCharacter::GetNumPart(void)
@@ -304,4 +314,12 @@ bool CCharacter::GetShoot(void)
 CCharacter::NOW_ROT_INFO CCharacter::GetNowRotInfo(void)
 {
 	return m_nowRotInfo;
+}
+
+//=============================================================================
+// 弾のカウンター取得処理
+//=============================================================================
+int CCharacter::GetCntBullet(void)
+{
+	return m_nCntBullet;
 }

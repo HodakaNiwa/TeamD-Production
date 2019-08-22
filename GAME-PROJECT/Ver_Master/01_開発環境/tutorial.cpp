@@ -162,11 +162,6 @@ HRESULT CTutorial::Init(void)
 	// カメラの生成
 	CreateCamera();
 
-
-
-	// デバッグ用
-	CGoalCylinder::Create(D3DXVECTOR3(300.0f,0.0f,300.0f), INITIALIZE_D3DXVECTOR3, D3DXCOLOR(0.2f, 0.7f, 1.0f, 1.0f), 100.0f, 100.0f, 20, 10, (D3DX_PI * 0.1f), 0.0f, (D3DX_PI * 0.01f), 4);
-
 	return S_OK;
 }
 
@@ -1789,7 +1784,9 @@ void CTutorial::SkipCheckUpdate(void)
 	// 入力クラスを取得
 	CInputKeyboard *pKey = CManager::GetKeyboard();
 	CXInput *pXInput = CManager::GetXInput();
-	if (pKey == NULL || pXInput == NULL)return;
+	CFade *pFade = CManager::GetFade();
+	if (pKey == NULL || pXInput == NULL || pFade == NULL)return;
+	if (pFade->GetFade() != CFade::FADE_NONE) { return; }
 
 	if (pKey->GetTrigger(DIK_A) == true ||
 		pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_2) == true ||
@@ -1859,6 +1856,12 @@ void CTutorial::SkipEndUpdate(void)
 void CTutorial::NormalUpdate(void)
 {
 	CDebugProc::Print(1, "通常状態\n");
+
+	if (m_pGoalCylinder == NULL)
+	{
+		m_pGoalCylinder = CGoalCylinder::Create(D3DXVECTOR3(300.0f, 0.0f, 300.0f), INITIALIZE_D3DXVECTOR3,
+			D3DXCOLOR(0.2f, 0.7f, 1.0f, 1.0f), 100.0f, 100.0f, 20, 10, (D3DX_PI * 0.1f), 0.0f, (D3DX_PI * 0.01f), 4);
+	}
 }
 
 //=============================================================================
@@ -2532,6 +2535,7 @@ void CTutorial::ClearVariable(void)
 	m_nNumDeleteEnemy = 0;
 	strcpy(m_aDeleteEnemy, "\0");
 	m_bDeletePlayerFlag = 0;
+	m_pGoalCylinder = NULL;
 	for (int nCntPlayer = NULL; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
 		m_pPlayer[nCntPlayer] = NULL;

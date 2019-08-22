@@ -24,6 +24,8 @@ class CNumber;
 class CBullet;
 class CBlock;
 class CCharacterManager;
+class CItem;
+class CItemCylinder;
 
 //*****************************************************************************
 // クラス定義
@@ -68,12 +70,26 @@ public:	// 誰からもアクセス可能
 	//---------------------
 	typedef enum
 	{
-		HINAEVENT_NONE = -1,
-		HINAEVENT_NORMAL,
-		HINAEVENT_CHERRY_BLOSSOMS,
+		HINAEVENT_NORMAL = 0,
+		HINAEVENT_CHERRYBLOSSOMS,
 		HINAEVENT_DROP_ITEM,
+		HINAEVENT_DROP_HINAARARE,
 		HINAEVENT_MAX
 	}HINAEVENT;
+
+	//---------------------------
+	// ゲーム内リザルトの進行度
+	//---------------------------
+	typedef enum
+	{
+		GAMERESULT_NONE = -1,
+		GAMERESULT_NORMALENEMY,
+		GAMERESULT_ARMOREENEMY,
+		GAMERESULT_FASTENEMY,
+		GAMERESULT_HEAVYENEMY,
+		GAMERESULT_TORTAL,
+		GAMERESULT_MAX
+	}GAMERESULT;
 
 	// メンバ関数
 	CGame();
@@ -83,19 +99,26 @@ public:	// 誰からもアクセス可能
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
-	void CreateItem(D3DXVECTOR3 pos, D3DXVECTOR3 rot, const int nItemType);
+	CItem *CreateItem(D3DXVECTOR3 pos, D3DXVECTOR3 rot, const int nItemType);
 	void DeletePlayer(CPlayer *pPlayer, const int nIdx);
 	void DeleteBlock(const int nIdx);
 	void DeleteEnemy(const int nIdx);
 
 	// アイテムの処理実行用関数
 	void ItemEvent_Star(int nPlayerNumber);
-	void ItemEvent_Grenade(void);
+	void ItemEvent_Grenade(int nPlayerNumber);
 	void ItemEvent_Granade_Shake(void);
 	void ItemEvent_1Up(int nPlayerNumber);
-	void ItemEvent_Scoop(void);
-	void ItemEvent_Clock(void);
+	void ItemEvent_Scoop(int nPlayerNumber);
+	void ItemEvent_Clock(int nPlayerNumber);
 	void ItemEvent_Helmet(int nPlayerNumber);
+
+
+	// スコア加算処理実行用関数
+	void ScoreUp_NormalEnemy(int nPlayerIdx);
+	void ScoreUp_ArmoreEnemy(int nPlayerIdx);
+	void ScoreUp_FastEnemy(int nPlayerIdx);
+	void ScoreUp_HeavyEnemy(int nPlayerIdx);
 
 
 	void SetBulletModel(CBullet *pBullet);
@@ -129,6 +152,7 @@ private:	// 自分だけがアクセス可能
 	void CreateStageLogo(void);
 	void CreateStageNumber(void);
 	void CreateBlossoms(void);
+	void CreateHinaarare(void);
 	void CreateGameResult(void);
 	void CreateGameResult_Bg(void);
 	void CreateGameResult_Stage(void);
@@ -205,17 +229,22 @@ private:	// 自分だけがアクセス可能
 	void GameOverUpdate(void);
 	void GameOverLogoUp(void);
 	void ResultUpdate(void);
+	void ResultUpdate_None(void);
+	void ResultUpdate_Normal(void);
+	void ResultUpdate_Armore(void);
+	void ResultUpdate_Fast(void);
+	void ResultUpdate_Heavy(void);
+	void ResultUpdate_Tortal(void);
 	void ChangeMapUpdate(void);
 	void EndUpdate(void);
 
 
-	// マップイベント用関数(みんながいじる OR 追加するならここ！！ それ以外は別途相談して・・・)
-	void MapEvent_Candy(void);
-	void MapEvent_Christmas(void);
+	// マップイベント用関数
 	void MapEvent_Hinamatsuri(void);
 	void MapEvent_Hinamatsuri_Normal(void);
 	void MapEvent_Hinamatsuri_CherryBlossoms(void);
-	void MapEvent_Hinamatsuri_DropItem(void);
+	void MapEvent_Hinamatsuri_Drop_Item(void);
+	void MapEvent_Hinamatsuri_Drop_Hinaarare(void);
 
 
 	// ゲーム内スポーン処理用関数
@@ -252,38 +281,51 @@ private:	// 自分だけがアクセス可能
 	void LoadHinamatsuriEvent(char *pStr);
 	void LoadHinamatsuriEventScript(CFileLoader *pFileLoader, char *pStr);
 	void LoadCherryBlossomsData(CFileLoader *pFileLoader, char *pStr);
+	void LoadHinaarareData(CFileLoader *pFileLoader, char *pStr);
 
 
 	// メンバ変数
-	int m_nNumMap;                        // 読み込むマップの数
-	char **m_pMapFileName;                // 読み込むマップのファイル名
-	int m_nMapIdx;                        // 現在のマップの番号
-	int m_nStageIdx;                      // 現在のステージ番号
-	CUI *m_pUI;                           // UIクラスへのポインタ
-	STATE m_State;                        // 今回の状態
-	STATE m_StateOld;                     // 前回の状態
-	int m_nStateCounter;                  // 状態を管理するカウンター
-	int m_nGameCounter;                   // ゲームの時間を数えるカウンター
-	int m_nSpawnEnemyCount;               // スポーンした敵の数を数えるカウンター
-	int m_nNumEnemy;                      // 出現する敵の数
-	CScene2D *m_pGameOverLogo;            // ゲームオーバーを知らせるロゴポリゴン
-	CScene2D *m_pStageBg;                 // ステージ表示状態の時の背景ポリゴン
-	CScene2D *m_pStageLogo;               // ステージロゴ用ポリゴン
-	CNumber **m_pStageNumber;             // ステージ番号表示用ポリゴン
-	int m_nNumberTexIdx;                  // 数字ポリゴンが使用するテクスチャの番号
-	int m_nNumNumberDigits;               // 現在のステージ番号の桁数
-	int m_nBulletModelIdx;                // 弾が使用するモデルの番号
-	int m_nItemModelIdx[CItem::TYPE_MAX]; // アイテムが使用するモデルの番号
-	bool m_bEnemyMove;                    // 敵が動けるかどうか
-	int m_nEnemyMoveCounter;              // 敵が動けない状態になってからの時間を数えるカウンター
-	HINAEVENT m_HinaEvent;                // ひな祭りマップのイベントを分ける変数
-	int m_nEventCounter;                  // イベントカウンター
+	int m_nNumMap;                           // 読み込むマップの数
+	char **m_pMapFileName;                   // 読み込むマップのファイル名
+	int m_nMapIdx;                           // 現在のマップの番号
+	int m_nStageIdx;                         // 現在のステージ番号
+	CUI *m_pUI;                              // UIクラスへのポインタ
+	STATE m_State;                           // 今回の状態
+	STATE m_StateOld;                        // 前回の状態
+	int m_nStateCounter;                     // 状態を管理するカウンター
+	int m_nGameCounter;                      // ゲームの時間を数えるカウンター
+	int m_nSpawnEnemyCount;                  // スポーンした敵の数を数えるカウンター
+	int m_nNumEnemy;                         // 出現する敵の数
+	CScene2D *m_pGameOverLogo;               // ゲームオーバーを知らせるロゴポリゴン
+	CScene2D *m_pStageBg;                    // ステージ表示状態の時の背景ポリゴン
+	CScene2D *m_pStageLogo;                  // ステージロゴ用ポリゴン
+	CNumber *m_pStageNumber;                 // ステージ番号表示用ポリゴン
+	int m_nNumberTexIdx;                     // 数字ポリゴンが使用するテクスチャの番号
+	int m_nNumNumberDigits;                  // 現在のステージ番号の桁数
+	int m_nBulletModelIdx;                   // 弾が使用するモデルの番号
+	int m_nItemModelIdx[CItem::TYPE_MAX];    // アイテムが使用するモデルの番号
+	bool m_bEnemyMove;                       // 敵が動けるかどうか
+	int m_nEnemyMoveCounter;                 // 敵が動けない状態になってからの時間を数えるカウンター
+
+	// マップイベント用
+	HINAEVENT m_HinaEvent;                   // ひな祭りマップのイベントを分ける変数
+	int m_nEventCounter;                     // イベントカウンター
+	int m_nRandomEventEva;                   // イベントを起こすかどうかのランダム評価値
+	int m_nNotEventCounter;                  // イベントが起こっていない時間を数えるカウンター
+	int m_nEventWakeUpCount[HINAEVENT_MAX];  // 連続してイベントが起こってないかを判定するためのカウンター
+
+	// アイテムドロップイベント用
+	CItem *m_pItem;                          // アイテムクラスへのポインタ
+	CItemCylinder *m_pItemCylinder;          // アイテム用円筒クラスへのポインタ
+	D3DXVECTOR3 m_ItemDropPos;               // アイテムをドロップする位置
 
 	// プレイヤー用
 	CPlayer *m_pPlayer[MAX_NUM_PLAYER];
 	CPlayerManager *m_pPlayerManager[MAX_NUM_PLAYER];
 	int m_nPlayerStock[MAX_NUM_PLAYER];
 	int m_nPlayerRespawnCounter;
+	int m_nPlayerStockIni;
+	int m_nPlayerStockMax;
 
 	// 敵データ用
 	CCharacterManager *m_pEnemyManager[CEnemy::TYPE_MAX];
@@ -350,7 +392,7 @@ private:	// 自分だけがアクセス可能
 	typedef struct
 	{// 桜の花びらデータ
 		int nTime;
-		int nAppear;
+		int nLap;
 		int nTexIdx;
 		int nMoveXMax;
 		int nMoveXMin;
@@ -367,45 +409,51 @@ private:	// 自分だけがアクセス可能
 	}CHERRYBLOSSOMS_DATA;
 	CHERRYBLOSSOMS_DATA m_CherryBlossomsData;
 
+	typedef struct
+	{// ひなあられデータ
+		int nModelIdx;
+		int nTime;
+		int nAppear;
+	}HINAARARE_DATA;
+	HINAARARE_DATA m_HinarareData;
+
 	// ゲーム内リザルト用データ
+	bool m_bNextGameResult;
+	bool m_bAddBonus;
+	GAMERESULT m_GameResultAddvance;
+
 	// 背景用
 	CScene2D *m_pGameResultBg;
 
 	// ステージ表示用
 	CScene2D *m_pGameResultStage;
-	CNumber **m_apGameResultStageNumber;
+	CNumber *m_pGameResultStageNumber;
 
 	// ハイスコア用
-	CNumber **m_apHighScore;
-	int m_nNumHighScoreDigit;
+	CNumber *m_pHighScore;
 	CScene2D *m_pHighScoreLogo;
 
 	// プレイヤースコア用
 	int m_nScore[MAX_NUM_PLAYER];
-	CNumber **m_apScore[MAX_NUM_PLAYER];
-	int m_nScoreDigit[MAX_NUM_PLAYER];
+	CNumber *m_apScore[MAX_NUM_PLAYER];
 	CScene2D *m_apPlayerLogo[MAX_NUM_PLAYER];
 
 	// エネミースコア用
 	int m_nNumBreakEnemy[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
-	CNumber **m_apNumBreakEnemy[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
-	int m_nNumBreakEnemyDigit[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
-	CNumber **m_apEnemyScore[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
-	int m_nNumEnemyScoreDigit[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
+	CNumber *m_apNumBreakEnemy[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
+	CNumber *m_apEnemyScore[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
 	CScene2D *m_apEnemyScorePointLogo[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
 	CScene2D *m_apEnemyScoreArrow[MAX_NUM_PLAYER][CEnemy::TYPE_MAX];
 	CScene2D *m_apEnemyScoreIcon[CEnemy::TYPE_MAX];
 
 	// トータルスコア用
 	int m_nNumAllBreakEnemy[MAX_NUM_PLAYER];
-	CNumber **m_apNumAllBreakEnemy[MAX_NUM_PLAYER];
-	int m_nNumAllBreakEnemyDigit[MAX_NUM_PLAYER];
+	CNumber *m_apNumAllBreakEnemy[MAX_NUM_PLAYER];
 	CScene2D *m_pTortalLogo;
 	CScene2D *m_pTortalLine;
 
 	// ボーナススコア用
-	CNumber **m_apBonus;
-	int m_nBonusDigit;
+	CNumber *m_pBonus;
 	CScene2D *m_pBonusPointLogo;
 	CScene2D *m_pBonusScoreLogo;
 };

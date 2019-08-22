@@ -25,6 +25,7 @@ class CEnemy_ListData;
 class CBullet;
 class CBlock;
 class CCharacterManager;
+class CGoalCylinder;
 
 //*****************************************************************************
 // クラス定義
@@ -190,6 +191,7 @@ private:	// 自分だけがアクセス可能
 	int m_nNumberTexIdx;                        // 数字ポリゴンが使用するテクスチャの番号
 	int m_nNumNumberDigits;                     // 現在のステージ番号の桁数
 	int m_nBulletModelIdx;                      // 弾が使用するモデルの番号
+	CGoalCylinder *m_pGoalCylinder;             // ゴール用円筒クラスへのポインタ
 
 	// プレイヤー用
 	CPlayer *m_pPlayer[MAX_NUM_PLAYER];

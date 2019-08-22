@@ -14,6 +14,7 @@
 class CFileLoader;
 class CFileSaver;
 class CScene2D;
+class CNumber;
 
 //*****************************************************************************
 // クラス定義
@@ -29,6 +30,7 @@ public:	// 誰からもアクセス可能
 		STATE_NONE = -1,
 		STATE_WAIT,
 		STATE_NORMAL,
+		STATE_HIGHSCORE,
 		STATE_END,
 		STATE_MAX
 	}STATE;
@@ -46,6 +48,7 @@ public:	// 誰からもアクセス可能
 
 	// 静的メンバ関数
 	static CResult *Create(void);
+	static void SetHighScore(void);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 
@@ -55,12 +58,16 @@ private:	// 自分だけがアクセス可能
 	void CreateTexture(int nNumTex);
 	void CreateCamera(void);
 	void CreateLogo(void);
+	void CreateHighScore(void);
 
 	void ReleaseLogo(void);
+	void ReleaseHighScore(void);
 
 	void WaitUpdate(void);
 	void NormalUpdate(void);
+	void HighScoreUpdate(void);
 	void EndUpdate(void);
+	void WaitInputToHighScore(void);
 	void WaitInputToNextMode(void);
 
 	void LoadSystem(void);
@@ -72,6 +79,11 @@ private:	// 自分だけがアクセス可能
 	int m_nStateCounter;  // 状態を管理するカウンター
 	CScene2D *m_pLogo;    // リザルトロゴ表示用ポリゴン
 
+	// ハイスコア表示用データ
+	static bool m_bHighScore;
+	CScene2D *m_pHighScoreLogo;
+	CNumber *m_pHighScore;
+	D3DXCOLOR m_FalshCol;
 
 	// 各種クラス生成用情報
 	typedef struct

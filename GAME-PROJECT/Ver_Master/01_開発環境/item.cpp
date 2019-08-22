@@ -718,11 +718,15 @@ void CItemGrenade::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
+		// プレイヤークラスのポインタにキャスト
+		CPlayer *pPlayer = (CPlayer*)pScene;
+
 		// アイテムのイベントを起こす
+		int nPlayerNumber = pPlayer->GetPlayerIdx();
 		if (CManager::GetMode() == CManager::MODE_GAME)
 		{
 			CGame *pGame = CManager::GetGame();
-			pGame->ItemEvent_Grenade();
+			pGame->ItemEvent_Grenade(nPlayerNumber);
 
 			// エフェクトを出す
 			CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
@@ -1007,11 +1011,15 @@ void CItemScoop::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
+		// プレイヤークラスのポインタにキャスト
+		CPlayer *pPlayer = (CPlayer*)pScene;
+
 		// アイテムのイベントを起こす
+		int nPlayerNumber = pPlayer->GetPlayerIdx();
 		if (CManager::GetMode() == CManager::MODE_GAME)
 		{
 			CGame *pGame = CManager::GetGame();
-			pGame->ItemEvent_Scoop();
+			pGame->ItemEvent_Scoop(nPlayerNumber);
 		}
 
 		// アイテムを消す
@@ -1146,11 +1154,15 @@ void CItemClock::Hit(CScene *pScene)
 	// 当たってきたオブジェクトの種類で処理わけ
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{
+		// プレイヤークラスのポインタにキャスト
+		CPlayer *pPlayer = (CPlayer*)pScene;
+
 		// アイテムのイベントを起こす
+		int nPlayerNumber = pPlayer->GetPlayerIdx();
 		if (CManager::GetMode() == CManager::MODE_GAME)
 		{
 			CGame *pGame = CManager::GetGame();
-			pGame->ItemEvent_Clock();
+			pGame->ItemEvent_Clock(nPlayerNumber);
 		}
 
 		// アイテムを消す

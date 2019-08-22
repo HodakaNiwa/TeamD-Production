@@ -6,6 +6,10 @@
 //*****************************************************************************
 #include "UI.h"
 #include "scene2D.h"
+#include "number.h"
+#include "title.h"
+#include "charaselect.h"
+#include "textureManager.h"
 
 //*****************************************************************************
 //    マクロ定義
@@ -23,23 +27,32 @@
 #define UI_ENEMYICON_COL_INI        (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 
 // プレイヤーアイコン用
+#define UI_PLAYERICON_TEXIDX        (5)
+
 // １つ目
 #define UI_PLAYERICON_0_WIDTH_INI   (16.0f)
 #define UI_PLAYERICON_0_HEIGHT_INI  (16.0f)
 #define UI_PLAYERICON_0_POS_INI     (D3DXVECTOR3(SCREEN_WIDTH - 150.0f,410.0f,0.0f))
-#define UI_PLAYERICON_0_COL_INI     (D3DXCOLOR(1.0f,0.0f,0.0f,1.0f))
+#define UI_PLAYERICON_0_COL_INI     (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 
 // ２つ目
 #define UI_PLAYERICON_1_WIDTH_INI   (16.0f)
 #define UI_PLAYERICON_1_HEIGHT_INI  (16.0f)
 #define UI_PLAYERICON_1_POS_INI     (D3DXVECTOR3(SCREEN_WIDTH - 70.0f ,410.0f,0.0f))
-#define UI_PLAYERICON_1_COL_INI     (D3DXCOLOR(0.0f,0.0f,1.0f,1.0f))
+#define UI_PLAYERICON_1_COL_INI     (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 
 // プレイヤーの残機数用
-#define UI_PLAYERSTOCK_WIDTH_INI    (90.0f)
-#define UI_PLAYERSTOCK_HEIGHT_INI   (SCREEN_HEIGHT / 2)
-#define UI_PLAYERSTOCK_POS_INI      (D3DXVECTOR3(SCREEN_WIDTH ,SCREEN_HEIGHT / 2,0.0f))
-#define UI_PLAYERSTOCK_COL_INI      (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+// １つ目
+#define UI_PLAYERSTOCK_0_WIDTH_INI  (15.0f)
+#define UI_PLAYERSTOCK_0_HEIGHT_INI (15.0f)
+#define UI_PLAYERSTOCK_0_POS_INI    (D3DXVECTOR3(SCREEN_WIDTH - 115.0f ,410.0f,0.0f))
+#define UI_PLAYERSTOCK_0_COL_INI    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+
+// ２つ目
+#define UI_PLAYERSTOCK_1_WIDTH_INI  (15.0f)
+#define UI_PLAYERSTOCK_1_HEIGHT_INI (15.0f)
+#define UI_PLAYERSTOCK_1_POS_INI    (D3DXVECTOR3(SCREEN_WIDTH - 35.0f ,410.0f,0.0f))
+#define UI_PLAYERSTOCK_1_COL_INI    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 
 // ステージアイコン用
 #define UI_STAGEICON_WIDTH_INI      (25.0f)
@@ -48,10 +61,10 @@
 #define UI_STAGEICON_COL_INI        (D3DXCOLOR(0.0f,1.0f,0.0f,1.0f))
 
 // ステージ数表示用ポリゴン用
-#define UI_STAGENUMBER_WIDTH_INI     (20.0f)
-#define UI_STAGENUMBER_HEIGHT_INI    (SCREEN_HEIGHT / 2)
-#define UI_STAGENUMBER_POS_INI       (D3DXVECTOR3(SCREEN_WIDTH ,SCREEN_HEIGHT / 2,0.0f))
-#define UI_STAGENUMBER_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define UI_STAGENUMBER_WIDTH_INI    (20.0f)
+#define UI_STAGENUMBER_HEIGHT_INI   (20.0f)
+#define UI_STAGENUMBER_POS_INI      (D3DXVECTOR3(SCREEN_WIDTH - 68.5f ,550.0f,0.0f))
+#define UI_STAGENUMBER_COL_INI      (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 
 //*****************************************************************************
 //    静的メンバ変数宣言
@@ -77,7 +90,7 @@ CUI::~CUI()
 //=============================================================================
 //    生成処理
 //=============================================================================
-CUI *CUI::Create(CTextureManager *pTextureManager, int nNumEnemy, int nMapIdx)
+CUI *CUI::Create(CTextureManager *pTextureManager, int nNumEnemy, int nStageIdx, int *pPlayerStock, int nTexNumber)
 {
 	CUI *pUI = NULL;  // UIクラス型のポインタ
 	if (pUI == NULL)
@@ -85,7 +98,7 @@ CUI *CUI::Create(CTextureManager *pTextureManager, int nNumEnemy, int nMapIdx)
 		pUI = new CUI;
 		if (pUI != NULL)
 		{// インスタンスを生成できた
-			if (FAILED(pUI->Init(pTextureManager, nNumEnemy, nMapIdx)))
+			if (FAILED(pUI->Init(pTextureManager, nNumEnemy, nStageIdx, pPlayerStock, nTexNumber)))
 			{// 初期化に失敗した
 				return NULL;
 			}
@@ -107,16 +120,19 @@ CUI *CUI::Create(CTextureManager *pTextureManager, int nNumEnemy, int nMapIdx)
 //=============================================================================
 //    初期化処理
 //=============================================================================
-HRESULT CUI::Init(CTextureManager *pTextureManager, int nNumEnemy, int nMapIdx)
+HRESULT CUI::Init(CTextureManager *pTextureManager, int nNumEnemy, int nStageIdx, int *pPlayerStock, int nTexNumber)
 {
+	// 変数をクリアする
+	ClearVariable();
+
 	// テクスチャ管轄クラスへのポインタを設定
 	m_pTextureManager = pTextureManager;
 
 	// 敵の数を保存
 	m_nNumEnemy = nNumEnemy;
 
-	// 変数をクリアする
-	ClearVariable();
+	// 数字に使用するテクスチャの番号を保存
+	m_nNumberTexIdx = nTexNumber;
 
 	// 背景を作成する
 	CreateBg();
@@ -128,13 +144,13 @@ HRESULT CUI::Init(CTextureManager *pTextureManager, int nNumEnemy, int nMapIdx)
 	CreatePlayerIcon();
 
 	// プレイヤーの残機数表示用ポリゴンを作成
-	CreatePlayerStock();
+	CreatePlayerStock(pPlayerStock);
 
 	// ステージアイコンを作成
 	CreateStageIcon();
 
 	// 現在のステージ数表示用ポリゴンを作成
-	CreateStageNumber(nMapIdx);
+	CreateStageNumber(nStageIdx);
 
 	return S_OK;
 }
@@ -168,7 +184,11 @@ void CUI::Uninit(void)
 //=============================================================================
 void CUI::ReCreateEnemyIcon(int nNumEnemy)
 {
+	// 現在のポリゴンを開放
+	ReleaseEnemyIcon();
 
+	// もう一度作る
+	CreateEnemyIcon(nNumEnemy);
 }
 
 //=============================================================================
@@ -182,17 +202,25 @@ void CUI::CutEnemyIcon(int nIdx)
 //=============================================================================
 //    プレイヤーの残機数を再度生成する処理
 //=============================================================================
-void CUI::ReCreatePlayerStock(int nStock)
+void CUI::ReCreatePlayerStock(int *pStock)
 {
+	// 現在のポリゴンを開放
+	ReleasePlayerStock();
 
+	// もう一度作る
+	CreatePlayerStock(pStock);
 }
 
 //=============================================================================
 //    ステージ数表示用ポリゴンを再度生成する処理
 //=============================================================================
-void CUI::ReCreateStageNumber(int nMapIdx)
+void CUI::ReCreateStageNumber(int nStageIdx)
 {
+	// 現在のポリゴンを開放
+	ReleaseStageNumber();
 
+	// もう一度作る
+	CreateStageNumber(nStageIdx);
 }
 
 //=============================================================================
@@ -206,11 +234,10 @@ void CUI::ClearVariable(void)
 	m_pStageIcon = NULL;          // ステージアイコン表示用ポリゴン
 	m_pStageNumber = NULL;        // 現在のステージ数表示用ポリゴン
 	m_nNumEnemy = 0;              // 敵のアイコンの数
-	m_nStageNumberDigit = 0;      // 現在のステージ数の桁数
+	m_nNumberTexIdx = 0;          // 数字に使用するテクスチャの番号
 
 	for (int nCnt = 0; nCnt < MAX_NUM_PLAYER; nCnt++)
 	{
-		m_nCharaStockDigit[nCnt] = 0;    // プレイヤーの残機数の桁数
 		m_pPlayerIcon[nCnt] = NULL;       // プレイヤーアイコン表示用ポリゴン
 		m_pPlayerStock[nCnt] = NULL;      // プレイヤーの残機数表示用ポリゴン
 	}
@@ -242,19 +269,52 @@ void CUI::CreatePlayerIcon(void)
 	float fPlayerIconWidth[MAX_NUM_PLAYER] = { UI_PLAYERICON_0_WIDTH_INI, UI_PLAYERICON_1_WIDTH_INI };
 	float fPlayerIconHeight[MAX_NUM_PLAYER] = { UI_PLAYERICON_0_HEIGHT_INI, UI_PLAYERICON_1_HEIGHT_INI };
 
-	for (int nCnt = 0; nCnt < MAX_NUM_PLAYER; nCnt++)
+	// 作成する数をプレイする人数で決定
+	int nMaxPlayer = MAX_NUM_PLAYER;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// 1人プレイならば
+		nMaxPlayer--;
+	}
+
+	for (int nCnt = 0; nCnt < nMaxPlayer; nCnt++)
 	{
 		m_pPlayerIcon[nCnt] = CScene2D::Create(PlayerIconPos[nCnt], PlayerIconCol[nCnt],
 			fPlayerIconWidth[nCnt], fPlayerIconHeight[nCnt], UI_PRIORITY);
+		if (m_pTextureManager != NULL && m_pPlayerIcon[nCnt] != NULL)
+		{
+			m_pPlayerIcon[nCnt]->BindTexture(m_pTextureManager->GetTexture(UI_PLAYERICON_TEXIDX + CCharaSelect::GetPlayerNumber(nCnt)));
+		}
 	}
 }
 
 //=============================================================================
 //    プレイヤーの残機数表示用ポリゴンを生成する
 //=============================================================================
-void CUI::CreatePlayerStock(void)
+void CUI::CreatePlayerStock(int *pStock)
 {
+	D3DXVECTOR3 PlayerStockPos[MAX_NUM_PLAYER] = { UI_PLAYERSTOCK_0_POS_INI, UI_PLAYERSTOCK_1_POS_INI };
+	D3DXCOLOR PlayerStockCol[MAX_NUM_PLAYER] = { UI_PLAYERSTOCK_0_COL_INI, UI_PLAYERSTOCK_1_COL_INI };
+	float fPlayerStockWidth[MAX_NUM_PLAYER] = { UI_PLAYERSTOCK_0_WIDTH_INI, UI_PLAYERSTOCK_1_WIDTH_INI };
+	float fPlayerStockHeight[MAX_NUM_PLAYER] = { UI_PLAYERSTOCK_0_HEIGHT_INI, UI_PLAYERSTOCK_1_HEIGHT_INI };
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (m_pTextureManager != NULL)
+	{
+		pTexture = m_pTextureManager->GetTexture(m_nNumberTexIdx);
+	}
 
+	// 作成する数をプレイする人数で決定
+	int nMaxPlayer = MAX_NUM_PLAYER;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// 1人プレイならば
+		nMaxPlayer--;
+	}
+
+	for (int nCnt = 0; nCnt < nMaxPlayer; nCnt++)
+	{
+		m_pPlayerStock[nCnt] = CNumber::Create(PlayerStockPos[nCnt], PlayerStockCol[nCnt],
+			fPlayerStockWidth[nCnt], fPlayerStockHeight[nCnt], INITIALIZE_D3DXVECTOR3, pTexture,
+			pStock[nCnt], CNumberPolygon::STATE_NONE, 3, 0.0f, UI_PRIORITY);
+	}
 }
 
 //=============================================================================
@@ -269,9 +329,17 @@ void CUI::CreateStageIcon(void)
 //=============================================================================
 //    現在のステージ数表示用ポリゴンを生成する
 //=============================================================================
-void CUI::CreateStageNumber(int nMapIdx)
+void CUI::CreateStageNumber(int nStageIdx)
 {
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (m_pTextureManager != NULL)
+	{
+		pTexture = m_pTextureManager->GetTexture(m_nNumberTexIdx);
+	}
 
+	m_pStageNumber = CNumber::Create(UI_STAGENUMBER_POS_INI, UI_STAGENUMBER_COL_INI,
+		UI_STAGENUMBER_WIDTH_INI, UI_STAGENUMBER_HEIGHT_INI, INITIALIZE_D3DXVECTOR3, pTexture,
+		nStageIdx, CNumberPolygon::STATE_NONE, 3, 0.0f, UI_PRIORITY);
 }
 
 //=============================================================================
@@ -330,15 +398,7 @@ void CUI::ReleasePlayerStock(void)
 	{
 		if (m_pPlayerStock[nCnt] != NULL)
 		{
-			for (int nCntDigit = 0; nCntDigit < m_nCharaStockDigit[nCnt]; nCntDigit++)
-			{
-				if (m_pPlayerStock[nCnt][nCntDigit] != NULL)
-				{
-					m_pPlayerStock[nCnt][nCntDigit]->Uninit();
-					m_pPlayerStock[nCnt][nCntDigit] = NULL;
-				}
-			}
-			delete[] m_pPlayerStock[nCnt];
+			m_pPlayerStock[nCnt]->Uninit();
 			m_pPlayerStock[nCnt] = NULL;
 		}
 	}
@@ -363,15 +423,7 @@ void CUI::ReleaseStageNumber(void)
 {
 	if (m_pStageNumber != NULL)
 	{
-		for (int nCnt = 0; nCnt < m_nStageNumberDigit; nCnt++)
-		{
-			if (m_pStageNumber[nCnt] != NULL)
-			{
-				m_pStageNumber[nCnt]->Uninit();
-				m_pStageNumber[nCnt] = NULL;
-			}
-		}
-		delete[] m_pStageNumber;
+		m_pStageNumber->Uninit();
 		m_pStageNumber = NULL;
 	}
 }
