@@ -27,10 +27,12 @@
 // マクロ定義
 //*****************************************************************************
 #define ENEMY_SPAWN_EFFECT_IDX   (3)     // 敵生成時のエフェクト番号
-#define ENEMY_DEATH_EFFECT_IDX   (7)     // 敵が死んだ時のエフェクト番号
+#define ENEMY_DEATH_EFFECT_IDX   (7)     // 敵死亡時のエフェクト番号
 #define ENEMY_AI_NONE_TIME       (3)     // 動きを止めてから動き出すまでの時間
 #define ENEMY_AI_MOVE_TIME       (120)   // 動いてから動きを止められるまでの時間
 #define ENEMY_MASS_COLRANGE      (2.0f)  // マスの範囲内と判定される範囲
+#define ENEMY_LIFE               (1)     // 敵の体力
+#define ENEMY_HEAVY_LIFE         (3)     // ヘビータンクの体力
 
 //*****************************************************************************
 // 静的メンバ変数
@@ -96,22 +98,13 @@ HRESULT CEnemy::Init(void)
 	// スポーン数を増やす
 	m_nSpawnCounter++;
 
+	// 体力を設定
+	m_nLife = ENEMY_LIFE;
+
 	// キャラクターの初期化処理
 	if (FAILED(CCharacter::Init()))
 	{
 		return E_FAIL;
-	}
-
-	// エフェクトを出す
-	D3DXVECTOR3 rot = INITIALIZE_D3DXVECTOR3;
-	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
-	if (pEffectManager != NULL)
-	{
-		pEffectManager->SetEffect(GetPos(), rot, ENEMY_SPAWN_EFFECT_IDX);
-		rot.y += D3DX_PI * 0.1f;
-		pEffectManager->SetEffect(GetPos(), rot, ENEMY_SPAWN_EFFECT_IDX + 1);
-		rot.y += D3DX_PI * 0.1f;
-		pEffectManager->SetEffect(GetPos(), rot, ENEMY_SPAWN_EFFECT_IDX + 2);
 	}
 
 	return S_OK;
@@ -122,13 +115,6 @@ HRESULT CEnemy::Init(void)
 //=============================================================================
 void CEnemy::Uninit(void)
 {
-	// エフェクトを出す
-	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
-	if (pEffectManager != NULL)
-	{
-		pEffectManager->SetEffect(GetPos(), INITIALIZE_D3DXVECTOR3, ENEMY_DEATH_EFFECT_IDX);
-	}
-
 	// 総数を減らす
 	m_nNumAll--;
 
@@ -259,9 +245,74 @@ void CEnemy::Hit(CScene * pScene)
 		CBullet *pBullet = (CBullet*)pScene;
 		if (pBullet->GetType() == CBullet::TYPE_PLAYER_0 || pBullet->GetType() == CBullet::TYPE_PLAYER_1)
 		{// プレイヤーの弾だった
-			Destroy();
+			// 体力を減らす
+			m_nLife--;
+			if (m_nLife <= 0)
+			{// 体力がもうない
+			    // 死亡時処理
+				Destroy();
+
+				// スコアを加算する
+				ScoreUp(pBullet);
+			}
+			else
+			{// 体力がまだある
+				// パーツを削る
+				DeleteParts();
+			}
 		}
 	}
+}
+
+//=============================================================================
+// スコアを加算させる処理
+//=============================================================================
+void CEnemy::ScoreUp(CBullet *pBullet)
+{
+	if (pBullet == NULL) { return; }
+
+	// スコアをアップさせるプレイヤーの番号を設定
+	int nPlayerIdx = pBullet->GetType();
+
+	// スコアを加算する
+	if (CManager::GetMode() != CManager::MODE_GAME) { return; }
+	CGame *pGame = CManager::GetGame();
+	if (pGame == NULL) { return; }
+
+	switch (m_Type)
+	{// 自身の種類によって処理わけ
+	case TYPE_NORMAL:
+		pGame->ScoreUp_NormalEnemy(nPlayerIdx);
+		break;
+	case TYPE_ARMORE:
+		pGame->ScoreUp_ArmoreEnemy(nPlayerIdx);
+		break;
+	case TYPE_FAST:
+		pGame->ScoreUp_FastEnemy(nPlayerIdx);
+		break;
+	case TYPE_HEAVY:
+		pGame->ScoreUp_HeavyEnemy(nPlayerIdx);
+		break;
+	}
+}
+
+//=============================================================================
+// 敵のパーツを削る処理
+//=============================================================================
+void CEnemy::DeleteParts(void)
+{
+	// パーツ数を取得
+	int nNumParts = GetNumPart();
+
+	// モデルクラスへのポインタを破棄する
+	CModel **pModel = GetModel();
+	if (pModel == NULL || nNumParts <= 0) { return; }
+	pModel[nNumParts - 1]->Uninit();
+	delete pModel[nNumParts - 1];
+	pModel[nNumParts - 1] = NULL;
+
+	// パーツ数を一つ減らす
+	SetNumPart(nNumParts - 1);
 }
 
 //=============================================================================
@@ -623,7 +674,16 @@ void CEnemy::Collision(void)
 	// 死亡判定
 	if (bDeath == true)
 	{
-		Destroy();
+		if (m_nLife <= 0)
+		{// 体力がもうない
+		    // 死亡時処理
+			Destroy();
+		}
+		else
+		{// 体力がまだある
+		    // パーツを削る
+			DeleteParts();
+		}
 	}
 }
 
@@ -654,10 +714,21 @@ void CEnemy::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3
 		CBullet *pBullet = (CBullet*)pScene;
 		if (CollisionBullet(pPos, pPosOld, pMove, colRange, pBullet) == true)
 		{// 当たっている
-			pBullet->Hit(this);
 			if (pBullet->GetType() == CBullet::TYPE_PLAYER_0 || pBullet->GetType() == CBullet::TYPE_PLAYER_1)
 			{// プレイヤーの弾だった
+				pBullet->Hit(this);
 				*pDeath = true;
+
+				// 体力を減らす
+				m_nLife--;
+				if (m_nLife <= 0)
+				{// 体力がもう無い
+					ScoreUp(pBullet);
+				}
+			}
+			else if(pBullet->GetParent() != this)
+			{// 自分以外の敵が放った敵の弾だった
+				pBullet->Hit(this);
 			}
 		}
 	}
@@ -776,21 +847,25 @@ void CEnemy::Destroy(void)
 		CClient *pClient = CManager::GetClient();
 		if (pClient == NULL)
 		{
+			SetDeathEffect();
 			Uninit();
 			return;
 		}
 		else if (pClient != NULL && pClient->GetConnected() == false)
 		{
+			SetDeathEffect();
 			Uninit();
 			return;
 		}
 		else if (pClient != NULL && pClient->GetClientId() == 0)
 		{
+			SetDeathEffect();
 			Uninit();
 			return;
 		}
 		if (pClient != NULL && CManager::GetClient()->GetClientId() != 0)
 		{
+			SetDeathEffect();
 			pGame->DeleteEnemy(m_nIdx);
 		}
 	}
@@ -800,27 +875,61 @@ void CEnemy::Destroy(void)
 		CClient *pClient = CManager::GetClient();
 		if (pClient == NULL)
 		{
+			SetDeathEffect();
 			Uninit();
 			return;
 		}
 		else if (pClient != NULL && pClient->GetConnected() == false)
 		{
+			SetDeathEffect();
 			Uninit();
 			return;
 		}
 		else if (pClient != NULL && pClient->GetClientId() == 0)
 		{
+			SetDeathEffect();
 			Uninit();
 			return;
 		}
 		if (pClient != NULL && CManager::GetClient()->GetClientId() != 0)
 		{
+			SetDeathEffect();
 			pTutorial->DeleteEnemy(m_nIdx);
 		}
 	}
 	else
 	{
+		SetDeathEffect();
 		Uninit();
+	}
+}
+
+//=============================================================================
+// スポーンしたときのエフェクトを生成する処理
+//=============================================================================
+void CEnemy::SetSpawnEffect(void)
+{
+	D3DXVECTOR3 rot = INITIALIZE_D3DXVECTOR3;
+	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+	if (pEffectManager != NULL)
+	{
+		pEffectManager->SetEffect(GetPos(), rot, ENEMY_SPAWN_EFFECT_IDX);
+		rot.y += D3DX_PI * 0.1f;
+		pEffectManager->SetEffect(GetPos(), rot, ENEMY_SPAWN_EFFECT_IDX + 1);
+		rot.y += D3DX_PI * 0.1f;
+		pEffectManager->SetEffect(GetPos(), rot, ENEMY_SPAWN_EFFECT_IDX + 2);
+	}
+}
+
+//=============================================================================
+// 死んだときのエフェクトを生成する処理
+//=============================================================================
+void CEnemy::SetDeathEffect(void)
+{
+	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+	if (pEffectManager != NULL)
+	{
+		pEffectManager->SetEffect(GetPos(), INITIALIZE_D3DXVECTOR3, ENEMY_DEATH_EFFECT_IDX);
 	}
 }
 
@@ -1132,10 +1241,14 @@ CEnemyNormal *CEnemyNormal::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, 
 //=============================================================================
 HRESULT CEnemyNormal::Init(void)
 {
+	// 共通の初期化処理
 	if (FAILED(CEnemy::Init()))
 	{
 		return E_FAIL;
 	}
+
+	// 敵の種類を設定
+	SetType(TYPE_NORMAL);
 
 	return S_OK;
 }
@@ -1212,10 +1325,14 @@ CEnemyArmore *CEnemyArmore::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, 
 //=============================================================================
 HRESULT CEnemyArmore::Init(void)
 {
+	// 共通の初期化処理
 	if (FAILED(CEnemy::Init()))
 	{
 		return E_FAIL;
 	}
+
+	// 敵の種類を設定
+	SetType(TYPE_ARMORE);
 
 	return S_OK;
 }
@@ -1292,10 +1409,14 @@ CEnemyFast *CEnemyFast::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int 
 //=============================================================================
 HRESULT CEnemyFast::Init(void)
 {
+	// 共通の初期化処理
 	if (FAILED(CEnemy::Init()))
 	{
 		return E_FAIL;
 	}
+
+	// 敵の種類を設定
+	SetType(TYPE_FAST);
 
 	return S_OK;
 }
@@ -1372,10 +1493,17 @@ CEnemyHeavy *CEnemyHeavy::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, in
 //=============================================================================
 HRESULT CEnemyHeavy::Init(void)
 {
+	// 共通の初期化処理
 	if (FAILED(CEnemy::Init()))
 	{
 		return E_FAIL;
 	}
+
+	// 敵の種類を設定
+	SetType(TYPE_HEAVY);
+
+	// 体力を設定
+	SetLife(ENEMY_HEAVY_LIFE);
 
 	return S_OK;
 }

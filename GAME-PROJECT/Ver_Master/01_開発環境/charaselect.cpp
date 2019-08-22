@@ -755,7 +755,8 @@ void CCharaSelect::GetDataFromServer(void)
 		// 状態を設定
 		if (CManager::GetClient()->GetClientId() == 0)
 		{
-			ChangeState_WaitPartnerToStageSelect(CManager::GetClient()->GetClientId());
+			//ChangeState_WaitPartnerToStageSelect(CManager::GetClient()->GetClientId());
+			SetState(STATE_END);
 		}
 		else
 		{
@@ -873,7 +874,8 @@ void CCharaSelect::WaitPartnerUpdate(int nIdx)
 		if (pKey->GetTrigger(DIK_RETURN) == true ||
 			CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
 		{// 決定ボタンが押された
-			ChangeState_WaitPartnerToStageSelect(nIdx);
+			//ChangeState_WaitPartnerToStageSelect(nIdx);
+			SetState(STATE_END);
 		}
 	}
 }
@@ -920,8 +922,18 @@ void CCharaSelect::EndUpdate(void)
 //=============================================================================
 void CCharaSelect::WaitInputToChangeChara(int nIdx)
 {
+	// オンラインプレイの場合自分が割り振られた番号じゃないなら処理しない
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{
+		CClient *pClient = CManager::GetClient();
+		if (pClient == NULL) { return; }
+		if (pClient->GetClientId() != nIdx) { return; }
+	}
+
 	CInputKeyboard *pKey = CManager::GetKeyboard();
-	if (pKey == NULL) return;
+	CFade *pFade = CManager::GetFade();
+	if (pKey == NULL || pFade == NULL) return;
+	if (pFade->GetFade() != CFade::FADE_NONE) { return; }
 
 	if (pKey->GetTrigger(DIK_A) == true ||
 		CManager::GetXInput()->GetPress(0, CXInput::XIJS_BUTTON_2) == true ||
@@ -959,6 +971,11 @@ void CCharaSelect::WaitInputToChangeChara(int nIdx)
 			}
 			m_State[nIdx] = STATE_WAIT_PARTNER;
 			CManager::GetSound()->PlaySound(CHARASELECT_SE_DECIDE_IDX);
+		}
+
+		if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+		{// ローカルプレイならば
+			m_State[nIdx] = STATE_END;
 		}
 	}
 }

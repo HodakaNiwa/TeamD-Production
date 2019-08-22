@@ -178,47 +178,4 @@ private:   // このクラスだけがアクセス可能
 	int   m_nPushTiming;    // 描画を切り替えるタイミング(押された状態の時)
 };
 
-//*****************************************************************************
-//    数字クラスの定義
-//*****************************************************************************
-class CNumber : public CScene2D
-{
-public:     // 誰でもアクセス可能
-	typedef enum
-	{
-		STATE_NONE = 0,  // 通常状態
-		STATE_FLASH,     // 点滅表示させる状態
-		STATE_MAX
-	}STATE;
-
-	CNumber(int nPriority = 3, OBJTYPE objType = OBJTYPE_SCENE2D);
-	~CNumber();
-
-	static CNumber *Create(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float fHeight, float fRot = 0.0f, STATE State = STATE_NONE,
-		int nNumber = 0, int nFlashTiming = 3, int nPriority = 3);
-
-	HRESULT Init(D3DXVECTOR3 pos, D3DXCOLOR col, float fWidth, float fHeight, float fRot = 0.0f, STATE State = STATE_NONE,
-		int nNumber = 0, int nFlashTiming = 3);
-	void Uninit(void);
-	void Update(void);
-	void Draw(void);
-	void MakeVertex(const LPDIRECT3DDEVICE9 pDevice);
-
-	void SetNumber(const int nNumber);
-	void SetState(const STATE State);
-
-	int GetNumber(void);
-	STATE GetState(void);
-
-protected: // このクラスと派生クラスだけがアクセス可能
-
-private:   // このクラスだけがアクセス可能
-	void Flash(void);
-
-	STATE m_State;         // 状態
-	int   m_nNumber;       // 表示する数字
-	int   m_nFlashTiming;  // 点滅させるタイミング
-	int   m_nCounter;      // 描画を管理するカウンター
-};
-
 #endif

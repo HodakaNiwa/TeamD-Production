@@ -18,22 +18,40 @@
 #include "input.h"
 #include "fade.h"
 #include "scene2D.h"
+#include "number.h"
+#include "title.h"
 #include "sound.h"
 #include "debugproc.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define RESULT_SYSTEM_FILENAME  "data/TEXT/MODE/result.ini"    // 初期化に使用するシステムファイル名
-#define RESULT_WAITSTATE_TIME   (60)                           // 待機状態から通常状態に変わるまでの時間
-#define RESULT_CHANGEMODE_TIME  (600)                          // 通常状態から終了状態に変わるまでの時間
-#define RESULT_BGM_IDX          (4)                            // リザルトで再生するBGMの番号
+#define RESULT_SYSTEM_FILENAME               "data/TEXT/MODE/result.ini"    // 初期化に使用するシステムファイル名
+#define RESULT_WAITSTATE_TIME                (60)                           // 待機状態から通常状態に変わるまでの時間
+#define RESULT_NEXTHIGHSCORE_TIME            (240)                          // 通常状態からハイスコアを表示する状態に変わるまでの時間
+#define RESULT_CHANGEMODE_TIME               (600)                          // 通常状態から終了状態に変わるまでの時間
+#define RESULT_HIGHSCORE_FALSH_TIME          (2)                            // ハイスコアロゴを点滅させるタイミング
+#define RESULT_BGM_IDX                       (4)                            // リザルトで再生するBGMの番号
 
 // リザルトロゴ初期化用
-#define RESULT_LOGO_POS_INI     (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
-#define RESULT_LOGO_COL_INI     (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define RESULT_LOGO_WIDTH_INI   (150.0f)
-#define RESULT_LOGO_HEIGHT_INI  (100.0f)
+#define RESULT_LOGO_POS_INI                  (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define RESULT_LOGO_COL_INI                  (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define RESULT_LOGO_WIDTH_INI                (150.0f)
+#define RESULT_LOGO_HEIGHT_INI               (100.0f)
+
+// リザルトハイスコアロゴ初期化用
+#define RESULT_HIGHSCORE_FALSH_COL           (D3DXCOLOR(0.5f,0.5f,1.0f,1.0f))
+#define RESULT_HIGHSCORELOGO_POS_INI         (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 220.0f, 0.0f))
+#define RESULT_HIGHSCORELOGO_COL_INI         (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define RESULT_HIGHSCORELOGO_WIDTH_INI       (400.0f)
+#define RESULT_HIGHSCORELOGO_HEIGHT_INI      (60.0f)
+
+// リザルトハイスコアロゴ初期化用
+#define RESULT_HIGHSCORENUMBER_POS_INI       (D3DXVECTOR3(900.0f, 380.0f, 0.0f))
+#define RESULT_HIGHSCORENUMBER_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define RESULT_HIGHSCORENUMBER_WIDTH_INI     (40.0f)
+#define RESULT_HIGHSCORENUMBER_HEIGHT_INI    (40.0f)
+#define RESULT_HIGHSCORENUMBER_INTERVAL_INI  (D3DXVECTOR3(-90.0f, 0.0f, 0.0f))
 
 // 値読み込み用のパス
 // テクスチャ用
@@ -52,6 +70,7 @@
 //=============================================================================
 // 静的メンバ変数宣言
 //=============================================================================
+bool CResult::m_bHighScore = true;   // ハイスコアを表示するかどうか
 
 //=============================================================================
 // リザルトのコンストラクタ
@@ -116,12 +135,16 @@ void CResult::Uninit(void)
 
 	// 各種クラスの開放
 	ReleaseLogo();
+	ReleaseHighScore();
 
 	// 全てのオブジェクト開放
 	CScene::ReleaseAll();
 
 	// BGMを停止
 	CManager::GetSound()->StopSound(RESULT_BGM_IDX);
+
+	// ハイスコアを表示しない状態に
+	m_bHighScore = false;
 }
 
 //=============================================================================
@@ -139,6 +162,9 @@ void CResult::Update(void)
 		break;
 	case STATE_NORMAL:
 		NormalUpdate();
+		break;
+	case STATE_HIGHSCORE:
+		HighScoreUpdate();
 		break;
 	case STATE_END:
 		EndUpdate();
@@ -203,6 +229,36 @@ void CResult::CreateLogo(void)
 }
 
 //=============================================================================
+// リザルトのロゴ生成処理
+//=============================================================================
+void CResult::CreateHighScore(void)
+{
+	// ロゴポリゴン生成
+	if (m_pHighScoreLogo == NULL)
+	{
+		m_pHighScoreLogo = CScene2D::Create(RESULT_HIGHSCORELOGO_POS_INI, RESULT_HIGHSCORELOGO_COL_INI,
+			RESULT_HIGHSCORELOGO_WIDTH_INI, RESULT_HIGHSCORELOGO_HEIGHT_INI);
+		if (m_pHighScoreLogo != NULL && GetTextureManager() != NULL)
+		{
+			m_pHighScoreLogo->BindTexture(GetTextureManager()->GetTexture(m_ResultLogoData.nTexIdx));
+		}
+	}
+
+	// 数字ポリゴン生成
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (GetTextureManager() != NULL)
+	{
+		pTexture = GetTextureManager()->GetTexture(1);
+	}
+	if (m_pHighScore == NULL)
+	{
+		m_pHighScore = CNumber::Create(RESULT_HIGHSCORENUMBER_POS_INI, RESULT_HIGHSCORENUMBER_COL_INI,
+			RESULT_HIGHSCORENUMBER_WIDTH_INI, RESULT_HIGHSCORENUMBER_HEIGHT_INI, RESULT_HIGHSCORENUMBER_INTERVAL_INI,
+			pTexture, CTitle::GetHighScore());
+	}
+}
+
+//=============================================================================
 // リザルトのロゴ開放処理
 //=============================================================================
 void CResult::ReleaseLogo(void)
@@ -211,6 +267,26 @@ void CResult::ReleaseLogo(void)
 	{
 		m_pLogo->Uninit();
 		m_pLogo = NULL;
+	}
+}
+
+//=============================================================================
+// リザルトのハイスコア開放処理
+//=============================================================================
+void CResult::ReleaseHighScore(void)
+{
+	// ロゴポリゴン開放
+	if (m_pHighScoreLogo != NULL)
+	{
+		m_pHighScoreLogo->Uninit();
+		m_pHighScoreLogo = NULL;
+	}
+
+	// 数字ポリゴン開放
+	if (m_pHighScore != NULL)
+	{
+		m_pHighScore->Uninit();
+		m_pHighScore = NULL;
 	}
 }
 
@@ -238,7 +314,81 @@ void CResult::NormalUpdate(void)
 {
 	CDebugProc::Print(1, "通常状態\n");
 
+	// カウンター加算
 	m_nStateCounter++;
+
+	if (m_bHighScore == true)
+	{// ハイスコアが更新されている
+		if (m_nStateCounter % RESULT_NEXTHIGHSCORE_TIME == 0)
+		{// カウンターが一定値に達した
+			// ハイスコアを表示する状態に
+			SetState(STATE_HIGHSCORE);
+			m_nStateCounter = 0;
+
+			// リザルトロゴを開放
+			ReleaseLogo();
+
+			// ハイスコア表示に必要なものを生成
+			CreateHighScore();
+		}
+
+		// 次の状態待機処理
+		WaitInputToHighScore();
+	}
+	else
+	{// ハイスコアが更新されていない
+		if (m_nStateCounter % RESULT_CHANGEMODE_TIME == 0)
+		{// カウンターが一定値に達した
+			SetState(STATE_END);
+			m_nStateCounter = 0;
+		}
+
+		// 次のモード待機処理
+		WaitInputToNextMode();
+	}
+
+	CDebugProc::Print(1, "%d\n", m_nStateCounter);
+}
+
+//=============================================================================
+// リザルトのハイスコアを表示する状態の更新処理
+//=============================================================================
+void CResult::HighScoreUpdate(void)
+{
+	CDebugProc::Print(1, "ハイスコア表示状態\n");
+
+	// スコアを点滅させる
+	if (m_nStateCounter % RESULT_HIGHSCORE_FALSH_TIME == 0)
+	{
+		// 点滅の色を設定
+		if (m_FalshCol.r < 1.0f)
+		{
+			m_FalshCol = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+		else
+		{
+			m_FalshCol = RESULT_HIGHSCORE_FALSH_COL;
+		}
+
+		// ポリゴンの色を設定
+		// ロゴポリゴン
+		if (m_pHighScoreLogo != NULL)
+		{
+			m_pHighScoreLogo->SetCol(m_FalshCol);
+			m_pHighScoreLogo->SetVtxBuffCol();
+		}
+
+		// 数字ポリゴン
+		if (m_pHighScore != NULL)
+		{
+			m_pHighScore->SetNumberCol(m_FalshCol);
+			m_pHighScore->SetNumberVtxBuffCol();
+		}
+	}
+
+	// カウンター加算
+	m_nStateCounter++;
+
 	if (m_nStateCounter % RESULT_CHANGEMODE_TIME == 0)
 	{// カウンターが一定値に達した
 		SetState(STATE_END);
@@ -264,6 +414,29 @@ void CResult::EndUpdate(void)
 	if (pFade->GetFade() == CFade::FADE_NONE)
 	{// フェードが使用されていない
 		pFade->SetFade(CManager::MODE_TITLE);
+	}
+}
+
+//=============================================================================
+// リザルトのハイスコアを表示する状態に行くための待機処理
+//=============================================================================
+void CResult::WaitInputToHighScore(void)
+{
+	CInputKeyboard *pKey = CManager::GetKeyboard();
+	if (pKey == NULL) return;
+
+	if (pKey->GetTrigger(DIK_RETURN) == true ||
+		CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
+	{// 決定ボタンが押された
+		// 状態を設定
+		SetState(STATE_HIGHSCORE);
+		m_nStateCounter = 0;
+
+		// リザルトロゴを開放
+		ReleaseLogo();
+
+		// ハイスコア表示に必要なものを生成
+		CreateHighScore();
 	}
 }
 
@@ -410,6 +583,8 @@ void CResult::ClearVariable(void)
 	m_State = STATE_WAIT;
 	m_nStateCounter = 0;
 	m_pLogo = NULL;
+	m_pHighScore = NULL;
+	m_pHighScoreLogo = NULL;
 }
 
 //=============================================================================
@@ -419,6 +594,14 @@ void CResult::SetState(const STATE state)
 {
 	m_State = state;
 	m_nStateCounter = 0;
+}
+
+//=============================================================================
+// リザルトのハイスコアを出すかどうかを設定する
+//=============================================================================
+void CResult::SetHighScore(void)
+{
+	m_bHighScore = true;
 }
 
 //=============================================================================

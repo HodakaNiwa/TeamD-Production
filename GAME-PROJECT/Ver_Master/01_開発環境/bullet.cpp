@@ -222,6 +222,14 @@ void CBullet::BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, 
 }
 
 //=============================================================================
+// ’e‚ª“–‚½‚Á‚½‚Æ‚«‚Ìˆ—
+//=============================================================================
+void CBullet::Hit(CScene *pScene)
+{
+	Destroy();
+}
+
+//=============================================================================
 // ’e‚Ì‘O‰ñ‚ÌˆÊ’uÝ’èˆ—
 //=============================================================================
 void CBullet::SetPosOld(D3DXVECTOR3 posOld)
@@ -416,7 +424,7 @@ void CBulletPlayer::Uninit(void)
 	pPlayer = (CPlayer*)GetParent();
 	if (pPlayer != NULL)
 	{
-		pPlayer->SetShoot(false);
+		pPlayer->SetCntBullet(pPlayer->GetCntBullet() - 1);
 	}
 
 	// ‹¤’Ê‚ÌI—¹ˆ—
@@ -531,19 +539,19 @@ void CBulletPlayer::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DX
 			if (pPlayer->GetPlayerIdx() != GetType())
 			{
 				pObj->Hit(this);
+				*pDeath = true;
 			}
-			*pDeath = true;
 		}
 	}
 	else if (pObj->GetObjType() == OBJTYPE_ENEMY)
 	{// “G‚¾‚Á‚½‚ç
 		if (CollisionEnemy(pPos, pPosOld, pMove, colRange, (CEnemy*)pScene) == true)
 		{// “–‚½‚Á‚Ä‚¢‚é
-			pObj->Hit(this);
+			((CEnemy*)pObj)->Hit(this);
 			*pDeath = true;
 		}
 	}
-	else if (pObj->GetObjType() == OBJTYPE_BULLET)
+	else if (pObj->GetObjType() == OBJTYPE_BULLET && pScene != this)
 	{// ’e‚¾‚Á‚½‚ç
 		if (CollisionBullet(pPos, pPosOld, pMove, colRange, (CBullet*)pScene) == true)
 		{// “–‚½‚Á‚Ä‚¢‚é
@@ -864,15 +872,21 @@ void CBulletEnemy::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXV
 	{// “G‚¾‚Á‚½‚ç
 		if (CollisionEnemy(pPos, pPosOld, pMove, colRange, (CEnemy*)pScene) == true)
 		{// “–‚½‚Á‚Ä‚¢‚é
-			*pDeath = true;
+			if (GetParent() != pScene)
+			{// Ž©•ª‚Ìeƒ|ƒCƒ“ƒ^‚Å‚Í‚È‚¢
+				*pDeath = true;
+			}
 		}
 	}
 	else if (pObj->GetObjType() == OBJTYPE_BULLET)
 	{// ’e‚¾‚Á‚½‚ç
 		if (CollisionBullet(pPos, pPosOld, pMove, colRange, (CBullet*)pScene) == true)
 		{// “–‚½‚Á‚Ä‚¢‚é
-			pObj->Hit(this);
-			*pDeath = true;
+			if (pObj != this)
+			{// Ž©•ª‚Å‚Í‚È‚¢
+				pObj->Hit(this);
+				*pDeath = true;
+			}
 		}
 	}
 	else if (pObj->GetObjType() == OBJTYPE_BLOCK)

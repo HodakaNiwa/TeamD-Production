@@ -34,14 +34,14 @@ public:    // 誰でもアクセス可能
 	CUI();
 	~CUI();
 
-	static CUI *Create(CTextureManager *pTextureManager, int nNumEnemy, int nMapIdx);
+	static CUI *Create(CTextureManager *pTextureManager, int nNumEnemy, int nStageIdx, int *pPlayerStock, int nTexNumber);
 
-	HRESULT Init(CTextureManager *pTextureManager, int nNumEnemy, int nMapIdx);
+	HRESULT Init(CTextureManager *pTextureManager, int nNumEnemy, int nStageIdx, int *pPlayerStock, int nTexNumber);
 	void Uninit(void);
 	void ReCreateEnemyIcon(int nNumEnemy);
 	void CutEnemyIcon(int nIdx);
-	void ReCreatePlayerStock(int nStock);
-	void ReCreateStageNumber(int nMapIdx);
+	void ReCreatePlayerStock(int *pStock);
+	void ReCreateStageNumber(int nStageIdx);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 
@@ -51,9 +51,9 @@ private:   // このクラスだけがアクセス可能
 	void CreateBg(void);
 	void CreateEnemyIcon(int nNumEnemy);
 	void CreatePlayerIcon(void);
-	void CreatePlayerStock(void);
+	void CreatePlayerStock(int *pStock);
 	void CreateStageIcon(void);
-	void CreateStageNumber(int nMapIdx);
+	void CreateStageNumber(int nStageIdx);
 
 	void ReleaseBg(void);
 	void ReleaseEnemyIcon(void);
@@ -66,12 +66,11 @@ private:   // このクラスだけがアクセス可能
 	CScene2D *m_pBg;                            // 背景に使用するポリゴンクラスへのポインタ
 	CScene2D **m_pEnemyIcon;                    // 敵のアイコン表示用ポリゴンクラスへのポインタ
 	CScene2D *m_pPlayerIcon[MAX_NUM_PLAYER];    // プレイヤーアイコン表示用ポリゴン
-	CNumber **m_pPlayerStock[MAX_NUM_PLAYER];   // プレイヤーの残機数表示用ポリゴン
+	CNumber *m_pPlayerStock[MAX_NUM_PLAYER];    // プレイヤーの残機数表示用ポリゴン
 	CScene2D *m_pStageIcon;                     // ステージアイコン表示用ポリゴン
-	CNumber **m_pStageNumber;                   // 現在のステージ数表示用ポリゴン
+	CNumber *m_pStageNumber;                    // 現在のステージ数表示用ポリゴン
 	int m_nNumEnemy;                            // 敵のアイコンの数
-	int m_nCharaStockDigit[MAX_NUM_PLAYER];     // プレイヤーの残機数の桁数
-	int m_nStageNumberDigit;                    // 現在のステージ数の桁数
+	int m_nNumberTexIdx;                        // 数字に使用するテクスチャの番号
 };
 
 #endif
