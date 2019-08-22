@@ -1,0 +1,238 @@
+#==============================================================================
+#
+# 敵の生成情報スクリプトファイル [enemylist_christmas001.txt]
+# Author : Hodaka Niwa
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# 生成する敵の数
+#------------------------------------------------------------------------------
+NUM_ENEMYLIST = 20
+
+#------------------------------------------------------------------------------
+# 敵の生成情報
+#------------------------------------------------------------------------------
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 1			# 種類
+	TIME = 50			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 9		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 1			# リスポーン位置の番号
+	TYPE =	1			# 種類
+	TIME = 150			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 11		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 2			# リスポーン位置の番号
+	TYPE = 1			# 種類
+	TIME = 250			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 8		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 1			# 種類
+	TIME = 750			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 12		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 1			# リスポーン位置の番号
+	TYPE = 1			# 種類
+	TIME = 850			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 10		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 2			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 950			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 10		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 240			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 12		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 1550			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 9		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 1			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 1650			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 10		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 2			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 1750			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 11		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 360			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 11		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 2			# 種類
+	TIME = 2150			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 10		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 1			# リスポーン位置の番号
+	TYPE = 2			# 種類
+	TIME = 2250			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 8		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 2			# リスポーン位置の番号
+	TYPE = 2			# 種類
+	TIME = 2350			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 9		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 2650			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 10		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 1			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 2750			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 12		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 2			# リスポーン位置の番号
+	TYPE = 0			# 種類
+	TIME = 2850			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 9		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 0			# リスポーン位置の番号
+	TYPE = 3			# 種類
+	TIME = 3150			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 10		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 1			# リスポーン位置の番号
+	TYPE = 3			# 種類
+	TIME = 3250			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 12		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+ENEMYLISTSET
+	RESPAWN = 2			# リスポーン位置の番号
+	TYPE = 3			# 種類
+	TIME = 3850			# 出現させる時間
+	AISET
+		BULLET = 300	# 弾を打つ際のランダム評価値
+		MASS = 11		# 向きを変えさせるランダム評価値
+		DOWN = 2		# 下向きに動かせるランダム評価値
+	END_AISET
+END_ENEMYLISTSET
+
+
+END_SCRIPT		# この行は絶対消さないこと！

@@ -1,0 +1,180 @@
+#==============================================================================
+#
+# 配置物情報スクリプトファイル [object_gantan001.txt]
+# Author : Hodaka Niwa
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# 読み込むオブジェクトデータの数
+#------------------------------------------------------------------------------
+NUM_OBJECT_DATA = 9
+
+#------------------------------------------------------------------------------
+# 読み込むオブジェクトデータのファイル名
+#------------------------------------------------------------------------------
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/bobby.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/box000.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/folding_screen.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/hina_bobby.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/hina_box000.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/hina_folding_screen.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/hina_threecolor_ricecake.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/hina_lady.txt
+OBJECT_FILENAME = data/TEXT/OBJECT/HINAMATSURI/hina_man.txt
+
+#------------------------------------------------------------------------------
+# モデル配置情報
+#------------------------------------------------------------------------------
+MODELSET
+	TYPE = 1					# 種類
+	POS = 1240.0 1.0 0.0		# 座標
+	ROT = 0.00 1.57 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 1					# 種類
+	POS = -1240.0 1.0 0.0		# 座標
+	ROT = 0.00 1.57 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 1					# 種類
+	POS = 0.0 1.0 1090.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 1					# 種類
+	POS = 0.0 1.0 -1090.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 2					# 種類
+	POS = 0.0 0.0 -630.0		# 座標
+	ROT = 0.00 3.14 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 2					# 種類
+	POS = 780.0 0.0 0.0		# 座標
+	ROT = 0.00 1.57 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 2					# 種類
+	POS = -780.0 0.0 0.0		# 座標
+	ROT = 0.00 -1.57 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 0					# 種類
+	POS = 650.0 46.0 -630.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 0					# 種類
+	POS = -650.0 46.0 -630.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 0					# 種類
+	POS = -650.0 46.0 630.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 0					# 種類
+	POS = 650.0 46.0 630.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 4					# 種類
+	POS = 0.0 46.0 780.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 5					# 種類
+	POS = 0.0 46.0 800.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 3					# 種類
+	POS = 320.0 46.0 740.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 3					# 種類
+	POS = -320.0 46.0 740.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 6					# 種類
+	POS = -70.0 46.0 610.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 6					# 種類
+	POS = 70.0 46.0 610.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 7					# 種類
+	POS = 160.0 80.0 690.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 8					# 種類
+	POS = -160.0 80.0 690.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+MODELSET
+	TYPE = 8					# 種類
+	POS = -160.0 80.0 690.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_MODELSET
+
+#------------------------------------------------------------------------------
+# ビルボード配置情報
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# エフェクト配置情報
+#------------------------------------------------------------------------------
+EFFECTSET
+	TYPE = 0					# 種類
+	POS = 600.0 450.0 -630.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 0					# 種類
+	POS = -600.0 450.0 -630.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 0					# 種類
+	POS = -550.0 450.0 460.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 0					# 種類
+	POS = 590.0 450.0 470.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+END_SCRIPT		# この行は絶対消さないこと！
