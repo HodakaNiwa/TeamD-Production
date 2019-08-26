@@ -178,9 +178,21 @@ EFFECTSET
 END_EFFECTSET
 
 EFFECTSET
-	TYPE = 8					# 種類
-	POS = -150.0 10.0 450.0		# 座標
+	TYPE = 3					# 種類
+	POS = 0.0 0.0 525.0		# 座標
 	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 4					# 種類
+	POS = 0.0 0.0 525.0		# 座標
+	ROT = 0.00 0.31 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 5					# 種類
+	POS = 0.0 0.0 525.0		# 座標
+	ROT = 0.00 0.63 0.00		# 向き
 END_EFFECTSET
 
 END_SCRIPT		# この行は絶対消さないこと！
