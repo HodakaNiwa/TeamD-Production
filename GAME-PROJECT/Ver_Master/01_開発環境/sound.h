@@ -50,8 +50,9 @@ private:   // このクラスだけがアクセス可能
 	//------------------------
 	typedef struct
 	{
-		char *pFilename;	// ファイル名
-		int nCntLoop;		// ループカウント(-1でループ再生)
+		char *pFilename;	     // ファイル名
+		int nCntLoop;		     // ループカウント(-1でループ再生)
+		int nPlayPositioned;     // 前回の再生位置
 	} SOUNDPARAM;
 	SOUNDPARAM *m_apSoundParam;   // 音素材のパラメータへのポインタ
 };

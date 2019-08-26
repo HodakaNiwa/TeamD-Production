@@ -30,11 +30,12 @@
 // 値読み込み用のパス名
 #define SERVER_ADDRESS "SERVER_ADDRESS = "
 #define SOUND_FILENAME "SOUND_FILENAME = "
+#define HIGHSCORE_FILENAME "HIGHSCORE_FILENAME = "
 
 //=============================================================================
 // 静的メンバ変数宣言
 //=============================================================================
-CManager::MODE	CManager::m_mode = MODE::MODE_GAME;  		// モードの情報
+CManager::MODE	CManager::m_mode = MODE::MODE_TITLE;  		// モードの情報
 CRenderer		*CManager::m_pRenderer = NULL;				// レンダリングのポインタ
 CInputKeyboard	*CManager::m_pInputKeyboard = NULL;			// キーボードのポインタ
 CInputMouse     *CManager::m_pMouse = NULL;                 // マウスのポインタ
@@ -180,6 +181,9 @@ void CManager::Uninit(void)
 
 	// サーバーのクリーンアップ
 	CServer::ServerCleanUp();
+
+	// ハイスコアを保存する
+	CResult::SaveHighScore();
 }
 
 //=============================================================================
@@ -280,16 +284,28 @@ void CManager::LoadSystem(HWND hWnd)
 //=============================================================================
 void CManager::LoadSystemScript(HWND hWnd, CFileLoader *pFileLoader, char *pStr)
 {
-	// サーバーのIPアドレスを読み込む
-	strcpy(pStr, pFileLoader->GetString(pStr));
-	strcpy(m_aServerAddr, CFunctionLib::ReadString(pStr, m_aServerAddr, SERVER_ADDRESS));
-
-
-	// サウンドデータのファイル名を読み込む
 	char aSoundFileName[256] = "\0";
-	strcpy(pStr, pFileLoader->GetString(pStr));
-	strcpy(aSoundFileName, CFunctionLib::ReadString(pStr, aSoundFileName, SOUND_FILENAME));
-	CreateSound(hWnd, aSoundFileName);
+	while (1)
+	{
+		strcpy(pStr, pFileLoader->GetString(pStr));
+		if (CFunctionLib::Memcmp(pStr, SERVER_ADDRESS) == 0)
+		{// サーバーのIPアドレスだった
+			strcpy(m_aServerAddr, CFunctionLib::ReadString(pStr, m_aServerAddr, SERVER_ADDRESS));
+		}
+		else if (CFunctionLib::Memcmp(pStr, SOUND_FILENAME) == 0)
+		{// サウンドデータのファイル名だった
+			strcpy(aSoundFileName, CFunctionLib::ReadString(pStr, aSoundFileName, SOUND_FILENAME));
+			CreateSound(hWnd, aSoundFileName);
+		}
+		else if (CFunctionLib::Memcmp(pStr, HIGHSCORE_FILENAME) == 0)
+		{// ハイスコアファイルだった
+			CResult::LoadHighScore(CFunctionLib::ReadString(pStr, pStr, HIGHSCORE_FILENAME));
+		}
+		else if (CFunctionLib::Memcmp(pStr, END_SCRIPT) == 0)
+		{// スクリプト読み込み終了の合図だった
+			break;
+		}
+	}
 }
 
 //=============================================================================

@@ -21,10 +21,13 @@
 #define UI_BG_COL_INI               (D3DXCOLOR(0.3f,0.3f,0.3f,1.0f))
 
 // 敵アイコン用
-#define UI_ENEMYICON_WIDTH_INI      (90.0f)
-#define UI_ENEMYICON_HEIGHT_INI     (SCREEN_HEIGHT / 2)
-#define UI_ENEMYICON_POS_INI        (D3DXVECTOR3(SCREEN_WIDTH ,SCREEN_HEIGHT / 2,0.0f))
+#define UI_ENEMYICON_WIDTH_INI      (16.0f)
+#define UI_ENEMYICON_HEIGHT_INI     (16.0f)
+#define UI_ENEMYICON_POS_INI        (D3DXVECTOR3(SCREEN_WIDTH - 110.0f,36.0f,0.0f))
 #define UI_ENEMYICON_COL_INI        (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define UI_ENEMYICON_INTERVAL_X     (30.0f)
+#define UI_ENEMYICON_INTERVAL_Y     (30.0f)
+#define UI_ENEMYICON_TEXIDX         (19)
 
 // プレイヤーアイコン用
 #define UI_PLAYERICON_TEXIDX        (5)
@@ -58,7 +61,8 @@
 #define UI_STAGEICON_WIDTH_INI      (25.0f)
 #define UI_STAGEICON_HEIGHT_INI     (25.0f)
 #define UI_STAGEICON_POS_INI        (D3DXVECTOR3(SCREEN_WIDTH - 112.5f ,550.0f,0.0f))
-#define UI_STAGEICON_COL_INI        (D3DXCOLOR(0.0f,1.0f,0.0f,1.0f))
+#define UI_STAGEICON_COL_INI        (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define UI_STAGEICON_TEXIDX         (24)
 
 // ステージ数表示用ポリゴン用
 #define UI_STAGENUMBER_WIDTH_INI    (20.0f)
@@ -189,14 +193,22 @@ void CUI::ReCreateEnemyIcon(int nNumEnemy)
 
 	// もう一度作る
 	CreateEnemyIcon(nNumEnemy);
+
+	// 数を保存
+	m_nNumEnemy = nNumEnemy;
 }
 
 //=============================================================================
 //    敵のアイコンを削っていく処理
 //=============================================================================
-void CUI::CutEnemyIcon(int nIdx)
+void CUI::CutEnemyIcon(void)
 {
-
+	if (m_pEnemyIcon[(m_nNumEnemy - 1)] != NULL)
+	{
+		m_pEnemyIcon[(m_nNumEnemy - 1)]->Uninit();
+		m_pEnemyIcon[(m_nNumEnemy - 1)] = NULL;
+		m_nNumEnemy--;
+	}
 }
 
 //=============================================================================
@@ -256,7 +268,32 @@ void CUI::CreateBg(void)
 //=============================================================================
 void CUI::CreateEnemyIcon(int nNumEnemy)
 {
+	if (nNumEnemy == 0) { return; }
 
+	m_pEnemyIcon = new CScene2D*[nNumEnemy];
+	if (m_pEnemyIcon == NULL) { return; }
+
+	// アイコン生成
+	D3DXVECTOR3 EnemyIconPos = UI_ENEMYICON_POS_INI;
+	D3DXCOLOR EnemyIconCol = UI_ENEMYICON_COL_INI;
+	float fEnemyIconWidth = UI_ENEMYICON_WIDTH_INI;
+	float fEnemyIconHeight = UI_ENEMYICON_HEIGHT_INI;
+	for (int nCntEnemy = 0; nCntEnemy < nNumEnemy; nCntEnemy++)
+	{
+		m_pEnemyIcon[nCntEnemy] = CScene2D::Create(EnemyIconPos, EnemyIconCol, fEnemyIconWidth, fEnemyIconHeight, UI_PRIORITY);
+		if (m_pEnemyIcon[nCntEnemy] != NULL)
+		{
+			m_pEnemyIcon[nCntEnemy]->BindTexture(m_pTextureManager->GetTexture(UI_ENEMYICON_TEXIDX));
+		}
+
+		// アイコンの位置をずらす
+		EnemyIconPos.x += UI_ENEMYICON_INTERVAL_X;
+		if ((nCntEnemy + 1) % 2 == 0)
+		{
+			EnemyIconPos.x = UI_ENEMYICON_POS_INI.x;
+			EnemyIconPos.y += UI_ENEMYICON_INTERVAL_Y;
+		}
+	}
 }
 
 //=============================================================================
@@ -324,6 +361,10 @@ void CUI::CreateStageIcon(void)
 {
 	m_pStageIcon = CScene2D::Create(UI_STAGEICON_POS_INI, UI_STAGEICON_COL_INI,
 		UI_STAGEICON_WIDTH_INI, UI_STAGEICON_HEIGHT_INI, UI_PRIORITY);
+	if (m_pStageIcon != NULL)
+	{
+		m_pStageIcon->BindTexture(m_pTextureManager->GetTexture(UI_STAGEICON_TEXIDX));
+	}
 }
 
 //=============================================================================

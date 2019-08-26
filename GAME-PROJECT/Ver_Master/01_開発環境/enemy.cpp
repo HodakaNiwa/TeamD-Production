@@ -17,6 +17,7 @@
 #include "block.h"
 #include "server.h"
 #include "headquarters.h"
+#include "river.h"
 #include "game.h"
 #include "item.h"
 #include "tutorial.h"
@@ -748,6 +749,14 @@ void CEnemy::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3
 			ResetAIState();
 		}
 	}
+	else if (pObj->GetObjType() == OBJTYPE_RIVER)
+	{// ì‚¾‚Á‚½‚ç
+		if (CollisionRiver(pPos, pPosOld, pMove, colRange, (CRiver*)pScene) == true)
+		{// “–‚½‚Á‚Ä‚¢‚é
+			pObj->Hit(this);
+			ResetAIState();
+		}
+	}
 }
 
 //=============================================================================
@@ -824,6 +833,23 @@ bool CEnemy::CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3
 bool CEnemy::CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHead)
 {
 	CBoxCollider *pBoxCollider = pHead->GetBoxCollider();	//“–‚½‚è”»’è” ‚ÌŽæ“¾ˆ—
+	if (pBoxCollider != NULL)
+	{//“–‚½‚è”»’è” ‚ªNULL‚Å‚È‚¢ê‡
+		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
+		{//“–‚½‚è”»’è” ‚É“–‚½‚Á‚½ê‡
+			return true;
+		};
+	}
+
+	return false;
+}
+
+//=============================================================================
+// “G‚Æ‚Ì“–‚½‚è”»’èˆ—
+//=============================================================================
+bool CEnemy::CollisionRiver(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CRiver *pRiver)
+{
+	CBoxCollider *pBoxCollider = pRiver->GetBoxCollider();	//“–‚½‚è”»’è” ‚ÌŽæ“¾ˆ—
 	if (pBoxCollider != NULL)
 	{//“–‚½‚è”»’è” ‚ªNULL‚Å‚È‚¢ê‡
 		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)

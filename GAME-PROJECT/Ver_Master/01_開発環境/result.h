@@ -49,6 +49,8 @@ public:	// 誰からもアクセス可能
 	// 静的メンバ関数
 	static CResult *Create(void);
 	static void SetHighScore(void);
+	static void LoadHighScore(char *pFileName);
+	static void SaveHighScore(void);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 

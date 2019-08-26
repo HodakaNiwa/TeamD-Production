@@ -34,11 +34,12 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define PLAYER_MOVE (2.8f)
-#define PLAYER_MOVE_POWERUP (4.2f)
-#define PLAYER_DEATH_EFFECT_IDX (7)
-#define PLAYER_MOVE_EFFECT_IDX (15)
-#define PLAYER_SE_BULLET_IDX (6)
+#define PLAYER_MOVE             (2.8f)     // プレイヤーの移動量
+#define PLAYER_MOVE_POWERUP     (4.2f)     // パワーアップ時のプレイヤーの移動量
+#define PLAYER_DEATH_EFFECT_IDX (7)        // 死んだときのエフェクト番号
+#define PLAYER_MOVE_EFFECT_IDX  (15)       // 移動している時のエフェクト番号
+#define PLAYER_SE_BULLET_IDX    (6)        // 弾発射時の音番号
+#define PLAYER_SE_DAMAGE_IDX    (12)       // プレイヤーが動けなくなる攻撃をくらったときの音番号
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -725,6 +726,10 @@ void CPlayer::Collision(void)
 			{// オブジェクト3Dだったら
 				bLand = CollisionObject3D(&pos, &posOld, &move, colRange, (CObject3D*)pScene);
 			}
+			else if (pScene->GetObjType() == OBJTYPE_BULLET)
+			{// 弾だったら
+				bLand = CollisionBullet(&pos, &posOld, &move, colRange / 2, (CBullet*)pScene);
+			}
 			else if (pScene->GetObjType() == OBJTYPE_ENEMY)
 			{// 敵だったら
 				bLand = CollisionEnemy(&pos, &posOld, &move, colRange / 2, (CEnemy*)pScene);
@@ -780,7 +785,7 @@ void CPlayer::Collision(void)
 			}
 			else if (pScene->GetObjType() == OBJTYPE_ICEFIELD)
 			{// 氷だったら
-				CollisionIceField(pos, (CIceField*)pScene);
+				CollisionIceField(pos, (CIceField*)pScene, &bIceLand);
 			}
 			else if (pScene->GetObjType() == OBJTYPE_HEADQUARTERS)
 			{// 司令部だったら
@@ -822,6 +827,10 @@ void CPlayer::State(void)
 		break;
 	case STATE_STOP:	//停止状態
 		m_nCntState++;	//状態カウンターの加算
+		if (m_nCntState == 1)
+		{// 停止状態になってからすぐの時に音を鳴らす
+			CManager::GetSound()->PlaySound(PLAYER_SE_DAMAGE_IDX);
+		}
 		if (m_nCntState >= 80)
 		{//状態カウンターが120以上の場合
 			m_state = STATE_NOMAL;	//通常状態に戻す
@@ -1027,6 +1036,33 @@ bool CPlayer::CollisionObject3D(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVEC
 }
 
 //=============================================================================
+// 弾当たり判定の処理
+//=============================================================================
+bool CPlayer::CollisionBullet(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBullet *pBullet)
+{
+	bool bLand = false;
+	if (CTitle::GetGameMode() != CTitle::GAMEMODE_ONLINE2P) { return false; }
+
+	CBoxCollider *pBoxCollider = pBullet->GetBoxCollider();
+	if (pBoxCollider == NULL) { return false; }
+
+	int nBulletType = pBullet->GetType();
+	if (nBulletType != CBulletPlayer::TYPE_PLAYER_0 && nBulletType != CBulletPlayer::TYPE_PLAYER_1) { return false; }
+
+
+	if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange) == true)
+	{
+		if (nBulletType != m_nPlayerIdx)
+		{// 自分以外が放った種類の弾に当たった
+			Hit(pBullet);
+		}
+		bLand = true;
+	}
+
+	return bLand;
+}
+
+//=============================================================================
 // 敵当たり判定の処理
 //=============================================================================
 bool CPlayer::CollisionEnemy(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CEnemy *pEnemy)
@@ -1122,7 +1158,7 @@ bool CPlayer::CollisionRiver(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR
 //=============================================================================
 // 氷当たり判定の処理
 //=============================================================================
-void CPlayer::CollisionIceField(D3DXVECTOR3 pos, CIceField *pIceField)
+void CPlayer::CollisionIceField(D3DXVECTOR3 pos, CIceField *pIceField, bool *pLandIce)
 {
 	bool  bIceLand = false;
 	//メッシュフィールドの取得
@@ -1136,9 +1172,13 @@ void CPlayer::CollisionIceField(D3DXVECTOR3 pos, CIceField *pIceField)
 		switch (bIceLand)
 		{
 		case false:	//氷の上にいない
-			SetInertia(0.8f);
+			if (*pLandIce == false)
+			{
+				SetInertia(0.8f);
+			}
 			break;
 		case true:	//氷の上にいる
+			*pLandIce = true;
 			SetInertia(0.05f);
 			break;
 		}

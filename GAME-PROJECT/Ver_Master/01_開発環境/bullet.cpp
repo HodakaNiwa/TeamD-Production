@@ -20,6 +20,7 @@
 #include "title.h"
 #include "tutorial.h"
 #include "debugproc.h"
+#include "sound.h"
 
 //*****************************************************************************
 // É}ÉNÉçíËã`

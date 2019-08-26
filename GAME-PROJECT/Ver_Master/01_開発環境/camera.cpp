@@ -15,6 +15,7 @@
 // マクロ定義
 //*****************************************************************************
 #define CAMERA_ANGEL_VIEW      (45.0f)                           // カメラの画角
+#define CHARACAMERA_ANGEL_VIEW (30.0f)                           // キャラセレクトカメラの画角
 #define CAMERA_ANGLE_SPEED     (0.01f)                           // カメラをマウスで回転させるスピード倍率
 #define CAMERA_MOVE_SPEED      (1.3f)                            // カメラをマウスで移動させるスピード倍率
 #define CAMERA_LENGTH_MIN      (100.0f)                          // 視点注視点の距離の最小値
@@ -85,6 +86,9 @@ HRESULT CCamera::Init(void)
 	m_posV.y = m_posR.y - sinf(m_rot.x) * m_fLength;
 	m_posV.z = m_posR.z - cosf(m_rot.x) * m_fLength;
 
+	// カメラの画角を設定
+	m_fAngleOfView = CAMERA_ANGEL_VIEW;
+
 	return S_OK;
 }
 
@@ -135,7 +139,7 @@ void CCamera::SetCamera(void)
 
 	// プロジェクションマトリックスを作成
 	D3DXMatrixPerspectiveFovLH(&m_mtxProjection,
-		D3DXToRadian(45.0f),						//画角
+		D3DXToRadian(m_fAngleOfView),				//画角
 		(float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,	//画面比率
 		10.0f,										//手前
 		20000.0f);									//奥行き
@@ -213,6 +217,14 @@ bool CCamera::GetChengeLength(void)
 }
 
 //=============================================================================
+// カメラの画角を取得
+//=============================================================================
+float CCamera::GetAngleOfView(void)
+{
+	return m_fAngleOfView;
+}
+
+//=============================================================================
 // カメラの種類設置処理
 //=============================================================================
 void CCamera::SetType(TYPE type)
@@ -268,6 +280,14 @@ void CCamera::SetChengeLength(bool bChengeLength)
 	m_bChengeLength = bChengeLength;
 }
 
+//=============================================================================
+// カメラの画角を設定
+//=============================================================================
+void CCamera::SetAngleOfView(float fAngleOfView)
+{
+	m_fAngleOfView = fAngleOfView;
+}
+
 
 //*****************************************************************************
 // CCharaSelectCameraの処理
@@ -317,6 +337,9 @@ HRESULT CCharaSelectCamera::Init(D3DXVECTOR3 posV, D3DXVECTOR3 posR)
 	// 視点と注視点を改めて設定する
 	SetPosV(posV);
 	SetPosR(posR);
+
+	// カメラの画角を設定
+	SetAngleOfView(CHARACAMERA_ANGEL_VIEW);
 
 	return S_OK;
 }

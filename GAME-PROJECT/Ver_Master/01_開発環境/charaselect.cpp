@@ -28,18 +28,21 @@
 #include "playerManager.h"
 #include "light.h"
 #include "lightManager.h"
+#include "scene3D.h"
+#include "charaCylinder.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
 #define CHARASELECT_SYSTEM_FILENAME              "data/TEXT/MODE/charaselect.ini"    // 初期化に使用するシステムファイル名
-#define CHARASELECT_CAMERA_POSV                  (D3DXVECTOR3(0.0f,40.0f,400.0f))    // キャラを映すカメラの視点位置
-#define CHARASELECT_CIRCLE_RADIUS                (200.0f)                            // 円の半径(円形回転の計算に使用)
+#define CHARASELECT_CAMERA_POSV                  (D3DXVECTOR3(0.0f,40.0f,450.0f))    // キャラを映すカメラの視点位置
+#define CHARASELECT_CIRCLE_RADIUS                (140.0f)                            // 円の半径(円形回転の計算に使用)
 #define CHARASELECT_CIRCLE_ROLLSPEED             (D3DX_PI * 2.0f / 120.0f)           // 円形回転時の回転スピード
 #define CHARASELECT_MODECHANGE_TIMING            (120)                               // 終了状態から画面遷移するまでの時間
 #define CHARASELECT_BGM_IDX                      (1)                                 // キャラセレクトで再生するBGMの番号
 #define CHARASELECT_SE_SELECT_IDX                (8)                                 // 項目を選択している時のSEの音番号
 #define CHARASELECT_SE_DECIDE_IDX                (9)                                 // 決定ボタンを押された時のSEの音番号
+#define CHARASELECT_SE_NOTDECIDE_IDX             (10)                                // キャラセレクトができないとき時のSEの音番号
 
 // 計算置き換え用マクロ
 #define CHARASELECT_MAPTYPE_NUMBER               (m_nSelectStageSide + (m_nSelectStageVertical * (CGame::MAPTYPE_MAX / 2)))
@@ -49,6 +52,7 @@
 #define CHARASELECTBG_COL_INI                    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define CHARASELECTBG_WIDTH_INI                  (SCREEN_WIDTH / 2.0f)
 #define CHARASELECTBG_HEIGHT_INI                 (SCREEN_HEIGHT / 2.0f)
+#define CHARASELECTBG_TEXIDX                     (7)
 
 // 準備中ポリゴン初期化用
 // １つ目
@@ -85,13 +89,13 @@
 
 // レンダリングポリゴン初期化用
 // １つ目
-#define CHARASELECT_RENDERERPOLYGON_0_POS_INI    (D3DXVECTOR3(SCREEN_WIDTH / 4.0f, 250.0f, 0.0f))
+#define CHARASELECT_RENDERERPOLYGON_0_POS_INI    (D3DXVECTOR3(SCREEN_WIDTH / 4.0f, 520.0f, 0.0f))
 #define CHARASELECT_RENDERERPOLYGON_0_COL_INI    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define CHARASELECT_RENDERERPOLYGON_0_WIDTH_INI  (310.0f)
 #define CHARASELECT_RENDERERPOLYGON_0_HEIGHT_INI (250.0f)
 
 // ２つ目
-#define CHARASELECT_RENDERERPOLYGON_1_POS_INI    (D3DXVECTOR3(SCREEN_WIDTH / 4.0f * 3.0f, 250.0f, 0.0f))
+#define CHARASELECT_RENDERERPOLYGON_1_POS_INI    (D3DXVECTOR3(SCREEN_WIDTH / 4.0f * 3.0f, 520.0f, 0.0f))
 #define CHARASELECT_RENDERERPOLYGON_1_COL_INI    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define CHARASELECT_RENDERERPOLYGON_1_WIDTH_INI  (310.0f)
 #define CHARASELECT_RENDERERPOLYGON_1_HEIGHT_INI (250.0f)
@@ -105,6 +109,12 @@
 #define CHARASELECT_STAGEPOLYGON_WIDTH_SELECT    (180.0f)
 #define CHARASELECT_STAGEPOLYGON_HEIGHT_SELECT   (180.0f)
 #define CHARASELECT_STAGEPOLYGON_INTERVAL_X      (SCREEN_WIDTH / 3.0f)
+
+// プレイヤーの台座ポリゴン初期化用
+#define CHARASELECT_PEDESTAL_COL_INI             (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define CHARASELECT_PEDESTAL_WIDTH_INI           (60.0f)
+#define CHARASELECT_PEDESTAL_HEIGHT_INI          (30.0f)
+#define CHARASELECT_PEDESTAL_TEXIDX              (6)
 
 // 値読み込み用のパス
 // テクスチャ用
@@ -142,7 +152,7 @@
 // 静的メンバ変数宣言
 //=============================================================================
 int CCharaSelect::m_nSelectPlayer[MAX_NUM_PLAYER] = {};
-int CCharaSelect::m_nSelectStage = 0;
+int CCharaSelect::m_nSelectStage = CGame::MAPTYPE_HINAMATSURI;
 
 //=============================================================================
 // キャラセレクトのコンストラクタ
@@ -280,11 +290,43 @@ void CCharaSelect::Update(void)
 	case STATE_END:
 		EndUpdate();
 		break;
+	case STATE_END_TITLE:
+		EndTitleUpdate();
+		break;
 	}
 
 
 	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL2P)
 	{// ローカルの2Pプレイだったら
+	    // 状態によって処理わけ
+		switch (m_State[(nClientId + 1) % MAX_NUM_PLAYER])
+		{
+		case STATE_SELECT:
+			SelectUpdate((nClientId + 1) % MAX_NUM_PLAYER);
+			break;
+		case STATE_CHARACHANGE_TO_LEFT:
+			CharaChangeToLeftUpdate((nClientId + 1) % MAX_NUM_PLAYER);
+			break;
+		case STATE_CHARACHANGE_TO_RIGHT:
+			CharaChangeToRightUpdate((nClientId + 1) % MAX_NUM_PLAYER);
+			break;
+		case STATE_WAIT_PARTNER:
+			WaitPartnerUpdate((nClientId + 1) % MAX_NUM_PLAYER);
+			break;
+		case STATE_STAGE_SELECT:
+			StageSelectUpdate((nClientId + 1) % MAX_NUM_PLAYER);
+			break;
+		case STATE_WAIT_STAGESELECT:
+			WaitStageSelectUpdate((nClientId + 1) % MAX_NUM_PLAYER);
+			break;
+		case STATE_END:
+			EndUpdate();
+			break;
+		case STATE_END_TITLE:
+			EndTitleUpdate();
+			break;
+		}
+
 		ReleaseYouPolygon();
 	}
 	if (CTitle::GetGameMode() != CTitle::GAMEMODE_ONLINE2P)
@@ -293,16 +335,25 @@ void CCharaSelect::Update(void)
 	}
 
 	// 状態によって処理わけ
-	switch (m_State[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER])
+	int nIdxClient = 0;
+	CClient *pClient = CManager::GetClient();
+	if (pClient == NULL) { return; }
+
+	if (pClient != NULL)
+	{
+		nIdxClient = pClient->GetClientId();
+	}
+
+	switch (m_State[(nIdxClient + 1) % MAX_NUM_PLAYER])
 	{
 	case STATE_SELECT:
-		SelectUpdate((CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER);
+		SelectUpdate((nIdxClient + 1) % MAX_NUM_PLAYER);
 		break;
 	case STATE_CHARACHANGE_TO_LEFT:
-		CharaChangeToLeftUpdate((CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER);
+		CharaChangeToLeftUpdate((nIdxClient + 1) % MAX_NUM_PLAYER);
 		break;
 	case STATE_CHARACHANGE_TO_RIGHT:
-		CharaChangeToRightUpdate((CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER);
+		CharaChangeToRightUpdate((nIdxClient + 1) % MAX_NUM_PLAYER);
 		break;
 	}
 
@@ -328,7 +379,12 @@ void CCharaSelect::Draw(void)
 	}
 
 	// テクスチャにプレイヤーを描画する
-	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	int nMaxPlayer = MAX_NUM_PLAYER;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// ローカル1人プレイならば描画する回数を減らす
+		nMaxPlayer--;
+	}
+	for (int nCntPlayer = 0; nCntPlayer < nMaxPlayer; nCntPlayer++)
 	{
 		CharaDraw(nCntPlayer);
 	}
@@ -376,14 +432,42 @@ void CCharaSelect::CreateCamera(void)
 void CCharaSelect::CreatePlayer(void)
 {
 	// プレイヤーを生成する
+	int nMaxPlayer = MAX_NUM_PLAYER;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// ローカル1人プレイならば人数を減らしておく
+		nMaxPlayer--;
+	}
+
 	float fAddRot = 0.0f;
-	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	for (int nCntPlayer = 0; nCntPlayer < nMaxPlayer; nCntPlayer++)
 	{
 		for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
 		{
+			// 座標の計算
+			D3DXVECTOR3 Pos = D3DXVECTOR3(sinf(m_fSelectRot[nCntPlayer] - fAddRot) * CHARASELECT_CIRCLE_RADIUS, 0.0f, cosf(m_fSelectRot[nCntPlayer] - fAddRot) * CHARASELECT_CIRCLE_RADIUS);
+
 			// プレイヤーの生成
-			m_pPlayer[nCntPlayer][nCntType] = m_pPlayerManager[nCntPlayer][nCntType]->SetPlayer(D3DXVECTOR3(sinf(m_fSelectRot[nCntPlayer] + fAddRot) * CHARASELECT_CIRCLE_RADIUS, 0.0f, cosf(m_fSelectRot[nCntPlayer] + fAddRot) * CHARASELECT_CIRCLE_RADIUS),
+			m_pPlayer[nCntPlayer][nCntType] = m_pPlayerManager[nCntPlayer][nCntType]->SetPlayer(Pos,
 				D3DXVECTOR3(0.0f, -D3DX_PI, 0.0f), nCntPlayer);
+
+			// 台座の生成
+			if (m_pPlayerPedestal[nCntPlayer][nCntType] == NULL)
+			{
+				m_pPlayerPedestal[nCntPlayer][nCntType] = CScene3D::Create(Pos, INITIALIZE_D3DXVECTOR3,
+					CHARASELECT_PEDESTAL_COL_INI, CHARASELECT_PEDESTAL_WIDTH_INI, CHARASELECT_PEDESTAL_HEIGHT_INI);
+				if (m_pPlayerPedestal[nCntPlayer][nCntType] != NULL)
+				{
+					ChangePedestalTexPos(nCntPlayer, nCntType);
+					m_pPlayerPedestal[nCntPlayer][nCntType]->BindTexture(GetTextureManager()->GetTexture(CHARASELECT_PEDESTAL_TEXIDX));
+				}
+			}
+
+			// 円筒の生成
+			if (m_pCharaCylinder[nCntPlayer][0] == NULL)
+			{
+				m_pCharaCylinder[nCntPlayer][0] = CCharaCylinder::Create(Pos, INITIALIZE_D3DXVECTOR3,
+					D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.3f), 150.0f, 70.0f, 20, 1, (D3DX_PI * 0.1f), 0.0f, (D3DX_PI * 0.01f));
+			}
 
 			// 回転量加算
 			fAddRot += D3DX_PI * 2.0f / m_nNumPlayerData;
@@ -393,6 +477,30 @@ void CCharaSelect::CreatePlayer(void)
 			}
 		}
 	}
+}
+
+//=============================================================================
+// キャラセレクトの台座ポリゴンのテクスチャ座標をずらす処理
+//=============================================================================
+void CCharaSelect::ChangePedestalTexPos(int nCntPlayer, int nCntType)
+{
+	LPDIRECT3DVERTEXBUFFER9 pVtxBuff = m_pPlayerPedestal[nCntPlayer][nCntType]->GetVtxBuff();
+	if (pVtxBuff == NULL) { return; }
+
+	// 頂点情報の設定
+	VERTEX_3D *pVtx;
+
+	// 頂点バッファをロックし,頂点データへのポインタを取得
+	pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	// テクスチャ座標
+	pVtx[0].tex = D3DXVECTOR2(0.25f * nCntType, 0.0f);
+	pVtx[1].tex = D3DXVECTOR2(0.25f + (0.25f * nCntType), 0.0f);
+	pVtx[2].tex = D3DXVECTOR2(0.25f * nCntType, 1.0f);
+	pVtx[3].tex = D3DXVECTOR2(0.25f + (0.25f * nCntType), 1.0f);
+
+	// 頂点バッファをアンロックする
+	pVtxBuff->Unlock();
 }
 
 //=============================================================================
@@ -451,6 +559,26 @@ void CCharaSelect::CreatePlayerDataPointer(void)
 		}
 	}
 
+	// 台座ポリゴン
+	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	{
+		m_pPlayerPedestal[nCntPlayer] = new CScene3D*[m_nNumPlayerData];
+		for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
+		{
+			m_pPlayerPedestal[nCntPlayer][nCntType] = NULL;
+		}
+	}
+
+	// 円筒
+	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	{
+		m_pCharaCylinder[nCntPlayer] = new CCharaCylinder*[m_nNumPlayerData];
+		for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
+		{
+			m_pCharaCylinder[nCntPlayer][nCntType] = NULL;
+		}
+	}
+
 	// プレイヤーマネージャー
 	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
@@ -475,7 +603,14 @@ void CCharaSelect::CreateRenderTexture(void)
 	float fPolygonWidth[MAX_NUM_PLAYER] = { CHARASELECT_RENDERERPOLYGON_0_WIDTH_INI, CHARASELECT_RENDERERPOLYGON_1_WIDTH_INI };
 	float fPolygonHeight[MAX_NUM_PLAYER] = { CHARASELECT_RENDERERPOLYGON_0_HEIGHT_INI, CHARASELECT_RENDERERPOLYGON_1_HEIGHT_INI };
 
-	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	int nMaxPlayer = MAX_NUM_PLAYER;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// ローカル1人プレイならばすべての値を2倍にする
+		nMaxPlayer--;
+		PolygonPos[0].x *= 2.0f;
+	}
+
+	for (int nCntPlayer = 0; nCntPlayer < nMaxPlayer; nCntPlayer++)
 	{// プレイヤーの総数分繰り返し
 		// レンダリング用のテクスチャを作成
 		pDevice->CreateTexture(SCREEN_WIDTH, SCREEN_HEIGHT, 1,
@@ -536,6 +671,7 @@ void CCharaSelect::ReleasePlayer(void)
 {
 	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
+		// プレイヤー
 		if (m_pPlayer[nCntPlayer] != NULL)
 		{
 			for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
@@ -548,6 +684,36 @@ void CCharaSelect::ReleasePlayer(void)
 			}
 			delete[] m_pPlayer[nCntPlayer];
 			m_pPlayer[nCntPlayer] = NULL;
+		}
+
+		// 台座ポリゴン
+		if (m_pPlayerPedestal[nCntPlayer] != NULL)
+		{
+			for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
+			{
+				if (m_pPlayerPedestal[nCntPlayer][nCntType] != NULL)
+				{
+					m_pPlayerPedestal[nCntPlayer][nCntType]->Uninit();
+					m_pPlayerPedestal[nCntPlayer][nCntType] = NULL;
+				}
+			}
+			delete[] m_pPlayerPedestal[nCntPlayer];
+			m_pPlayerPedestal[nCntPlayer] = NULL;
+		}
+
+		// 円筒
+		if (m_pCharaCylinder[nCntPlayer] != NULL)
+		{
+			for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
+			{
+				if (m_pCharaCylinder[nCntPlayer][nCntType] != NULL)
+				{
+					m_pCharaCylinder[nCntPlayer][nCntType]->Uninit();
+					m_pCharaCylinder[nCntPlayer][nCntType] = NULL;
+				}
+			}
+			delete[] m_pCharaCylinder[nCntPlayer];
+			m_pCharaCylinder[nCntPlayer] = NULL;
 		}
 	}
 }
@@ -775,6 +941,10 @@ void CCharaSelect::GetDataFromServer(void)
 	{
 		m_State[CManager::GetClient()->GetClientId()] = STATE_END;
 	}
+	else if (nState == STATE_END_TITLE)
+	{
+		m_State[CManager::GetClient()->GetClientId()] = STATE_END_TITLE;
+	}
 }
 
 
@@ -796,6 +966,7 @@ void CCharaSelect::SelectUpdate(int nIdx)
 	if (m_State[nIdx] != STATE_END && m_State[nIdx] != STATE_WAIT_PARTNER)
 	{
 		WaitInputToChangeChara(nIdx);
+		CheckCharaCylinderCol(nIdx);
 	}
 }
 
@@ -864,19 +1035,13 @@ void CCharaSelect::WaitPartnerUpdate(int nIdx)
 	CDebugProc::Print(1, "自分の現在のキャラ番号 : %d\n", m_nSelectPlayer[nIdx]);
 	CDebugProc::Print(1, "相手の現在のキャラ番号 : %d\n", m_nSelectPlayer[(nIdx + 1) % MAX_NUM_PLAYER]);
 
+	// ローカル2人プレイじゃないならこの先処理しない
+	if (CTitle::GetGameMode() != CTitle::GAMEMODE_LOCAL2P) { return; }
 
-	CInputKeyboard *pKey = CManager::GetKeyboard();
-	CFade *pFade = CManager::GetFade();
-	if (pKey == NULL || pFade == NULL) return;
-
-	if (pFade->GetFade() == CFade::FADE_NONE)
-	{// フェードが使用されていない
-		if (pKey->GetTrigger(DIK_RETURN) == true ||
-			CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
-		{// 決定ボタンが押された
-			//ChangeState_WaitPartnerToStageSelect(nIdx);
-			SetState(STATE_END);
-		}
+	// どちらもプレイヤー選択が終わっているなら終了する
+	if (m_State[0] == STATE_WAIT_PARTNER && m_State[1] == STATE_WAIT_PARTNER)
+	{
+		m_State[0] = m_State[1] = STATE_END;
 	}
 }
 
@@ -918,6 +1083,22 @@ void CCharaSelect::EndUpdate(void)
 }
 
 //=============================================================================
+// キャラセレクトのタイトルに戻る終了状態の更新処理
+//=============================================================================
+void CCharaSelect::EndTitleUpdate(void)
+{
+	CDebugProc::Print(1, "タイトルに戻る終了状態\n");
+	CFade *pFade = CManager::GetFade();
+	if (pFade == NULL) return;
+
+	if (pFade->GetFade() == CFade::FADE_NONE)
+	{// まだフェードが開始されていない
+		pFade->SetFade(CManager::MODE_TITLE);
+		CManager::ReleaseClient();
+	}
+}
+
+//=============================================================================
 // キャラセレクトのキャラ番号を変えるための入力待機処理
 //=============================================================================
 void CCharaSelect::WaitInputToChangeChara(int nIdx)
@@ -936,23 +1117,23 @@ void CCharaSelect::WaitInputToChangeChara(int nIdx)
 	if (pFade->GetFade() != CFade::FADE_NONE) { return; }
 
 	if (pKey->GetTrigger(DIK_A) == true ||
-		CManager::GetXInput()->GetPress(0, CXInput::XIJS_BUTTON_2) == true ||
-		CManager::GetXInput()->GetPress(0, CXInput::XIJS_BUTTON_18) == true)
+		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_2) == true ||
+		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_18) == true)
 	{// 左方向の入力がされた
 		m_nSelectPlayer[nIdx] = (m_nSelectPlayer[nIdx] + (m_nNumPlayerData - 1)) % m_nNumPlayerData;
 		m_State[nIdx] = STATE_CHARACHANGE_TO_RIGHT;
 		CManager::GetSound()->PlaySound(CHARASELECT_SE_SELECT_IDX);
 	}
 	else if (pKey->GetTrigger(DIK_D) == true ||
-		CManager::GetXInput()->GetPress(0, CXInput::XIJS_BUTTON_3) == true ||
-		CManager::GetXInput()->GetPress(0, CXInput::XIJS_BUTTON_19) == true)
+		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_3) == true ||
+		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_19) == true)
 	{// 右方向の入力がされた
 		m_nSelectPlayer[nIdx] = (m_nSelectPlayer[nIdx] + 1) % m_nNumPlayerData;
 		m_State[nIdx] = STATE_CHARACHANGE_TO_LEFT;
 		CManager::GetSound()->PlaySound(CHARASELECT_SE_SELECT_IDX);
 	}
 	else if (pKey->GetTrigger(DIK_RETURN) == true ||
-		CManager::GetXInput()->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
+		CManager::GetXInput()->GetTrigger(nIdx, CXInput::XIJS_BUTTON_11) == true)
 	{// 決定ボタンが押された
 		if (m_State[(nIdx + 1) % MAX_NUM_PLAYER] != STATE_WAIT_PARTNER)
 		{// まだ相手がプレイヤーの種類を決定していない
@@ -962,6 +1143,10 @@ void CCharaSelect::WaitInputToChangeChara(int nIdx)
 			}
 			m_State[nIdx] = STATE_WAIT_PARTNER;
 			CManager::GetSound()->PlaySound(CHARASELECT_SE_DECIDE_IDX);
+			if (m_pCharaCylinder[nIdx][0] != NULL)
+			{
+				m_pCharaCylinder[nIdx][0]->SetCol(D3DXCOLOR(1.0f, 1.0f, 0.0f, 0.3f));
+			}
 		}
 		else if (m_nSelectPlayer[nIdx] != m_nSelectPlayer[(nIdx + 1) % MAX_NUM_PLAYER])
 		{// すでに相手が選んだ番号ではない
@@ -971,12 +1156,31 @@ void CCharaSelect::WaitInputToChangeChara(int nIdx)
 			}
 			m_State[nIdx] = STATE_WAIT_PARTNER;
 			CManager::GetSound()->PlaySound(CHARASELECT_SE_DECIDE_IDX);
+			if (m_pCharaCylinder[nIdx][0] != NULL)
+			{
+				m_pCharaCylinder[nIdx][0]->SetCol(D3DXCOLOR(1.0f, 1.0f, 0.0f, 0.3f));
+			}
+		}
+		else
+		{// キャラセレクトができなかった
+			CManager::GetSound()->PlaySound(CHARASELECT_SE_NOTDECIDE_IDX);
 		}
 
 		if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
 		{// ローカルプレイならば
 			m_State[nIdx] = STATE_END;
+			CManager::GetSound()->PlaySound(CHARASELECT_SE_DECIDE_IDX);
+			if (m_pCharaCylinder[nIdx][0] != NULL)
+			{
+				m_pCharaCylinder[nIdx][0]->SetCol(D3DXCOLOR(1.0f, 1.0f, 0.0f, 0.3f));
+			}
 		}
+	}
+	else if (pKey->GetTrigger(DIK_BACK) == true ||
+		CManager::GetXInput()->GetTrigger(nIdx, CXInput::XIJS_BUTTON_5) == true)
+	{// 戻るボタンが押された
+		m_State[nIdx] = STATE_END_TITLE;
+		m_State[(nIdx + 1) % MAX_NUM_PLAYER] = STATE_END_TITLE;
 	}
 }
 
@@ -1049,6 +1253,34 @@ void CCharaSelect::ChangeSelectStagePolygon(int nSelect)
 }
 
 //=============================================================================
+// キャラセレクトの円筒の色を変えるかどうか判定する処理
+//=============================================================================
+void CCharaSelect::CheckCharaCylinderCol(int nIdx)
+{
+	if (m_State[(nIdx + 1) % MAX_NUM_PLAYER] == STATE_WAIT_PARTNER &&
+		m_nSelectPlayer[nIdx] == m_nSelectPlayer[(nIdx + 1) % MAX_NUM_PLAYER])
+	{// 相手がもう選択したプレイヤー番号だった
+		if (m_pCharaCylinder[nIdx][0] != NULL)
+		{
+			if (m_pCharaCylinder[nIdx][0]->GetCol() != D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f))
+			{
+				m_pCharaCylinder[nIdx][0]->SetCol(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f));
+			}
+		}
+	}
+	else
+	{// 選択されていない番号ならば
+		if (m_pCharaCylinder[nIdx][0] != NULL)
+		{
+			if (m_pCharaCylinder[nIdx][0]->GetCol() != D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.3f))
+			{
+				m_pCharaCylinder[nIdx][0]->SetCol(D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.3f));
+			}
+		}
+	}
+}
+
+//=============================================================================
 // キャラセレクトの円形にプレイヤーを移動させる処理
 //=============================================================================
 void CCharaSelect::CircleRotation(int nIdx)
@@ -1056,7 +1288,20 @@ void CCharaSelect::CircleRotation(int nIdx)
 	float fAddRot = 0.0f;
 	for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
 	{
-		m_pPlayer[nIdx][nCntType]->SetPos(D3DXVECTOR3(sinf(m_fSelectRot[nIdx] + fAddRot) * CHARASELECT_CIRCLE_RADIUS, 0.0f, cosf(m_fSelectRot[nIdx] + fAddRot) * CHARASELECT_CIRCLE_RADIUS));
+		D3DXVECTOR3 Pos = D3DXVECTOR3(sinf(m_fSelectRot[nIdx] - fAddRot) * CHARASELECT_CIRCLE_RADIUS, 0.0f, cosf(m_fSelectRot[nIdx] - fAddRot) * CHARASELECT_CIRCLE_RADIUS);
+
+		// プレイヤー
+		if (m_pPlayer[nIdx][nCntType] != NULL)
+		{
+			m_pPlayer[nIdx][nCntType]->SetPos(Pos);
+		}
+
+		// 台座ポリゴン
+		if (m_pPlayerPedestal[nIdx][nCntType] != NULL)
+		{
+			m_pPlayerPedestal[nIdx][nCntType]->SetPos(Pos);
+		}
+		//m_pCharaCylinder[nIdx][nCntType]->SetPos(Pos);
 
 		// 回転量加算
 		fAddRot += D3DX_PI * 2.0f / m_nNumPlayerData;
@@ -1098,6 +1343,8 @@ void CCharaSelect::ChangeState_WaitPartnerToStageSelect(int nIdx)
 //=============================================================================
 void CCharaSelect::CharaDraw(int nCntTex)
 {
+	if (m_apRenderTexture[nCntTex] == NULL) { return; }
+
 	// レンダリングターゲットをテクスチャに設定
 	CManager::GetRenderer()->SetRenderTarget(m_apRenderTexture[nCntTex]);
 
@@ -1106,11 +1353,37 @@ void CCharaSelect::CharaDraw(int nCntTex)
 	pLightManager = CLightManager::Create(1);
 	pLightManager->SettingLight(CDirectionalLight::Create(D3DXVECTOR3(-0.10f, 0.63f, -0.77f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f)), 0);
 
+	// プレイヤー
 	if (m_pPlayer[nCntTex] != NULL)
 	{
 		for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
 		{// プレイヤーの種類の総数分繰り返し
 			m_pPlayer[nCntTex][nCntType]->Draw();
+		}
+	}
+
+	// 台座ポリゴン
+	DWORD Lighting;
+	CManager::GetRenderer()->GetDevice()->GetRenderState(D3DRS_LIGHTING, &Lighting);
+	CManager::GetRenderer()->GetDevice()->SetRenderState(D3DRS_LIGHTING, false);
+	if (m_pPlayerPedestal[nCntTex] != NULL)
+	{
+		for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
+		{// プレイヤーの種類の総数分繰り返し
+			m_pPlayerPedestal[nCntTex][nCntType]->Draw();
+		}
+	}
+	CManager::GetRenderer()->GetDevice()->SetRenderState(D3DRS_LIGHTING, Lighting);
+
+	// 円筒
+	if (m_pCharaCylinder[nCntTex] != NULL)
+	{
+		for (int nCntType = 0; nCntType < m_nNumPlayerData; nCntType++)
+		{// プレイヤーの種類の総数分繰り返し
+			if (m_pCharaCylinder[nCntTex][nCntType] != NULL)
+			{
+				m_pCharaCylinder[nCntTex][nCntType]->Draw();
+			}
 		}
 	}
 
@@ -1361,6 +1634,11 @@ void CCharaSelect::LoadBgPolygon(CFileLoader *pFileLoader, char *pStr)
 		}
 	}
 
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// ローカル1人プレイならば背景テクスチャ番号を変えておく
+		nBgTexIdx = CHARASELECTBG_TEXIDX;
+	}
+
 	// ポリゴン生成
 	m_pBg = CScene2D::Create(BgPos, BgCol, fBgWidth, fBgHeight);
 	if (m_pBg != NULL && GetTextureManager() != NULL)
@@ -1404,6 +1682,16 @@ void CCharaSelect::LoadPreparation(CFileLoader *pFileLoader, char *pStr, int nCn
 		}
 	}
 
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P && nCntPre >= MAX_NUM_PLAYER - 1)
+	{// ローカル1人プレイならば2P用のポリゴンは生成しない
+		return;
+	}
+
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// ローカル1人プレイならば座標をずらしておく
+		PreparationPos.x *= 2.0f;
+	}
+
 	// ポリゴン生成
 	m_apPreparation[nCntPre] = CScene2D::Create(PreparationPos, PreparationCol, fPreparationWidth, fPreparationHeight);
 	if (m_apPreparation[nCntPre] != NULL && GetTextureManager() != NULL)
@@ -1445,6 +1733,11 @@ void CCharaSelect::LoadPlayerNumber(CFileLoader *pFileLoader, char *pStr, int nC
 		{// プレイヤー番号表示ポリゴン情報終了の合図だった
 			break;
 		}
+	}
+
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P && nCntPlayerNum >= MAX_NUM_PLAYER - 1)
+	{// ローカル1人プレイならば2P用のポリゴンは生成しない
+		return;
 	}
 
 	// ポリゴン生成
@@ -1496,6 +1789,11 @@ void CCharaSelect::LoadYouPolygon(CFileLoader *pFileLoader, char *pStr)
 		}
 	}
 
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// ローカル1人プレイならばポリゴンは生成しない
+		return;
+	}
+
 	// ポリゴン生成
 	m_pYouPolygon = CScene2D::Create(YouPolygonPos, YouPolygonCol, fYouPolygonWidth, fYouPolygonHeight);
 	if (m_pYouPolygon != NULL && GetTextureManager() != NULL)
@@ -1536,6 +1834,9 @@ void CCharaSelect::ClearVariable(void)
 		m_nPreparationTexIdx[nCntPlayer] = 0;
 		m_nPlayerNumberTexIdx[nCntPlayer] = 0;
 		m_pPlayer[nCntPlayer] = NULL;
+		m_pPlayerManager[nCntPlayer] = NULL;
+		m_pPlayerPedestal[nCntPlayer] = NULL;
+		m_pCharaCylinder[nCntPlayer] = NULL;
 	}
 
 	for (int nCntType = 0; nCntType < CGame::MAPTYPE_MAX; nCntType++)

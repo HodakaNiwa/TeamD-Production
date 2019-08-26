@@ -42,10 +42,10 @@
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define GAME_DEBUG                                                    // 宣言時デバッグコマンド適用
+#define GAME_DEBUG      // 宣言時デバッグコマンド適用
 
 // マップ更新時に消されるオブジェクト(判定用のマクロなのでここに追加)
-#define GAME_DELETE_OBJECT (pScene->GetObjType() == CScene::OBJTYPE_ITEM || pScene->GetObjType() == CScene::OBJTYPE_BULLET || pScene->GetObjType() == CScene::OBJTYPE_PARTICLE || pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER || pScene->GetObjType() == CScene::OBJTYPE_EMITTER || pScene->GetObjType() == CScene::OBJTYPE_BLOSSOMS)
+#define GAME_DELETE_OBJECT (pScene->GetObjType() == CScene::OBJTYPE_ITEM || pScene->GetObjType() == CScene::OBJTYPE_BULLET || pScene->GetObjType() == CScene::OBJTYPE_PARTICLE || pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER || pScene->GetObjType() == CScene::OBJTYPE_EMITTER || pScene->GetObjType() == CScene::OBJTYPE_BLOSSOMS || pScene->GetObjType() == CScene::OBJTYPE_ITEMCYLINDER)
 
 #ifdef GAME_DEBUG
 #define GAME_DEBUG_STARTMAP                          (CGame::MAPTYPE_HINAMATSURI)
@@ -70,8 +70,11 @@
 #define GAME_GAMEOVERPOLYGON_PRIORITY                (6)                          // ゲームオーバーポリゴンの描画優先順位
 #define GAME_PLAYER_SPAWN_EFFECT_IDX                 (11)                         // プレイヤーがリスポーンするときのエフェクト
 #define GAME_MAPEVENT_RANDOM                         (600)                        // マップイベントを起こすランダム評価値
-#define GAME_SE_FANFARE_IDX                          (5)                          // ゲームでステージが始まるときの音
-#define GAME_BGM_HINAMAP_IDX                         (3)                          // ゲームのBGM(ひな祭りマップ)
+#define GAME_SE_FANFARE_IDX                          (5)                          // ゲームでステージが始まるときの音番号
+#define GAME_SE_PAUSE_OPEN_IDX                       (11)                         // ポーズ画面を開いたときの音番号
+#define GAME_SE_GAMERESULT_SCOREUP_IDX               (13)                         // ゲームリザルトでスコアを加算したときの音番号
+#define GAME_SE_BONUS_IDX                            (14)                         // ボーナスを付与したの音番号
+
 
 // アイテムイベント用マクロ
 #define GAME_ITEMEVENT_GRENADESHAKE_TIME             (10)                         // グレネードを取った時にカメラをどれくらい揺らし続けるか
@@ -86,13 +89,13 @@
 #define GAME_STAGEBG_HEIGHT_INI                      (SCREEN_HEIGHT / 2.0f)
 
 // ステージロゴポリゴン初期化用
-#define GAME_STAGELOGO_POS_INI                       (D3DXVECTOR3(500.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define GAME_STAGELOGO_POS_INI                       (D3DXVECTOR3(560.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
 #define GAME_STAGELOGO_COL_INI                       (D3DXCOLOR(1.0f,1.0f,0.0f,1.0f))
 #define GAME_STAGELOGO_WIDTH_INI                     (170.0f)
 #define GAME_STAGELOGO_HEIGHT_INI                    (60.0f)
 
 // ステージ番号表示用ポリゴン初期化用
-#define GAME_STAGENUMBER_POS_INI                     (D3DXVECTOR3(750.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define GAME_STAGENUMBER_POS_INI                     (D3DXVECTOR3(830.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
 #define GAME_STAGENUMBER_COL_INI                     (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define GAME_STAGENUMBER_WIDTH_INI                   (40.0f)
 #define GAME_STAGENUMBER_HEIGHT_INI                  (40.0f)
@@ -102,6 +105,16 @@
 #define GAME_GAMEOVERLOGO_COL_INI                    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define GAME_GAMEOVERLOGO_WIDTH_INI                  (80.0f)
 #define GAME_GAMEOVERLOGO_HEIGHT_INI                 (80.0f)
+
+// マップイベント用
+#define GAME_MAPEVENT_MAX                            (3)
+#define GAME_MAPEVENT_STARTTIME                      (160)
+#define GAME_MAPEVENT_STARTLOGO_WIDTH                (300.0f)
+#define GAME_MAPEVENT_STARTLOGO_HEIGHT               (40.0f)
+#define GAME_MAPEVENT_STARTLOGO_POS                  (D3DXVECTOR3(SCREEN_WIDTH + 100.0f, GAME_MAPEVENT_STARTLOGO_HEIGHT + 5.0f, 0.0f))
+#define GAME_MAPEVENT_STARTLOGO_COL                  (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define GAME_MAPEVENT_STARTLOGO_PRIORITY             (4)
+#define GAME_MAPEVENT_STARTLOGO_MOVE                 (-13.0f)
 
 // 桜の花びらデータ初期化用
 #define GAME_BLOSSOMS_POS_INI                        (D3DXVECTOR3(SCREEN_WIDTH - UI_BG_WIDTH_INI + 100.0f, -100.0f, 0.0f))
@@ -126,10 +139,10 @@
 #define GAME_DROPITEM_CYLINDER_MOVE_Y                (-14.0f)
 #define GAME_DROPITEM_ITEM_MOVE_Y                    (-10.0f)
 #define GAME_DROPITEM_CYLINDER_COL                   (D3DXCOLOR(0.3f,0.3f,1.0f,1.0f))
-#define GAME_DROPITEM_CYLINDER_HEIGHT                (1800.0f)
+#define GAME_DROPITEM_CYLINDER_HEIGHT                (3600.0f)
 #define GAME_DROPITEM_CYLINDER_RADIUS                (50.0f)
 #define GAME_DROPITEM_CYLINDER_XBLOCK                (20)
-#define GAME_DROPITEM_CYLINDER_ZBLOCK                (6)
+#define GAME_DROPITEM_CYLINDER_YBLOCK                (1)
 #define GAME_DROPITEM_CYLINDER_PRIORITY              (7)
 #define GAME_DROPITEM_EFFECT_IDX                     (14)
 #define GAME_DROPITEM_EFFECT_APPEAR                  (7)
@@ -139,6 +152,8 @@
 #define GAME_HINAARARE_MODELIDX                      (0)
 #define GAME_HINAARARE_TIME                          (300)
 #define GAME_HINAARARE_APPEAR                        (60)
+#define GAME_HINAARARE_CAMERA_SHAKE                  (3.0f)
+#define GAME_HINAARARE_MODEL_NUM                     (4)
 
 // ゲーム内リザルト用背景ポリゴン初期化用
 #define GAME_GAMERESULT_BG_POS_INI                   (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
@@ -160,6 +175,7 @@
 #define GAME_GAMERESULT_HIGHSCORENUMBER_WIDTH_INI    (15.0f)
 #define GAME_GAMERESULT_HIGHSCORENUMBER_HEIGHT_INI   (15.0f)
 #define GAME_GAMERESULT_HIGHSCORENUMBER_INTERVAL_INI (D3DXVECTOR3(-GAME_GAMERESULT_HIGHSCORENUMBER_WIDTH_INI - 14.0f, 0.0f, 0.0f))
+#define GAME_GAMERESULT_HIGHSCORENUMBER_TEXIDX       (28)
 #define GAME_GAMERESULT_HIGHSCORENUMBER_PRIORITY     (6)
 
 // ゲーム内リザルト用ステージロゴポリゴン初期化用
@@ -266,6 +282,7 @@
 #define GAME_GAMERESULT_BONUSSCORELOGO_COL_INI       (D3DXCOLOR(1.0f,0.0f,0.0f,1.0f))
 #define GAME_GAMERESULT_BONUSSCORELOGO_WIDTH_INI     (120.0f)
 #define GAME_GAMERESULT_BONUSSCORELOGO_HEIGHT_INI    (17.0f)
+#define GAME_GAMERESULT_BONUSSCORELOGO_TEXIDX        (25)
 #define GAME_GAMERESULT_BONUSSCORELOGO_PRIORITY      (6)
 
 // ゲーム内リザルト用ボーナスポイントロゴポリゴン初期化用
@@ -273,15 +290,36 @@
 #define GAME_GAMERESULT_BONUSPOINTLOGO_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define GAME_GAMERESULT_BONUSPOINTLOGO_WIDTH_INI     (30.0f)
 #define GAME_GAMERESULT_BONUSPOINTLOGO_HEIGHT_INI    (20.0f)
+#define GAME_GAMERESULT_BONUSPOINTLOGO_TEXIDX        (11)
 #define GAME_GAMERESULT_BONUSPOINTLOGO_PRIORITY      (6)
 
-// ゲーム内リザルト用ボーナスポイントロゴポリゴン初期化用
+// ゲーム内リザルト用ボーナススコアロゴポリゴン初期化用
 #define GAME_GAMERESULT_BONUSSCORE_POS_INI           (D3DXVECTOR3(320.0f, 680.0f, 0.0f))
 #define GAME_GAMERESULT_BONUSSCORE_COL_INI           (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define GAME_GAMERESULT_BONUSSCORE_WIDTH_INI         (15.0f)
 #define GAME_GAMERESULT_BONUSSCORE_HEIGHT_INI        (15.0f)
 #define GAME_GAMERESULT_BONUSSCORE_INTERVAL_INI      (D3DXVECTOR3(-30.0f, 0.0f, 0.0f))
 #define GAME_GAMERESULT_BONUSSCORE_PRIORITY          (6)
+
+// ポーズしたプレイヤー番号表示用ポリゴン初期化用
+#define GAME_PAUSE_PLAYERNUMBER_POS_INI              (D3DXVECTOR3(120.0f, 60.0f, 0.0f))
+#define GAME_PAUSE_PLAYERNUMBER_COL_INI              (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define GAME_PAUSE_PLAYERNUMBER_WIDTH_INI            (120.0f)
+#define GAME_PAUSE_PLAYERNUMBER_HEIGHT_INI           (60.0f)
+#define GAME_PAUSE_PLAYERNUMBER_PRIORITY             (8)
+#define GAME_PAUSE_PLAYERNUMBER_TEXIDX               (26)
+
+// ポーズしてますポリゴン初期化用
+#define GAME_PAUSE_NOT_POS_INI                       (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define GAME_PAUSE_NOT_COL_INI                       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define GAME_PAUSE_NOT_WIDTH_INI                     (120.0f)
+#define GAME_PAUSE_NOT_HEIGHT_INI                    (60.0f)
+#define GAME_PAUSE_NOT_PRIORITY                      (8)
+#define GAME_PAUSE_NOT_TEXIDX                        (28)
+
+// ポーズしてます黒背景ポリゴン初期化用
+#define GAME_PAUSE_NOT_BLACKBG_COL_INI               (D3DXCOLOR(0.0f,0.0f,0.0f,0.5f))
+#define GAME_PAUSE_NOT_BLACKBG_PRIORITY              (8)
 
 // 値読み込み用のパス
 // テクスチャ用
@@ -475,6 +513,8 @@ void CGame::Uninit(void)
 	ReleaseStageLogo();
 	ReleaseStageNumber();
 	ReleaseGameResult();
+	ReleasePause();
+	ReleaseNotPause();
 
 	// 読み込むマップのファイル名のポインタを開放
 	ReleaseMapFilePointer();
@@ -485,8 +525,11 @@ void CGame::Uninit(void)
 	// 全てのオブジェクト開放
 	CScene::ReleaseAll();
 
-	// クライアントを開放する
-	CManager::ReleaseClient();
+	if (m_State != STATE_END_RETRY)
+	{// やり直しの終了状態でない
+		// クライアントを開放する
+		CManager::ReleaseClient();
+	}
 
 	// ハイスコアを更新したかどうかチェック
 	int nHighScore = CTitle::GetHighScore();
@@ -498,6 +541,9 @@ void CGame::Uninit(void)
 			CResult::SetHighScore();
 		}
 	}
+
+	// BGMを止める
+	CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX);
 }
 
 //=============================================================================
@@ -559,6 +605,12 @@ void CGame::Update(void)
 	case STATE_END:
 		EndUpdate();
 		CScene::UpdateAll();
+		break;
+	case STATE_END_RETRY:
+		EndRetryUpdate();
+		break;
+	case STATE_END_QUIT:
+		EndQuitUpdate();
 		break;
 	}
 
@@ -736,7 +788,13 @@ void CGame::SetDataToServer(void)
 
 		// 消す敵のデータを設定
 		SetDataToServerFromDeleteEnemy();
+
+		// 自身の状態を設定
+		SetDataToServerFromClientState();
 	}
+
+	// 倒した敵の数を設定
+	SetDataToServerFromBreakEnemy();
 }
 
 //=============================================================================
@@ -1047,6 +1105,36 @@ void CGame::SetDataToServerFromDeleteEnemy(void)
 }
 
 //=============================================================================
+// ゲームのサーバーに送る状態を設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromClientState(void)
+{
+	// 状態を設定
+	CManager::GetClient()->Print("%d", m_State);
+	CManager::GetClient()->Print(" ");
+}
+
+//=============================================================================
+// ゲームのサーバーに送る倒した敵の数を設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromBreakEnemy(void)
+{
+	// 番号を設定
+	int nIdxClient = 0;
+	CClient *pClient = CManager::GetClient();
+	if (pClient != NULL)
+	{
+		nIdxClient = pClient->GetClientId();
+	}
+
+	for (int nCntType = 0; nCntType < CEnemy::TYPE_MAX; nCntType++)
+	{
+		CManager::GetClient()->Print("%d", m_nNumBreakEnemy[nIdxClient][nCntType]);
+		CManager::GetClient()->Print(" ");
+	}
+}
+
+//=============================================================================
 // ゲームのサーバーから送られたデータを設定する処理
 //=============================================================================
 void CGame::GetDataFromServer(void)
@@ -1090,7 +1178,13 @@ void CGame::GetDataFromServer(void)
 
 		// 消す敵のデータを設定
 		pStr = SetDataToDeleteEnemy(pStr);
+
+		// 相手の状態を設定
+		pStr = SetDataToClientState(pStr);
 	}
+
+	// 敵を倒した数を設定
+	pStr = SetDataToBreakEnemy(pStr);
 
 	// 死亡フラグチェック
 	CScene::DeathCheck();
@@ -1162,7 +1256,10 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 			{
 				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetPos(D3DXVECTOR3(fGetPlayerPosX, fGetPlayerPosY, fGetPlayerPosZ));
 				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetRot(D3DXVECTOR3(fGetPlayerRotX, fGetPlayerRotY, fGetPlayerRotZ));
-				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetState((CPlayer::STATE)nGetPlayerState);
+				if (m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->GetState() != nGetPlayerState)
+				{
+					m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetState((CPlayer::STATE)nGetPlayerState);
+				}
 			}
 
 			// プレイヤーが生成されたばっかりならエフェクトを出す
@@ -1252,6 +1349,41 @@ char *CGame::SetDataToGameFromServer(char *pStr)
 	{
 		CreateGameResult();
 		CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX);
+	}
+	else if (m_State == STATE_PAUSE && m_StateOld == STATE_NORMAL)
+	{
+		if (m_bPauseOpen == true)
+		{
+			m_bPauseOpen = false;
+			m_State = STATE_NORMAL;
+			return pStr;
+		}
+		m_bPauseOpen = true;
+		CreateNotPause();
+		CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX, true);
+	}
+	else if (m_State == STATE_NORMAL && m_StateOld == STATE_PAUSE)
+	{
+		if (m_pPause != NULL)
+		{
+			m_State = STATE_PAUSE;
+			return pStr;
+		}
+
+		m_bPauseOpen = false;
+		ReleaseNotPause();
+		CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+	}
+	else if (m_State == STATE_END_RETRY && m_StateOld == STATE_PAUSE
+		|| m_State == STATE_END_QUIT && m_StateOld == STATE_PAUSE)
+	{
+		ReleaseNotPause();
+	}
+
+	// やり直しバグ回避用
+	if (m_StateOld == STATE_END_RETRY && m_State != STATE_END_RETRY)
+	{
+		m_State = STATE_END_RETRY;
 	}
 
 	return pStr;
@@ -1978,6 +2110,79 @@ void CGame::ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nNumDe
 	}
 }
 
+//=============================================================================
+// ゲームの相手の状態を取得する処理
+//=============================================================================
+char *CGame::SetDataToClientState(char *pStr)
+{
+	// 状態を読み取る
+	int nGameState = CFunctionLib::ReadInt(pStr, "");
+	int nWord = 0;
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// 状態によってポーズするか設定
+	if (nGameState == STATE_PAUSE && m_State == STATE_NORMAL && m_bPauseOpen == false)
+	{
+		m_State = STATE_PAUSE;
+		CreateNotPause();
+		CManager::GetSound()->PlaySound(GAME_SE_PAUSE_OPEN_IDX);
+		CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX, true);
+		m_bPauseOpen = true;
+	}
+	else if (nGameState == STATE_NORMAL && m_State == STATE_PAUSE && m_bPauseOpen == true)
+	{
+		if (m_pPause != NULL)
+		{
+			return pStr;
+		}
+
+		m_State = STATE_NORMAL;
+		ReleaseNotPause();
+		CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+		m_bPauseOpen = false;
+	}
+	else if (nGameState == STATE_END_RETRY)
+	{
+		m_State = STATE_END_RETRY;
+		ReleaseNotPause();
+	}
+	else if (nGameState == STATE_END_QUIT)
+	{
+		m_State = STATE_END_QUIT;
+		ReleaseNotPause();
+	}
+
+	return pStr;
+}
+
+//=============================================================================
+// ゲームの相手の倒した敵の数を取得する処理
+//=============================================================================
+char *CGame::SetDataToBreakEnemy(char *pStr)
+{
+	// 番号を設定
+	int nIdxClient = 0;
+	CClient *pClient = CManager::GetClient();
+	if (pClient != NULL)
+	{
+		nIdxClient = pClient->GetClientId();
+	}
+
+	// 敵を倒した数を取得
+	int nNumBreak = 0;
+	int nWord = 0;
+	for (int nCntType = 0; nCntType < CEnemy::TYPE_MAX; nCntType++)
+	{
+		nNumBreak = CFunctionLib::ReadInt(pStr, "");
+		nWord = CFunctionLib::PopString(pStr, "");
+		pStr += nWord;
+		m_nNumBreakEnemy[(nIdxClient + 1) % MAX_NUM_PLAYER][nCntType] = nNumBreak;
+	}
+
+	return pStr;
+}
+
 
 //*****************************************************************************
 //
@@ -2103,17 +2308,37 @@ void CGame::StageDispUpdate(void)
 //=============================================================================
 void CGame::NormalUpdate(void)
 {
-#ifdef GAME_DEBUG  // デバッグコマンド適用時
+	m_bPauseOpen = false;
 
 	CInputKeyboard *pKey = CManager::GetKeyboard();
+	CXInput *pXInput = CManager::GetXInput();
 	if (pKey == NULL) return;
 
 	// ポーズON/OFF切り替え
 	if (pKey->GetTrigger(DIK_P) == true)
-	{
+	{// キーボード判定
 		m_State = STATE_PAUSE;
+		CreatePause();
+		m_bPauseOpen = true;
+		CManager::GetSound()->PlaySound(GAME_SE_PAUSE_OPEN_IDX);
+		CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX, true);
+	}
+	else if (pXInput != NULL)
+	{// コントローラー判定
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			if (pXInput->GetTrigger(nCntPlayer, CXInput::XIJS_BUTTON_4) == true)
+			{
+				m_State = STATE_PAUSE;
+				m_bPauseOpen = true;
+				CreatePause(nCntPlayer);
+				CManager::GetSound()->PlaySound(GAME_SE_PAUSE_OPEN_IDX);
+				CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX, true);
+			}
+		}
 	}
 
+#ifdef GAME_DEBUG  // デバッグコマンド適用時
 	// ステージセレクトデバッグ
 	int nIdxClient = 0;
 	if (CManager::GetClient() != NULL)
@@ -2242,12 +2467,60 @@ void CGame::NormalUpdate(void)
 void CGame::PauseUpdate(void)
 {
 	CInputKeyboard *pKey = CManager::GetKeyboard();
-	if (pKey == NULL) return;
+	CXInput *pXInput = CManager::GetXInput();
+	if (pKey == NULL && pXInput == NULL) return;
+
+	// ポーズの更新
+	if (m_pPause != NULL)
+	{
+		m_pPause->Update();
+	}
 
 	// ポーズON/OFF切り替え
-	if (pKey->GetTrigger(DIK_P) == true)
-	{
-		m_State = STATE_NORMAL;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
+	{// 1人プレイならば
+		if (pKey->GetTrigger(DIK_P) == true || pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_4))
+		{
+			m_State = STATE_NORMAL;
+			ReleasePause();
+			CScene::DeathCheck();
+			CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+		}
+	}
+	else if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL2P)
+	{// ローカル2人プレイならば
+		// どちらのプレイヤーがポーズを開いたのか取得
+		int nOpneId = 0;
+		if (m_pPause != NULL)
+		{
+			nOpneId = m_pPause->GetOpenId();
+		}
+
+		// ポーズ解除判定
+		if (pKey->GetTrigger(DIK_P) == true || pXInput->GetTrigger(nOpneId, CXInput::XIJS_BUTTON_4))
+		{
+			m_State = STATE_NORMAL;
+			ReleasePause();
+			CScene::DeathCheck();
+			CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+		}
+	}
+	else if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{// オンライン2人プレイならば
+		// ポーズを生成していなければ処理しない
+		if (m_pPause == NULL)
+		{
+			return;
+		}
+
+		// ポーズ解除判定
+		if (pKey->GetTrigger(DIK_P) == true || pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_4))
+		{
+			m_State = STATE_NORMAL;
+			ReleasePause();
+			CScene::DeathCheck();
+			CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+		}
 	}
 }
 
@@ -2352,6 +2625,9 @@ void CGame::ResultUpdate_None(void)
 		// カウンターリセット
 		m_nStateCounter = 0;
 		m_bNextGameResult = false;
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 	}
 }
 
@@ -2387,6 +2663,9 @@ void CGame::ResultUpdate_Normal(void)
 
 					// カウンターリセット
 					m_nStateCounter = 0;
+
+					// 音を鳴らす
+					CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 				}
 				else
 				{// 現在の数字が倒した数になっている
@@ -2425,6 +2704,9 @@ void CGame::ResultUpdate_Normal(void)
 
 		// カウンターリセット
 		m_nStateCounter = 0;
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 	}
 }
 
@@ -2460,6 +2742,9 @@ void CGame::ResultUpdate_Armore(void)
 
 					// カウンターリセット
 					m_nStateCounter = 0;
+
+					// 音を鳴らす
+					CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 				}
 				else
 				{// 現在の数字が倒した数になっている
@@ -2497,6 +2782,9 @@ void CGame::ResultUpdate_Armore(void)
 
 		// カウンターリセット
 		m_nStateCounter = 0;
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 	}
 }
 
@@ -2532,6 +2820,9 @@ void CGame::ResultUpdate_Fast(void)
 
 					// カウンターリセット
 					m_nStateCounter = 0;
+
+					// 音を鳴らす
+					CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 				}
 				else
 				{// 現在の数字が倒した数になっている
@@ -2569,6 +2860,9 @@ void CGame::ResultUpdate_Fast(void)
 
 		// カウンターリセット
 		m_nStateCounter = 0;
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 	}
 }
 
@@ -2604,6 +2898,9 @@ void CGame::ResultUpdate_Heavy(void)
 
 					// カウンターリセット
 					m_nStateCounter = 0;
+
+					// 音を鳴らす
+					CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 				}
 				else
 				{// 現在の数字が倒した数になっている
@@ -2639,6 +2936,9 @@ void CGame::ResultUpdate_Heavy(void)
 
 		// トータルスコアを生成
 		CreateGameResult_TortalScore_Number();
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_SE_GAMERESULT_SCOREUP_IDX);
 
 		// カウンターリセット
 		m_nStateCounter = 0;
@@ -2733,6 +3033,8 @@ void CGame::ChangeMapUpdate(void)
 //=============================================================================
 void CGame::EndUpdate(void)
 {
+	CDebugProc::Print(1, "終了状態\n");
+
 	// カウンター加算
 	m_nStateCounter++;
 	if (m_nStateCounter % GAME_RESULT_TIMING == 0)
@@ -2741,8 +3043,38 @@ void CGame::EndUpdate(void)
 		CreateGameResult();
 		CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX);
 	}
+}
 
-	CDebugProc::Print(1, "終了状態\n");
+//=============================================================================
+// ゲームの終了状態(RETRY)の更新処理
+//=============================================================================
+void CGame::EndRetryUpdate(void)
+{
+	CDebugProc::Print(1, "ポーズからゲームをやり直す状態\n");
+
+	CFade *pFade = CManager::GetFade();
+	if (pFade == NULL) { return; }
+
+	if (pFade->GetFade() == CFade::FADE_NONE)
+	{
+		pFade->SetFade(CManager::MODE_GAME);
+	}
+}
+
+//=============================================================================
+// ゲームの終了状態(QUIT)の更新処理
+//=============================================================================
+void CGame::EndQuitUpdate(void)
+{
+	CDebugProc::Print(1, "ポーズからタイトルに戻る状態\n");
+
+	CFade *pFade = CManager::GetFade();
+	if (pFade == NULL) { return; }
+
+	if (pFade->GetFade() == CFade::FADE_NONE)
+	{
+		pFade->SetFade(CManager::MODE_TITLE);
+	}
 }
 
 
@@ -2918,6 +3250,9 @@ void CGame::MapEvent_Hinamatsuri(void)
 {
 	CDebugProc::Print(1, "ひな祭りイベント\n");
 
+	// ポーズ中なら更新しない
+	if (m_State == STATE_PAUSE || m_State == STATE_END_RETRY || m_State == STATE_END_QUIT) { return; }
+
 	// 現在のイベント状態によって処理わけ
 	switch (m_HinaEvent)
 	{
@@ -2933,6 +3268,9 @@ void CGame::MapEvent_Hinamatsuri(void)
 	case HINAEVENT_DROP_HINAARARE:
 		MapEvent_Hinamatsuri_Drop_Hinaarare();
 		break;
+	case HINAEVENT_EVENTSTART:
+		MapEvent_Hinamatsuri_EventStart();
+		break;
 	}
 }
 
@@ -2947,8 +3285,10 @@ void CGame::MapEvent_Hinamatsuri_Normal(void)
 	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
 	{
 		CClient *pClient = CManager::GetClient();
-		if (pClient == NULL) { return; }
-		if (pClient->GetClientId() != 0) { return; }
+		if (pClient != NULL)
+		{
+			if (pClient->GetClientId() != 0) { return; }
+		}
 	}
 
 	// イベントカウンター加算
@@ -2961,7 +3301,10 @@ void CGame::MapEvent_Hinamatsuri_Normal(void)
 		m_nEventCounter = 0;
 
 		// 引き起こすイベントをランダムで決定
-		m_HinaEvent = (HINAEVENT)(rand() % HINAEVENT_MAX);
+		m_nNextEvent = (HINAEVENT)(rand() % GAME_MAPEVENT_MAX) + 1;
+
+		// マップイベント開始状態に設定
+		m_HinaEvent = HINAEVENT_EVENTSTART;
 	}
 }
 
@@ -3009,7 +3352,7 @@ void CGame::MapEvent_Hinamatsuri_Drop_Item(void)
 		// 円筒生成
 		m_pItemCylinder = CItemCylinder::Create(m_ItemDropPos, INITIALIZE_D3DXVECTOR3,
 			GAME_DROPITEM_CYLINDER_COL, GAME_DROPITEM_CYLINDER_HEIGHT, GAME_DROPITEM_CYLINDER_RADIUS,
-			GAME_DROPITEM_CYLINDER_XBLOCK, GAME_DROPITEM_CYLINDER_ZBLOCK, GAME_DROPITEM_CYLINDER_PRIORITY);
+			GAME_DROPITEM_CYLINDER_XBLOCK, GAME_DROPITEM_CYLINDER_YBLOCK, GAME_DROPITEM_CYLINDER_PRIORITY);
 
 		// 処理をここで終了させる
 		return;
@@ -3097,12 +3440,59 @@ void CGame::MapEvent_Hinamatsuri_Drop_Hinaarare(void)
 		CreateHinaarare();
 	}
 
+	// カメラを揺らす状態にする
+	if (GetCameraManager() == NULL) { return; }
+	CCamera *pCamera = GetCameraManager()->GetCamera();
+	if (pCamera == NULL) { return; }
+
+	if (pCamera->GetType() == CCamera::TYPE_GAME)
+	{// ゲームで使用しているカメラである
+		CGameCamera *pGameCamera = (CGameCamera*)pCamera;
+		pGameCamera->StartShake(1, GAME_HINAARARE_CAMERA_SHAKE, GAME_HINAARARE_CAMERA_SHAKE);
+	}
+
 	// イベントカウンター進行
 	m_nEventCounter++;
 	if (m_nEventCounter >= m_HinarareData.nTime)
 	{// カウンターが一定値になった
 		m_nEventCounter = 0;
 		m_HinaEvent = HINAEVENT_NORMAL;
+	}
+}
+
+//=============================================================================
+// ゲームのマップイベント開始時の処理
+//=============================================================================
+void CGame::MapEvent_Hinamatsuri_EventStart(void)
+{
+	CDebugProc::Print(1, "マップイベント開始\n");
+
+	// ポリゴンを生成する
+	if (m_pEventStartLogo == NULL)
+	{
+		m_pEventStartLogo = CScene2D::Create(GAME_MAPEVENT_STARTLOGO_POS, GAME_MAPEVENT_STARTLOGO_COL,
+			GAME_MAPEVENT_STARTLOGO_WIDTH, GAME_MAPEVENT_STARTLOGO_HEIGHT, GAME_MAPEVENT_STARTLOGO_PRIORITY);
+		return;
+	}
+
+	// 生成されていたら横に動かす
+	D3DXVECTOR3 logoPos = m_pEventStartLogo->GetPos();
+	logoPos.x += GAME_MAPEVENT_STARTLOGO_MOVE;
+	m_pEventStartLogo->SetPos(logoPos);
+	m_pEventStartLogo->SetVtxBuffPos();
+
+	// イベントカウンター進行
+	m_nEventCounter++;
+	if (m_nEventCounter >= GAME_MAPEVENT_STARTTIME)
+	{// カウンターが一定値になった
+		m_nEventCounter = 0;
+		m_HinaEvent = (HINAEVENT)m_nNextEvent;
+
+		if (m_pEventStartLogo != NULL)
+		{
+			m_pEventStartLogo->Uninit();
+			m_pEventStartLogo = NULL;
+		}
 	}
 }
 
@@ -3130,6 +3520,7 @@ void CGame::SetPlayerPosToSpawn(void)
 		if (m_pPlayer[CManager::GetClient()->GetClientId()] != NULL)
 		{
 			m_pPlayer[CManager::GetClient()->GetClientId()]->SetPos(PlayerPos);
+			m_pPlayer[CManager::GetClient()->GetClientId()]->SetRot(D3DXVECTOR3(0.0f, D3DX_PI, 0.0f));
 		}
 	}
 	else
@@ -3140,6 +3531,7 @@ void CGame::SetPlayerPosToSpawn(void)
 			if (m_pPlayer[nCntPlayer] != NULL)
 			{
 				m_pPlayer[nCntPlayer]->SetPos(PlayerPos);
+				m_pPlayer[nCntPlayer]->SetRot(D3DXVECTOR3(0.0f, D3DX_PI, 0.0f));
 			}
 		}
 	}
@@ -3225,6 +3617,12 @@ void CGame::EnemySpawn(CMap *pMap, CEnemy_ListData *pEnemyData, int nCnt)
 
 	// 敵の生成
 	CreateEnemy(EnemyPos, INITIALIZE_D3DXVECTOR3, pEnemyData);
+
+	// UIの変更
+	if (m_pUI != NULL)
+	{
+		m_pUI->CutEnemyIcon();
+	}
 }
 
 
@@ -3245,6 +3643,7 @@ void CGame::ResetCounter(void)
 	m_nStateCounter = 0;
 	m_nEventCounter = 0;
 	m_nEnemyMoveCounter = 0;
+	m_HinaEvent = HINAEVENT_NORMAL;
 
 	// ゲームリザルトに必要な変数を初期化
 	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
@@ -3423,6 +3822,16 @@ void CGame::CreateMap(void)
 	CEnemy::ResetSpawnCounter();
 	SetPlayerPosToSpawn();
 	CheckEnemySpawn(m_nGameCounter);
+
+	// UIを変更
+	if (m_pUI != NULL)
+	{
+		m_pUI->ReCreateEnemyIcon(m_nNumEnemy);
+		m_pUI->ReCreateStageNumber((m_nStageIdx + 1));
+	}
+
+	// アイテムの総数をリセット
+	CItem::ResetNumAll();
 }
 
 //=============================================================================
@@ -3615,12 +4024,15 @@ void CGame::CreateHinaarare(void)
 	HinaararePos.z = (nMassZ * MASS_SIZE_Z) + MASS_SIZE_Z_HALF - (MASS_BLOCK_Z * MASS_SIZE_Z_HALF);
 	HinaararePos.y = GAME_HINAARARE_POSY;
 
+	// ひなあられに使用するモデルを設定
+	int nModelIdx = m_HinarareData.nModelIdx + (rand() % GAME_HINAARARE_MODEL_NUM);
+
 	// ひなあられを生成
 	CModelCreate *pModelCreate = GetModelCreate();
 	if (pModelCreate == NULL) { return; }
-	CHinaarare::Create(HinaararePos, INITIALIZE_D3DXVECTOR3, pModelCreate->GetMesh(m_HinarareData.nModelIdx),
-		pModelCreate->GetBuffMat(m_HinarareData.nModelIdx), pModelCreate->GetNumMat(m_HinarareData.nModelIdx),
-		pModelCreate->GetTexture(m_HinarareData.nModelIdx));
+	CHinaarare::Create(HinaararePos, INITIALIZE_D3DXVECTOR3, pModelCreate->GetMesh(nModelIdx),
+		pModelCreate->GetBuffMat(nModelIdx), pModelCreate->GetNumMat(nModelIdx),
+		pModelCreate->GetTexture(nModelIdx));
 }
 
 //=============================================================================
@@ -3827,7 +4239,7 @@ void CGame::CreateGameResult_EnemyScore_Logo(void)
 					GAME_GAMERESULT_ENEMYPOINTLOGO_WIDTH_INI, GAME_GAMERESULT_ENEMYPOINTLOGO_HEIGHT_INI, GAME_GAMERESULT_ENEMYPOINTLOGO_PRIORITY);
 				if (m_apEnemyScorePointLogo[nCnt][nCntEnemy] != NULL)
 				{
-					m_apEnemyScorePointLogo[nCnt][nCntEnemy]->BindTexture(GetTextureManager()->GetTexture(GAME_GAMERESULT_ENEMYPOINTLOGO_TEXIDX + nCnt));
+					m_apEnemyScorePointLogo[nCnt][nCntEnemy]->BindTexture(GetTextureManager()->GetTexture(GAME_GAMERESULT_ENEMYPOINTLOGO_TEXIDX));
 				}
 			}
 			EnemyScorePointLogoPos.y += GAME_GAMERESULT_ENEMYPOINTLOGO_INTERVAL_INI.y;
@@ -3968,6 +4380,9 @@ void CGame::CreateGameResult_TortalScore_Number(void)
 //=============================================================================
 void CGame::CreateGameResult_BonusScore(void)
 {
+	// 敵を倒した数が同じならば処理しない
+	if (m_nNumAllBreakEnemy[0] == m_nNumAllBreakEnemy[MAX_NUM_PLAYER - 1]) { return; }
+
 	// 敵を倒した数が多い方にボーナスを付与する
 	D3DXVECTOR3 BonusScorePosAdd = INITIALIZE_D3DXVECTOR3;
 	if (m_nNumAllBreakEnemy[0] < m_nNumAllBreakEnemy[MAX_NUM_PLAYER - 1])
@@ -3994,6 +4409,10 @@ void CGame::CreateGameResult_BonusScore(void)
 	{
 		m_pBonusScoreLogo = CScene2D::Create(GAME_GAMERESULT_BONUSSCORELOGO_POS_INI + BonusScorePosAdd, GAME_GAMERESULT_BONUSSCORELOGO_COL_INI,
 			GAME_GAMERESULT_BONUSSCORELOGO_WIDTH_INI, GAME_GAMERESULT_BONUSSCORELOGO_HEIGHT_INI, GAME_GAMERESULT_BONUSSCORELOGO_PRIORITY);
+		if (m_pBonusScoreLogo != NULL)
+		{
+			m_pBonusScoreLogo->BindTexture(GetTextureManager()->GetTexture(GAME_GAMERESULT_BONUSSCORELOGO_TEXIDX));
+		}
 	}
 
 	// ポイントポリゴン生成
@@ -4001,6 +4420,10 @@ void CGame::CreateGameResult_BonusScore(void)
 	{
 		m_pBonusPointLogo = CScene2D::Create(GAME_GAMERESULT_BONUSPOINTLOGO_POS_INI + BonusScorePosAdd, GAME_GAMERESULT_BONUSPOINTLOGO_COL_INI,
 			GAME_GAMERESULT_BONUSPOINTLOGO_WIDTH_INI, GAME_GAMERESULT_BONUSPOINTLOGO_HEIGHT_INI, GAME_GAMERESULT_BONUSPOINTLOGO_PRIORITY);
+		if (m_pBonusPointLogo != NULL)
+		{
+			m_pBonusPointLogo->BindTexture(GetTextureManager()->GetTexture(GAME_GAMERESULT_BONUSPOINTLOGO_TEXIDX));
+		}
 	}
 
 	// 数字ポリゴンを生成
@@ -4019,6 +4442,56 @@ void CGame::CreateGameResult_BonusScore(void)
 
 	// ボーナスを付与した状態に
 	m_bAddBonus = true;
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(GAME_SE_BONUS_IDX);
+}
+
+//=============================================================================
+// ゲームのポーズクラスを生成する
+//=============================================================================
+void CGame::CreatePause(int nIdxPlayer)
+{
+	if (m_pPause != NULL) { return; }
+	m_pPause = CPause::Create(GetTextureManager());
+
+	// ポーズクラスを生成
+	if (m_pPause != NULL)
+	{
+		m_pPause->SetOpenId(nIdxPlayer);
+	}
+
+	// ローカル2人プレイ以外ならこの先処理しない
+	if (CTitle::GetGameMode() != CTitle::GAMEMODE_LOCAL2P) { return; }
+
+	// どちらがポーズを開いたか表示する用ポリゴン生成
+	if (m_pPausePlayerNumber == NULL)
+	{
+		m_pPausePlayerNumber = CScene2D::Create(GAME_PAUSE_PLAYERNUMBER_POS_INI, GAME_PAUSE_PLAYERNUMBER_COL_INI,
+			GAME_PAUSE_PLAYERNUMBER_WIDTH_INI, GAME_PAUSE_PLAYERNUMBER_HEIGHT_INI, GAME_PAUSE_PLAYERNUMBER_PRIORITY);
+		if (m_pPausePlayerNumber != NULL)
+		{
+			m_pPausePlayerNumber->BindTexture(GetTextureManager()->GetTexture(GAME_PAUSE_PLAYERNUMBER_TEXIDX + nIdxPlayer));
+		}
+	}
+}
+
+//=============================================================================
+// ゲームのポーズを押されてない側のポリゴンを生成する
+//=============================================================================
+void CGame::CreateNotPause(void)
+{
+	// 黒背景を生成
+	m_pNotPauseBlackBg = CScene2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f),
+		GAME_PAUSE_NOT_BLACKBG_COL_INI, SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, GAME_PAUSE_NOT_BLACKBG_PRIORITY);
+
+	// ロゴポリゴンを生成
+	m_pNotPause = CScene2D::Create(GAME_PAUSE_NOT_POS_INI, GAME_PAUSE_NOT_COL_INI, GAME_PAUSE_NOT_WIDTH_INI,
+		GAME_PAUSE_NOT_HEIGHT_INI, GAME_PAUSE_NOT_PRIORITY);
+	if (m_pNotPause != NULL)
+	{
+		m_pNotPause->BindTexture(GetTextureManager()->GetTexture(GAME_PAUSE_NOT_TEXIDX));
+	}
 }
 
 
@@ -4351,6 +4824,45 @@ void CGame::ReleaseGameResult_BonusScore(void)
 	{
 		m_pBonusScoreLogo->Uninit();
 		m_pBonusScoreLogo = NULL;
+	}
+}
+
+//=============================================================================
+// ゲームのポーズクラスを開放する
+//=============================================================================
+void CGame::ReleasePause(void)
+{
+	if (m_pPause != NULL)
+	{
+		m_pPause->Uninit();
+		delete m_pPause;
+		m_pPause = NULL;
+	}
+
+	if (m_pPausePlayerNumber != NULL)
+	{
+		m_pPausePlayerNumber->Uninit();
+		m_pPausePlayerNumber = NULL;
+	}
+}
+
+//=============================================================================
+// ゲームのポーズを押されてない側のポリゴンを開放する
+//=============================================================================
+void CGame::ReleaseNotPause(void)
+{
+	// 文字ポリゴン開放
+	if (m_pNotPause != NULL)
+	{
+		m_pNotPause->Uninit();
+		m_pNotPause = NULL;
+	}
+
+	// 黒背景開放
+	if (m_pNotPauseBlackBg != NULL)
+	{
+		m_pNotPauseBlackBg->Uninit();
+		m_pNotPauseBlackBg = NULL;
 	}
 }
 
@@ -5066,6 +5578,8 @@ void CGame::ClearVariable(void)
 	m_nRandomEventEva = 0;
 	m_nPlayerStockIni = 0;
 	m_nPlayerStockMax = 0;
+	m_pEventStartLogo = NULL;
+	m_nNextEvent = 0;
 
 	for (int nCntPlayer = NULL; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
@@ -5136,6 +5650,13 @@ void CGame::ClearVariable(void)
 	m_pBonus = NULL;
 	m_pBonusPointLogo = NULL;
 	m_pBonusScoreLogo = NULL;
+
+	// ポーズ用
+	m_bPauseOpen = false;
+	m_pPause = NULL;
+	m_pPausePlayerNumber = NULL;
+	m_pNotPause = NULL;
+	m_pNotPauseBlackBg = NULL;
 }
 
 //=============================================================================
