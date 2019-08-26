@@ -26,6 +26,7 @@
 //=============================================================================
 // マクロ定義
 //=============================================================================
+#define RESULT_HIGHSCORE_FILENAME            "data/TEXT/highscore.txt"      // ハイスコアを保存するファイル名
 #define RESULT_SYSTEM_FILENAME               "data/TEXT/MODE/result.ini"    // 初期化に使用するシステムファイル名
 #define RESULT_WAITSTATE_TIME                (60)                           // 待機状態から通常状態に変わるまでの時間
 #define RESULT_NEXTHIGHSCORE_TIME            (240)                          // 通常状態からハイスコアを表示する状態に変わるまでの時間
@@ -45,8 +46,9 @@
 #define RESULT_HIGHSCORELOGO_COL_INI         (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define RESULT_HIGHSCORELOGO_WIDTH_INI       (400.0f)
 #define RESULT_HIGHSCORELOGO_HEIGHT_INI      (60.0f)
+#define RESULT_HIGHSCORELOGO_TEXIDX          (2)
 
-// リザルトハイスコアロゴ初期化用
+// リザルトハイスコア数字初期化用
 #define RESULT_HIGHSCORENUMBER_POS_INI       (D3DXVECTOR3(900.0f, 380.0f, 0.0f))
 #define RESULT_HIGHSCORENUMBER_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define RESULT_HIGHSCORENUMBER_WIDTH_INI     (40.0f)
@@ -54,6 +56,9 @@
 #define RESULT_HIGHSCORENUMBER_INTERVAL_INI  (D3DXVECTOR3(-90.0f, 0.0f, 0.0f))
 
 // 値読み込み用のパス
+// ハイスコア用
+#define HIGHSCORE "HIGHSCORE = "
+
 // テクスチャ用
 #define NUM_TEXTURE "NUM_TEXTURE = "
 #define TEXTURE_FILENAME "TEXTURE_FILENAME = "
@@ -70,7 +75,7 @@
 //=============================================================================
 // 静的メンバ変数宣言
 //=============================================================================
-bool CResult::m_bHighScore = true;   // ハイスコアを表示するかどうか
+bool CResult::m_bHighScore = false;   // ハイスコアを表示するかどうか
 
 //=============================================================================
 // リザルトのコンストラクタ
@@ -573,6 +578,81 @@ void CResult::LoadLogo(CFileLoader *pFileLoader, char *pStr)
 
 	// ポリゴン生成
 	CreateLogo();
+}
+
+//=============================================================================
+// リザルトのハイスコアをファイルから読み込む処理
+//=============================================================================
+void CResult::LoadHighScore(char *pFileName)
+{
+	CFileLoader *pFileLoader = NULL;  // ファイル読み込み用クラスへのポインタ
+	pFileLoader = CFileLoader::Create(pFileName);
+	if (pFileLoader == NULL) { return; }
+
+	// ファイルを読み進める
+	char aStr[256];
+	strcpy(aStr, pFileLoader->GetString(aStr));
+	if (CFunctionLib::Memcmp(aStr, SCRIPT) == 0)
+	{// スクリプト読み込み開始の合図があった
+		while (1)
+		{
+			strcpy(aStr, pFileLoader->GetString(aStr));
+			if (CFunctionLib::Memcmp(aStr, HIGHSCORE) == 0)
+			{// ハイスコア情報だった
+				CTitle::SetHighScore(CFunctionLib::ReadInt(aStr, HIGHSCORE));
+			}
+			else if (CFunctionLib::Memcmp(aStr, END_SCRIPT) == 0)
+			{// スクリプト読み込み終了の合図があった
+				break;
+			}
+		}
+	}
+
+	// メモリの開放
+	if (pFileLoader != NULL)
+	{
+		pFileLoader->Uninit();
+		delete pFileLoader;
+		pFileLoader = NULL;
+	}
+}
+
+//=============================================================================
+// リザルトのハイスコアを保存する処理
+//=============================================================================
+void CResult::SaveHighScore(void)
+{
+	CFileSaver *pFileSaver = NULL;  // ファイル保存用クラスへのポインタ
+	pFileSaver = CFileSaver::Create(RESULT_HIGHSCORE_FILENAME);
+	if (pFileSaver != NULL)
+	{// ファイルが読み込めた
+	    // ファイルの冒頭分を書き込み
+		pFileSaver->Print("#==============================================================================\n");
+		pFileSaver->Print("#\n");
+		pFileSaver->Print("# ハイスコアスクリプトファイル [highscore.txt]\n");
+		pFileSaver->Print("# Author : Hodaka Niwa\n");
+		pFileSaver->Print("#\n");
+		pFileSaver->Print("#==============================================================================\n");
+		pFileSaver->Print("%s			# この行は絶対消さないこと！\n", SCRIPT);
+		pFileSaver->Print("\n");
+
+		// ハイスコアを書き込み
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("# ハイスコア\n");
+		pFileSaver->Print("#------------------------------------------------------------------------------\n");
+		pFileSaver->Print("%s%d\n\n", HIGHSCORE, CTitle::GetHighScore());
+
+		// スクリプト終了の合図を書き込み
+		pFileSaver->Print("%s		# この行は絶対消さないこと！\n", END_SCRIPT);
+	}
+
+	// メモリの開放
+	if (pFileSaver != NULL)
+	{
+		pFileSaver->Uninit();
+		delete pFileSaver;
+		pFileSaver = NULL;
+	}
 }
 
 //=============================================================================

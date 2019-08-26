@@ -11,7 +11,8 @@
 //*****************************************************************************
 //    マクロ定義
 //*****************************************************************************
-
+#define RIVER_ADDTEX_U (0.0012f)
+#define RIVER_ADDTEX_V (0.0004f)
 
 //*****************************************************************************
 //    静的メンバ変数宣言
@@ -106,7 +107,31 @@ void CRiver::Uninit(void)
 //=============================================================================
 void CRiver::Update(void)
 {
+	if (m_pMeshField == NULL) { return; }
+	LPDIRECT3DVERTEXBUFFER9 pVtxBuff = m_pMeshField->GetVtxBuff();
+	if (pVtxBuff == NULL) { return; }
 
+	// テクスチャUV座標を動かす
+	VERTEX_3D *pVtx;
+	// 頂点バッファをロックし,頂点データへのポインタを取得
+	pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	int nXBlock = m_pMeshField->GetXBlock();
+	int nZBlock = m_pMeshField->GetZBlock();
+	for (int nCntV = 0; nCntV < nZBlock; nCntV++)
+	{// 垂直方向の分割数 + 1だけ繰り返し
+		for (int nCntH = 0; nCntH < nXBlock; nCntH++)
+		{// 水平方向の分割数 + 1だけ繰り返し
+			pVtx[nCntH].tex.x += RIVER_ADDTEX_U;
+			pVtx[nCntH].tex.y += RIVER_ADDTEX_V;
+		}
+
+		// ポインタを進める
+		pVtx += nXBlock + 1;
+	}
+
+	// 頂点バッファをアンロックする
+	pVtxBuff->Unlock();
 }
 
 //=============================================================================

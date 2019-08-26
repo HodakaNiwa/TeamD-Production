@@ -42,6 +42,7 @@ public:	//誰からもアクセス可能
 	float GetLength(void);
 	bool GetMouseMove(void);
 	bool GetChengeLength(void);
+	float GetAngleOfView(void);
 
 	void SetType(TYPE type);
 	void SetPosV(D3DXVECTOR3 posV);
@@ -50,6 +51,7 @@ public:	//誰からもアクセス可能
 	void SetLength(float fLength);
 	void SetMouseMove(bool bMouseMove);
 	void SetChengeLength(bool bChengeLength);
+	void SetAngleOfView(float fAngleOfView);
 
 	// 静的メンバ関数
 	static CCamera *Create(void);
@@ -67,6 +69,7 @@ private://自分だけがアクセス可能
 	float		m_fLength;			// 距離
 	bool        m_bMouseMove;       // マウスで動かせるかどうか
 	bool        m_bChengeLength;    // 距離を変えられるかどうか
+	float       m_fAngleOfView;     // カメラの画角
 };
 
 //*****************************************************************************

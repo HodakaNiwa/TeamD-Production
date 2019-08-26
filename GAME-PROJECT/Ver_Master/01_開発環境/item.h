@@ -58,6 +58,7 @@ public:    // 誰でもアクセス可能
 	void SetVtxMax(const D3DXVECTOR3 VtxMax);
 	void SetVtxMin(const D3DXVECTOR3 VtxMin);
 	void SetAlpha(const float fAlpha);
+	void SetIdx(const int nIdx);
 
 	int GetType(void);
 	int GetModelIdx(void);
@@ -68,10 +69,16 @@ public:    // 誰でもアクセス可能
 	D3DXVECTOR3 GetVtxMax(void);
 	D3DXVECTOR3 GetVtxMin(void);
 	float GetAlpha(void);
+	int GetIdx(void);
+
+	static void ResetNumAll(void);
 
 protected: // このクラスと派生クラスだけがアクセス可能
 
 private:   // このクラスだけがアクセス可能
+	static int m_nNumAll;
+
+	int                 m_nIdx;         // 番号
 	int                 m_nType;        // 種類番号
 	int                 m_nModelIdx;    // 使用するモデルの番号
 	LPD3DXMESH          m_pMesh;        // メッシュへのポインタ

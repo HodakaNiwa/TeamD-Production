@@ -39,7 +39,7 @@ public:    // 誰でもアクセス可能
 	HRESULT Init(CTextureManager *pTextureManager, int nNumEnemy, int nStageIdx, int *pPlayerStock, int nTexNumber);
 	void Uninit(void);
 	void ReCreateEnemyIcon(int nNumEnemy);
-	void CutEnemyIcon(int nIdx);
+	void CutEnemyIcon(void);
 	void ReCreatePlayerStock(int *pStock);
 	void ReCreateStageNumber(int nStageIdx);
 

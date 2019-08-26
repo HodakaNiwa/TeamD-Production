@@ -36,6 +36,7 @@ public:	//誰からもアクセス可能
 		OBJTYPE_MESHCYLINDER,   // メッシュシリンダー
 		OBJTYPE_GOALCYLINDER,   // ゴール用円筒
 		OBJTYPE_ITEMCYLINDER,   // アイテム用円筒
+		OBJTYPE_CHARACYLINDER,  // キャラセレクト用円筒
 		OBJTYPE_BILLBOARD,		// ビルボード
 		OBJTYPE_OBJECT,			// オブジェクト
 		OBJTYPE_3D,             // 3Dオブジェクト

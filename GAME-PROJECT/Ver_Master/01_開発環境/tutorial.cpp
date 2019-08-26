@@ -60,22 +60,30 @@
 
 // スキップチェックロゴ初期化用
 // １つ目
-#define TUTORIAL_SKIPCHECKLOGO_0_POS_INI       (D3DXVECTOR3(SCREEN_WIDTH / 4.0f, SCREEN_HEIGHT / 3.0f * 2.0f, 0.0f))
+#define TUTORIAL_SKIPCHECKLOGO_0_POS_INI       (D3DXVECTOR3(SCREEN_WIDTH / 6.0f, SCREEN_HEIGHT / 3.0f * 2.0f, 0.0f))
 #define TUTORIAL_SKIPCHECKLOGO_0_COL_NONE      (D3DXCOLOR(0.2f,0.2f,0.2f,1.0f))
-#define TUTORIAL_SKIPCHECKLOGO_0_WIDTH_NONE    (80.0f)
-#define TUTORIAL_SKIPCHECKLOGO_0_HEIGHT_NONE   (40.0f)
+#define TUTORIAL_SKIPCHECKLOGO_0_WIDTH_NONE    (180.0f)
+#define TUTORIAL_SKIPCHECKLOGO_0_HEIGHT_NONE   (60.0f)
 #define TUTORIAL_SKIPCHECKLOGO_0_COL_SELECT    (D3DXCOLOR(0.9f,0.9f,0.9f,1.0f))
-#define TUTORIAL_SKIPCHECKLOGO_0_WIDTH_SELECT  (120.0f)
-#define TUTORIAL_SKIPCHECKLOGO_0_HEIGHT_SELECT (60.0f)
+#define TUTORIAL_SKIPCHECKLOGO_0_WIDTH_SELECT  (200.0f)
+#define TUTORIAL_SKIPCHECKLOGO_0_HEIGHT_SELECT (80.0f)
 
 // ２つ目
-#define TUTORIAL_SKIPCHECKLOGO_1_POS_INI       (D3DXVECTOR3(SCREEN_WIDTH / 4.0f * 3.0f, SCREEN_HEIGHT / 3.0f * 2.0f, 0.0f))
+#define TUTORIAL_SKIPCHECKLOGO_1_POS_INI       (D3DXVECTOR3(SCREEN_WIDTH / 6.0f * 4.0f, SCREEN_HEIGHT / 3.0f * 2.0f, 0.0f))
 #define TUTORIAL_SKIPCHECKLOGO_1_COL_NONE      (D3DXCOLOR(0.2f,0.2f,0.2f,1.0f))
-#define TUTORIAL_SKIPCHECKLOGO_1_WIDTH_NONE    (80.0f)
-#define TUTORIAL_SKIPCHECKLOGO_1_HEIGHT_NONE   (40.0f)
+#define TUTORIAL_SKIPCHECKLOGO_1_WIDTH_NONE    (180.0f)
+#define TUTORIAL_SKIPCHECKLOGO_1_HEIGHT_NONE   (60.0f)
 #define TUTORIAL_SKIPCHECKLOGO_1_COL_SELECT    (D3DXCOLOR(0.9f,0.9f,0.9f,1.0f))
-#define TUTORIAL_SKIPCHECKLOGO_1_WIDTH_SELECT  (120.0f)
-#define TUTORIAL_SKIPCHECKLOGO_1_HEIGHT_SELECT (60.0f)
+#define TUTORIAL_SKIPCHECKLOGO_1_WIDTH_SELECT  (200.0f)
+#define TUTORIAL_SKIPCHECKLOGO_1_HEIGHT_SELECT (80.0f)
+
+// 操作方法表示用ポリゴン初期化用
+#define TUTORIAL_OPEINFO_POS_INI               (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 60.0f, 0.0f))
+#define TUTORIAL_OPEINFO_COL_INI               (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TUTORIAL_OPEINFO_WIDTH_INI             (300.0f)
+#define TUTORIAL_OPEINFO_HEIGHT_INI            (60.0f)
+#define TUTORIAL_OPEINFO_TEXIDX                (0)
+#define TUTORIAL_OPEINFO_PRIORITY              (7)
 
 // 値読み込み用のパス
 // テクスチャ用
@@ -179,6 +187,7 @@ void CTutorial::Uninit(void)
 	ReleaseMapFilePointer();
 	ReleasePlayer();
 	ReleasePlayerManager();
+	ReleaseOpeInfo();
 
 	// 全てのオブジェクト開放
 	CScene::ReleaseAll();
@@ -1654,6 +1663,21 @@ CEnemy *CTutorial::CreateEnemy(D3DXVECTOR3 pos, D3DXVECTOR3 rot, CEnemy_ListData
 	return pEnemy;
 }
 
+//=============================================================================
+// チュートリアルの操作方法表示用ポリゴン生成処理
+//=============================================================================
+void CTutorial::CreateOpeInfo(void)
+{
+	if (m_pOpeInfo != NULL) { return; }
+
+	m_pOpeInfo = CScene2D::Create(TUTORIAL_OPEINFO_POS_INI, TUTORIAL_OPEINFO_COL_INI, TUTORIAL_OPEINFO_WIDTH_INI,
+		TUTORIAL_OPEINFO_HEIGHT_INI, TUTORIAL_OPEINFO_PRIORITY);
+	if (m_pOpeInfo != NULL)
+	{
+		m_pOpeInfo->BindTexture(GetTextureManager()->GetTexture(TUTORIAL_OPEINFO_TEXIDX));
+	}
+}
+
 
 
 
@@ -1755,6 +1779,17 @@ void CTutorial::ReleaseEnemyManager(void)
 	}
 }
 
+//=============================================================================
+// チュートリアルの操作方法表示用ポリゴンを開放する
+//=============================================================================
+void CTutorial::ReleaseOpeInfo(void)
+{
+	if (m_pOpeInfo != NULL)
+	{
+		m_pOpeInfo->Uninit();
+		m_pOpeInfo = NULL;
+	}
+}
 
 
 
@@ -1828,6 +1863,7 @@ void CTutorial::SkipCheckUpdate(void)
 			CScene::DeathCheck();
 			CreateMap();
 			CreatePlayer();
+			CreateOpeInfo();
 			SetPlayerPosToSpawn();
 			CManager::GetSound()->PlaySound(TUTORIAL_BGM_IDX);
 		}
@@ -2536,6 +2572,7 @@ void CTutorial::ClearVariable(void)
 	strcpy(m_aDeleteEnemy, "\0");
 	m_bDeletePlayerFlag = 0;
 	m_pGoalCylinder = NULL;
+	m_pOpeInfo = NULL;
 	for (int nCntPlayer = NULL; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
 		m_pPlayer[nCntPlayer] = NULL;

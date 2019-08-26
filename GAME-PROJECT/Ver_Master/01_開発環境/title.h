@@ -191,6 +191,8 @@ private:	// 自分だけがアクセス可能
 	CScene2D *m_pFade;                 // フェードに使用するポリゴン
 	CScene2D *m_pTeamLogo;             // チームロゴ用ポリゴンクラス型のポインタ
 	CScene2D *m_pTeamBg;               // チームロゴ背景用ポリゴンクラス型のポインタ
+	CScene2D *m_pDecide;               // 決定ロゴ用ポリゴンクラス型のポインタ
+	CScene2D *m_pRetrun;               // もどるロゴ用ポリゴンクラス型のポインタ
 	CTitleLogo *m_pTitleLogo;          // タイトルロゴクラス型のポインタ
 	int m_nStateCounter;               // 状態を管理するカウンター
 

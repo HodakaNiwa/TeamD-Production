@@ -265,14 +265,17 @@ HRESULT CSound::PlaySound(int nIdx, bool bPause)
 		m_apSourceVoice[nIdx]->GetState(&xa2state);
 		if (xa2state.BuffersQueued != 0)
 		{// 再生中
-		 // 一時停止
+		    // 一時停止
 			m_apSourceVoice[nIdx]->Stop(0);
 
-			if (bPause == false)
-			{// 一時停止しないなら
-			 // オーディオバッファの削除
-				m_apSourceVoice[nIdx]->FlushSourceBuffers();
-			}
+			// オーディオバッファの削除
+			m_apSourceVoice[nIdx]->FlushSourceBuffers();
+		}
+
+		if (bPause == true)
+		{// 一時停止から復活するなら
+		    // 前回の再生位置にサイズを合わせておく
+			buffer.PlayBegin = m_apSoundParam[nIdx].nPlayPositioned;
 		}
 
 		// オーディオバッファの登録
@@ -298,14 +301,17 @@ void CSound::StopSound(int nIdx, bool bPause)
 		m_apSourceVoice[nIdx]->GetState(&xa2state);
 		if (xa2state.BuffersQueued != 0)
 		{// 再生中
-		 // 一時停止
+		    // 停止
 			m_apSourceVoice[nIdx]->Stop(0);
 
-			if (bPause == false)
-			{// 一時停止しないなら
-			 // オーディオバッファの削除
-				m_apSourceVoice[nIdx]->FlushSourceBuffers();
+			if (bPause == true)
+			{// 一時停止ならば
+				// 再生位置を保存
+				m_apSoundParam[nIdx].nPlayPositioned = (int)xa2state.SamplesPlayed;
 			}
+
+			// オーディオバッファの削除
+			m_apSourceVoice[nIdx]->FlushSourceBuffers();
 		}
 	}
 }
@@ -509,6 +515,7 @@ HRESULT CSound::CreatePointer(void)
 				m_apSoundParam[nCntSound].pFilename = new char[256];
 				strcpy(m_apSoundParam[nCntSound].pFilename, "\0");
 				m_apSoundParam[nCntSound].nCntLoop = 0;
+				m_apSoundParam[nCntSound].nPlayPositioned = 0;
 			}
 		}
 		else

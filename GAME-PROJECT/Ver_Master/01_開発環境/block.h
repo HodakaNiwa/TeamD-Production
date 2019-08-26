@@ -54,13 +54,11 @@ public:    // 誰でもアクセス可能
 
 	void SetType(const int nType);
 	void SetModelIdx(const int nModelIdx);
-	void SetModel(CModel *pModel);
 	void SetAlpha(const float fAlpha);
 	void SetIdx(const int nIdx);
 
 	int GetType(void);
 	int GetModelIdx(void);
-	CModel *GetModel(void);
 	float GetAlpha(void);
 	int GetIdx(void);
 

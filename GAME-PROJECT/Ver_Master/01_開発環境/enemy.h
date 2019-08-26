@@ -32,6 +32,7 @@ class CBullet;
 class CPlayer;
 class CBlock;
 class CHeadQuarters;
+class CRiver;
 
 //*****************************************************************************
 // 敵クラスの定義
@@ -129,6 +130,7 @@ private:	// 自分だけがアクセス可能
 	bool CollisionBullet(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBullet *pBullet);
 	bool CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBlock *pBlock);
 	bool CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHead);
+	bool CollisionRiver(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CRiver *pRiver);
 	void Destroy(void);
 	void ScoreUp(CBullet *pBullet);
 	void DeleteParts(void);

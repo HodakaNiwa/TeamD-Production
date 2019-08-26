@@ -12,6 +12,13 @@
 #include "item.h"
 #include "enemy.h"
 
+
+//*****************************************************************************
+// マクロ定義
+//*****************************************************************************
+#define GAME_BGM_HINAMAP_IDX (3)     // ゲームのBGM番号(ひな祭りマップ)
+
+
 // 前方宣言
 class CFileLoader;
 class CFileSaver;
@@ -20,6 +27,7 @@ class CPlayer;
 class CPlayerManager;
 class CEnemy_ListData;
 class CScene2D;
+class CScene2DFlash;
 class CNumber;
 class CBullet;
 class CBlock;
@@ -28,7 +36,64 @@ class CItem;
 class CItemCylinder;
 
 //*****************************************************************************
-// クラス定義
+// ポーズクラス定義
+//*****************************************************************************
+class CPause
+{
+public:	   // 誰からもアクセス可能
+	//--------------
+	// 状態
+	//--------------
+	typedef enum
+	{
+		SELECT_CONTINUE = 0,
+		SELECT_RETRY,
+		SELECT_QUIT,
+		SELECT_MAX
+	}SELECT;
+
+	CPause();
+	~CPause();
+
+	static CPause *Create(CTextureManager *pTexManager);
+
+	HRESULT Init(CTextureManager *pTexManager);
+	void Uninit(void);
+	void Update(void);
+	void Draw(void);
+
+	void SetSelect(const int nSelect);
+	void SetOpenId(const int nId);
+
+	CScene2D *GetBlackBg(void);
+	CScene2D *GetPauseBg(void);
+	CScene2DFlash *GetPauseSelect(int nIdx);
+	int GetSelect(void);
+	int GetOpenId(void);
+
+protected: // このクラスと派生クラスだけがアクセス可能
+
+private:   // 自分だけがアクセス可能
+	void ClearVariable(void);
+	void CreateBlackBg(void);
+	void CreatePauseBg(CTextureManager *pTexManager);
+	void CreatePauseSelect(CTextureManager *pTexManager);
+	void ReleaseBlackBg(void);
+	void ReleasePauseBg(void);
+	void ReleasePauseSelect(void);
+	void WaitInput(void);
+	void ChangeNoneStagePolygon(int nSelect);
+	void ChangeSelectStagePolygon(int nSelect);
+
+	CScene2D      *m_pBlackBg;                   // 黒背景用ポリゴン
+	CScene2D      *m_pPauseBg;                   // ポーズ背景用ポリゴン
+	CScene2DFlash *m_apPauseSelect[SELECT_MAX];  // 選択項目用ポリゴン
+	int           m_nSelect;                     // 現在選択されている番号
+	int           m_nOpenId;                     // ポーズを開いたプレイヤーの番号
+};
+
+//*****************************************************************************
+// ゲームクラス定義
 //*****************************************************************************
 class CGame : public CBasemode
 {
@@ -50,6 +115,8 @@ public:	// 誰からもアクセス可能
 		STATE_PREV_MAP,
 		STATE_NEXT_MAP,
 		STATE_END,
+		STATE_END_RETRY,
+		STATE_END_QUIT,
 		STATE_MAX
 	}STATE;
 
@@ -74,6 +141,7 @@ public:	// 誰からもアクセス可能
 		HINAEVENT_CHERRYBLOSSOMS,
 		HINAEVENT_DROP_ITEM,
 		HINAEVENT_DROP_HINAARARE,
+		HINAEVENT_EVENTSTART,
 		HINAEVENT_MAX
 	}HINAEVENT;
 
@@ -103,6 +171,8 @@ public:	// 誰からもアクセス可能
 	void DeletePlayer(CPlayer *pPlayer, const int nIdx);
 	void DeleteBlock(const int nIdx);
 	void DeleteEnemy(const int nIdx);
+	void DeleteItem(const int nIdx);
+	void ReleasePause(void);
 
 	// アイテムの処理実行用関数
 	void ItemEvent_Star(int nPlayerNumber);
@@ -163,6 +233,8 @@ private:	// 自分だけがアクセス可能
 	void CreateGameResult_TortalScore_Logo(void);
 	void CreateGameResult_TortalScore_Number(void);
 	void CreateGameResult_BonusScore(void);
+	void CreatePause(int nIdxPlayer = 0);
+	void CreateNotPause(void);
 
 
 	// 開放処理用関数
@@ -183,6 +255,7 @@ private:	// 自分だけがアクセス可能
 	void ReleaseGameResult_EnemyScore(void);
 	void ReleaseGameResult_TortalScore(void);
 	void ReleaseGameResult_BonusScore(void);
+	void ReleaseNotPause(void);
 
 
 	// サーバーとのメッセージ交換用関数
@@ -194,6 +267,10 @@ private:	// 自分だけがアクセス可能
 	void SetDataToServerFromPlayerBullet(void);
 	void SetDataToServerFromDeleteBlock(void);
 	void SetDataToServerFromDeleteEnemy(void);
+	void SetDataToServerFromDeleteItem(void);
+	void SetDataToServerFromItem(void);
+	void SetDataToServerFromClientState(void);
+	void SetDataToServerFromBreakEnemy(void);
 	char *GetDataToEnemy(CEnemy *pEnemy, char *pStr);
 	char *GetDataToEnemyBullet(CBullet *pBullet, char *pStr);
 	char *GetDataToPlayerBullet(CBullet *pBullet, char *pStr);
@@ -219,6 +296,13 @@ private:	// 自分だけがアクセス可能
 	void ReleaseCheckBlock(CBlock *pBlock, int *pDeleteIdx, int *nNumDeleteBlock);
 	char *SetDataToDeleteEnemy(char *pStr);
 	void ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nNumDeleteEnemy);
+	char *SetDataToItem(char *pStr);
+	void ReleaseItem(int nNumItem);
+	void ReleaseCheckItem(CItem *pItem, int *pNumItem);
+	char *SetDataToDeleteItem(char *pStr);
+	void ReleaseCheckDeleteItem(CItem *pItem, int *pDeleteIdx, int *nNumDeleteItem);
+	char *SetDataToClientState(char *pStr);
+	char *SetDataToBreakEnemy(char *pStr);
 
 
 	// 状態による更新処理分け用関数
@@ -237,6 +321,8 @@ private:	// 自分だけがアクセス可能
 	void ResultUpdate_Tortal(void);
 	void ChangeMapUpdate(void);
 	void EndUpdate(void);
+	void EndRetryUpdate(void);
+	void EndQuitUpdate(void);
 
 
 	// マップイベント用関数
@@ -245,6 +331,7 @@ private:	// 自分だけがアクセス可能
 	void MapEvent_Hinamatsuri_CherryBlossoms(void);
 	void MapEvent_Hinamatsuri_Drop_Item(void);
 	void MapEvent_Hinamatsuri_Drop_Hinaarare(void);
+	void MapEvent_Hinamatsuri_EventStart(void);
 
 
 	// ゲーム内スポーン処理用関数
@@ -308,11 +395,13 @@ private:	// 自分だけがアクセス可能
 	int m_nEnemyMoveCounter;                 // 敵が動けない状態になってからの時間を数えるカウンター
 
 	// マップイベント用
+	int m_nNextEvent;                        // 次に起こすマップイベント
 	HINAEVENT m_HinaEvent;                   // ひな祭りマップのイベントを分ける変数
 	int m_nEventCounter;                     // イベントカウンター
 	int m_nRandomEventEva;                   // イベントを起こすかどうかのランダム評価値
 	int m_nNotEventCounter;                  // イベントが起こっていない時間を数えるカウンター
 	int m_nEventWakeUpCount[HINAEVENT_MAX];  // 連続してイベントが起こってないかを判定するためのカウンター
+	CScene2D *m_pEventStartLogo;             // イベントが始まるときに表示する
 
 	// アイテムドロップイベント用
 	CItem *m_pItem;                          // アイテムクラスへのポインタ
@@ -340,6 +429,17 @@ private:	// 自分だけがアクセス可能
 	// 敵の同期に必要
 	int m_nNumDeleteEnemy;
 	char m_aDeleteEnemy[2048];
+
+	// アイテムの同期に必要
+	int m_nNumDeleteItem;
+	char m_aDeleteItem[2048];
+
+	// ポーズ用
+	bool m_bPauseOpen;
+	CPause *m_pPause;
+	CScene2D *m_pPausePlayerNumber;
+	CScene2D *m_pNotPause;
+	CScene2D *m_pNotPauseBlackBg;
 
 	// 各種クラス生成用情報
 	typedef struct

@@ -92,6 +92,7 @@ private:	// 自分だけがアクセス可能
 	void CreateMapFilePointer(void);
 	void CreatePlayer(void);
 	CEnemy *CreateEnemy(D3DXVECTOR3 pos, D3DXVECTOR3 rot, CEnemy_ListData *pEnemyData);
+	void CreateOpeInfo(void);
 
 
 	// 開放用関数
@@ -101,6 +102,7 @@ private:	// 自分だけがアクセス可能
 	void ReleasePlayer(void);
 	void ReleasePlayerManager(void);
 	void ReleaseEnemyManager(void);
+	void ReleaseOpeInfo(void);
 
 
 	// サーバーとのメッセージ交換用関数
@@ -192,6 +194,7 @@ private:	// 自分だけがアクセス可能
 	int m_nNumNumberDigits;                     // 現在のステージ番号の桁数
 	int m_nBulletModelIdx;                      // 弾が使用するモデルの番号
 	CGoalCylinder *m_pGoalCylinder;             // ゴール用円筒クラスへのポインタ
+	CScene2D *m_pOpeInfo;                       // 操作方法表示用ポリゴン
 
 	// プレイヤー用
 	CPlayer *m_pPlayer[MAX_NUM_PLAYER];

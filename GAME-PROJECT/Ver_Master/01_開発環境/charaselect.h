@@ -20,6 +20,8 @@ class CScene2DFlash;
 // プレイヤー用
 class CPlayer;
 class CPlayerManager;
+class CScene3D;
+class CCharaCylinder;
 
 //*****************************************************************************
 // マクロ定義
@@ -45,6 +47,7 @@ public:	// 誰からもアクセス可能
 		STATE_STAGE_SELECT,
 		STATE_WAIT_STAGESELECT,
 		STATE_END,
+		STATE_END_TITLE,
 		STATE_MAX
 	}STATE;
 
@@ -74,6 +77,7 @@ private:	// 自分だけがアクセス可能
 	void CreateTexture(int nNumTex);
 	void CreateCamera(void);
 	void CreatePlayer(void);
+	void ChangePedestalTexPos(int nCntPlayer, int nCntType);
 	void CreateRenderTexture(void);
 	void CreateStagePolygon(void);
 	void CreatePlayerDataPointer(void);
@@ -103,10 +107,12 @@ private:	// 自分だけがアクセス可能
 	void StageSelectUpdate(int nIdx);
 	void WaitStageSelectUpdate(int nIdx);
 	void EndUpdate(void);
+	void EndTitleUpdate(void);
 	void WaitInputToChangeChara(int nIdx);
 	void WaitInputToStageSelect(int nIdx);
 	void ChangeNoneStagePolygon(int nSelect);
 	void ChangeSelectStagePolygon(int nSelect);
+	void CheckCharaCylinderCol(int nIdx);
 	void CircleRotation(int nIdx);
 	void ChangeState_WaitPartnerToStageSelect(int nIdx);
 
@@ -146,8 +152,10 @@ private:	// 自分だけがアクセス可能
 	static int m_nSelectPlayer[MAX_NUM_PLAYER];                 // 何番のプレイヤーを選んでいるか
 	static int m_nSelectStage;                                  // 使用するマップの種類
 
-	// 後でプレイヤークラスに入れ替え
+	// プレイヤー表示用
 	CPlayer **m_pPlayer[MAX_NUM_PLAYER];						// プレイヤーの選択用のポリゴン
 	CPlayerManager	**m_pPlayerManager[MAX_NUM_PLAYER];			// プレイヤーマネージャーのポインタ情報
+	CScene3D **m_pPlayerPedestal[MAX_NUM_PLAYER];               // プレイヤーの台座表示用ポリゴン
+	CCharaCylinder **m_pCharaCylinder[MAX_NUM_PLAYER];          // プレイヤー用円筒クラスへのポインタ
 };
 #endif
