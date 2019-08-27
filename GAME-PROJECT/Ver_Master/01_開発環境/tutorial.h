@@ -69,6 +69,10 @@ public:	// 誰からもアクセス可能
 	void DeletePlayer(CPlayer *pPlayer, const int nIdx);
 	void DeleteBlock(const int nIdx);
 	void DeleteEnemy(const int nIdx);
+	void CreateBreakBlockInfo(void);
+	void CreateAttackPlayerInfo(void);
+	void CreateNearGoalInfo(void);
+	void SetGoalPlayerIdx(const int nIdx);
 
 	void SetBulletModel(CBullet *pBullet);
 	void SetPlayer(CPlayer *pPlayer, const int nIdx);
@@ -84,6 +88,9 @@ protected: // このクラスと派生クラスだけがアクセス可能
 
 private:	// 自分だけがアクセス可能
 	void ClearVariable(void);
+	void CheckBreakBlockInfo(void);
+	void CheckAttackPlayerInfo(void);
+	void CheckNearGoalInfo(void);
 
 	// 生成用関数
 	void CreateTexture(int nNumTex);
@@ -103,6 +110,9 @@ private:	// 自分だけがアクセス可能
 	void ReleasePlayerManager(void);
 	void ReleaseEnemyManager(void);
 	void ReleaseOpeInfo(void);
+	void ReleaseBreakBlockInfo(void);
+	void ReleaseAttackPlayerInfo(void);
+	void ReleaseNearGoalInfo(void);
 
 
 	// サーバーとのメッセージ交換用関数
@@ -196,10 +206,19 @@ private:	// 自分だけがアクセス可能
 	CGoalCylinder *m_pGoalCylinder;             // ゴール用円筒クラスへのポインタ
 	CScene2D *m_pOpeInfo;                       // 操作方法表示用ポリゴン
 
+	// レスポンス用
+	CScene2D *m_pBreakBlockInfo;
+	int m_nCntBreakBlockInfoDisp;
+	CScene2D *m_pAttackPlayerInfo;
+	int m_nCntAttackInfoDisp;
+	CScene2D *m_pNearGoalInfo;
+	int m_nCntNearGoalInfoDisp;
+
 	// プレイヤー用
 	CPlayer *m_pPlayer[MAX_NUM_PLAYER];
 	CPlayerManager *m_pPlayerManager[MAX_NUM_PLAYER];
 	int m_nPlayerRespawnCounter;
+	int m_nGoalPlayIdx;
 
 	// 敵データ用
 	CCharacterManager *m_pEnemyManager[CEnemy::TYPE_MAX];

@@ -39,6 +39,7 @@
 #define PLAYER_DEATH_EFFECT_IDX (7)        // 死んだときのエフェクト番号
 #define PLAYER_MOVE_EFFECT_IDX  (15)       // 移動している時のエフェクト番号
 #define PLAYER_SE_BULLET_IDX    (6)        // 弾発射時の音番号
+#define PLAYER_SE_DEATH_IDX     (18)       // 死んだときのエフェクト番号
 #define PLAYER_SE_DAMAGE_IDX    (12)       // プレイヤーが動けなくなる攻撃をくらったときの音番号
 
 //=============================================================================
@@ -229,13 +230,10 @@ void CPlayer::Hit(CScene *pScene)
 		CBullet *pBullet = (CBullet*)pScene;
 		if (pBullet->GetType() == CBullet::TYPE_ENEMY)
 		{// 敵の弾だった
-		    // エフェクトを出す
-			CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
-			if (pEffectManager != NULL)
-			{
-				pEffectManager->SetEffect(GetPos(), INITIALIZE_D3DXVECTOR3, PLAYER_DEATH_EFFECT_IDX);
-			}
+			// エフェクトを出す
+			SetDeathEffect();
 
+			// 終了処理
 			Uninit();
 		}
 		else if(pBullet->GetType() != m_nPlayerIdx)
@@ -256,6 +254,9 @@ void CPlayer::SetDeathEffect(void)
 	{
 		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, PLAYER_DEATH_EFFECT_IDX);
 	}
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(PLAYER_SE_DEATH_IDX);
 }
 
 //=============================================================================
@@ -688,8 +689,10 @@ void CPlayer::Move(void)
 
 	//位置の設置処理
 	SetPos(pos);
+
 	//向き設置処理
 	SetRot(rot);
+
 	//移動の設置処理
 	SetMove(move);
 }
@@ -1129,6 +1132,7 @@ void CPlayer::CollisionGoalCylinder(D3DXVECTOR3 *pPos, CGoalCylinder *pGoalCylin
 			CTutorial *pTutorial = CManager::GetTutorial();
 			if (pTutorial->GetState() != CTutorial::STATE_END)
 			{
+				pTutorial->SetGoalPlayerIdx(m_nPlayerIdx);
 				pTutorial->SetState(CTutorial::STATE_END);
 			}
 		}

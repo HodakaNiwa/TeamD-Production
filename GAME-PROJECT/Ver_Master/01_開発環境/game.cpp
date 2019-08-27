@@ -25,6 +25,8 @@
 #include "respawn.h"
 #include "item.h"
 #include "itemCylinder.h"
+#include "river.h"
+#include "boxCollider.h"
 #include "scene2D.h"
 #include "number.h"
 #include "server.h"
@@ -43,6 +45,7 @@
 // マクロ定義
 //=============================================================================
 #define GAME_DEBUG      // 宣言時デバッグコマンド適用
+#define GAME_MAPEVENT   // 宣言時マップイベント適用
 
 // マップ更新時に消されるオブジェクト(判定用のマクロなのでここに追加)
 #define GAME_DELETE_OBJECT (pScene->GetObjType() == CScene::OBJTYPE_ITEM || pScene->GetObjType() == CScene::OBJTYPE_BULLET || pScene->GetObjType() == CScene::OBJTYPE_PARTICLE || pScene->GetObjType() == CScene::OBJTYPE_PAREMITTER || pScene->GetObjType() == CScene::OBJTYPE_RINGEMITTER || pScene->GetObjType() == CScene::OBJTYPE_EMITTER || pScene->GetObjType() == CScene::OBJTYPE_BLOSSOMS || pScene->GetObjType() == CScene::OBJTYPE_ITEMCYLINDER)
@@ -66,14 +69,15 @@
 #define GAME_MAPSTAGE_MAX                            (3)                          // ステージの種類ごとの数
 #define GAME_ITEM_SCORE                              (500)                        // アイテムのスコアの量
 #define GAME_BONUS_SCORE                             (1000)                       // ボーナススコアの量
-#define GAME_STAGEPOLYGON_PRIORITY                   (6)                          // ステージポリゴンの描画優先順位
-#define GAME_GAMEOVERPOLYGON_PRIORITY                (6)                          // ゲームオーバーポリゴンの描画優先順位
+#define GAME_STAGEPOLYGON_PRIORITY                   (8)                          // ステージポリゴンの描画優先順位
+#define GAME_GAMEOVERPOLYGON_PRIORITY                (8)                          // ゲームオーバーポリゴンの描画優先順位
 #define GAME_PLAYER_SPAWN_EFFECT_IDX                 (11)                         // プレイヤーがリスポーンするときのエフェクト
 #define GAME_MAPEVENT_RANDOM                         (600)                        // マップイベントを起こすランダム評価値
 #define GAME_SE_FANFARE_IDX                          (5)                          // ゲームでステージが始まるときの音番号
+#define GAME_SE_PLAYER_RESPAWN_IDX                   (17)                         // プレイヤーがリスポーンした時の音番号
 #define GAME_SE_PAUSE_OPEN_IDX                       (11)                         // ポーズ画面を開いたときの音番号
 #define GAME_SE_GAMERESULT_SCOREUP_IDX               (13)                         // ゲームリザルトでスコアを加算したときの音番号
-#define GAME_SE_BONUS_IDX                            (14)                         // ボーナスを付与したの音番号
+#define GAME_SE_BONUS_IDX                            (14)                         // ボーナスを付与した時の音番号
 
 
 // アイテムイベント用マクロ
@@ -81,6 +85,12 @@
 #define GAME_ITEMEVENT_GRENADESHAKE_VALUE            (40.0f)                      // グレネードを取った時にカメラをどれくらい揺らすか
 #define GAME_ITEMEVENT_GRENADESHAKE_CUT              (3.0f)                       // カメラの揺れをどれくらい減らしていくか
 #define GAME_ITEMEVENT_ENEMYSTOPTIME                 (300)                        // 敵をどれくらい止めておくか
+#define GAME_ITEMEVENT_SE_STAR                       (19)                         // スターアイテムイベントの音番号
+#define GAME_ITEMEVENT_SE_GRENADE                    (20)                         // グレネードアイテムイベントの音番号
+#define GAME_ITEMEVENT_SE_1UP                        (21)                         // 1UPアイテムイベントの音番号
+#define GAME_ITEMEVENT_SE_SCOOP                      (22)                         // スコップアイテムイベントの音番号
+#define GAME_ITEMEVENT_SE_CLOCK                      (23)                         // 時計アイテムイベントの音番号
+#define GAME_ITEMEVENT_SE_HELMET                     (24)                         // ヘルメットアイテムイベントの音番号
 
 // ステージ背景ポリゴン初期化用
 #define GAME_STAGEBG_POS_INI                         (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
@@ -108,13 +118,17 @@
 
 // マップイベント用
 #define GAME_MAPEVENT_MAX                            (3)
-#define GAME_MAPEVENT_STARTTIME                      (160)
+#define GAME_MAPEVENT_STARTTIME                      (200)
+#define GAME_MAPEVENT_SOUNDIDX                       (25)
 #define GAME_MAPEVENT_STARTLOGO_WIDTH                (300.0f)
-#define GAME_MAPEVENT_STARTLOGO_HEIGHT               (40.0f)
-#define GAME_MAPEVENT_STARTLOGO_POS                  (D3DXVECTOR3(SCREEN_WIDTH + 100.0f, GAME_MAPEVENT_STARTLOGO_HEIGHT + 5.0f, 0.0f))
+#define GAME_MAPEVENT_STARTLOGO_HEIGHT               (90.0f)
+#define GAME_MAPEVENT_STARTLOGO_POS                  (D3DXVECTOR3(SCREEN_WIDTH + 100.0f, GAME_MAPEVENT_STARTLOGO_HEIGHT - 30.0f, 0.0f))
 #define GAME_MAPEVENT_STARTLOGO_COL                  (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define GAME_MAPEVENT_STARTLOGO_PRIORITY             (4)
-#define GAME_MAPEVENT_STARTLOGO_MOVE                 (-13.0f)
+#define GAME_MAPEVENT_STARTLOGO_PRIORITY             (6)
+#define GAME_MAPEVENT_STARTLOGO_TEXIDX               (29)
+#define GAME_MAPEVENT_STARTLOGO_TEXU_SPLIT           (2)
+#define GAME_MAPEVENT_STARTLOGO_TEXV_SPLIT           (3)
+#define GAME_MAPEVENT_STARTLOGO_MOVE                 (-9.0f)
 
 // 桜の花びらデータ初期化用
 #define GAME_BLOSSOMS_POS_INI                        (D3DXVECTOR3(SCREEN_WIDTH - UI_BG_WIDTH_INI + 100.0f, -100.0f, 0.0f))
@@ -133,9 +147,10 @@
 #define GAME_BLOSSOMS_ANGLESPEED_MIN_INI             (0)
 #define GAME_BLOSSOMS_ROTSPEED_MAX_INI               (5)
 #define GAME_BLOSSOMS_ROTSPEED_MIN_INI               (0)
+#define GAME_BLOSSOMS_BGMIDX                         (28)
 
 // アイテムドロップイベント用
-#define GAME_DROPITEM_POS_Y                          (1500.0f)
+#define GAME_DROPITEM_POS_Y                          (1200.0f)
 #define GAME_DROPITEM_CYLINDER_MOVE_Y                (-14.0f)
 #define GAME_DROPITEM_ITEM_MOVE_Y                    (-10.0f)
 #define GAME_DROPITEM_CYLINDER_COL                   (D3DXCOLOR(0.3f,0.3f,1.0f,1.0f))
@@ -146,6 +161,8 @@
 #define GAME_DROPITEM_CYLINDER_PRIORITY              (7)
 #define GAME_DROPITEM_EFFECT_IDX                     (14)
 #define GAME_DROPITEM_EFFECT_APPEAR                  (7)
+#define GAME_DROPITEM_CYLINDER_SE_IDX                (29)
+#define GAME_DROPITEM_ITEM_SE_IDX                    (30)
 
 // ひなあられデータ初期化用
 #define GAME_HINAARARE_POSY                          (800.0f)
@@ -154,20 +171,22 @@
 #define GAME_HINAARARE_APPEAR                        (60)
 #define GAME_HINAARARE_CAMERA_SHAKE                  (3.0f)
 #define GAME_HINAARARE_MODEL_NUM                     (4)
+#define GAME_HINAARARE_BGMIDX                        (31)
 
 // ゲーム内リザルト用背景ポリゴン初期化用
 #define GAME_GAMERESULT_BG_POS_INI                   (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f))
 #define GAME_GAMERESULT_BG_COL_INI                   (D3DXCOLOR(0.0f,0.0f,0.0f,1.0f))
 #define GAME_GAMERESULT_BG_WIDTH_INI                 (SCREEN_WIDTH / 2.0f)
 #define GAME_GAMERESULT_BG_HEIGHT_INI                (SCREEN_HEIGHT / 2.0f)
-#define GAME_GAMERESULT_BG_PRIORITY                  (6)
+#define GAME_GAMERESULT_BG_PRIORITY                  (8)
 
 // ゲーム内リザルト用ハイスコアロゴポリゴン初期化用
 #define GAME_GAMERESULT_HIGHSCORELOGO_POS_INI        (D3DXVECTOR3(500.0f, 25.0f, 0.0f))
 #define GAME_GAMERESULT_HIGHSCORELOGO_COL_INI        (D3DXCOLOR(1.0f,0.0f,0.0f,1.0f))
-#define GAME_GAMERESULT_HIGHSCORELOGO_WIDTH_INI      (120.0f)
-#define GAME_GAMERESULT_HIGHSCORELOGO_HEIGHT_INI     (15.0f)
-#define GAME_GAMERESULT_HIGHSCORELOGO_PRIORITY       (6)
+#define GAME_GAMERESULT_HIGHSCORELOGO_WIDTH_INI      (100.0f)
+#define GAME_GAMERESULT_HIGHSCORELOGO_HEIGHT_INI     (25.0f)
+#define GAME_GAMERESULT_HIGHSCORELOGO_PRIORITY       (8)
+#define GAME_GAMERESULT_HIGHSCORELOGO_TEXIDX         (30)
 
 // ゲーム内リザルト用ハイスコア数字ポリゴン初期化用
 #define GAME_GAMERESULT_HIGHSCORENUMBER_POS_INI      (D3DXVECTOR3(830.0f, 25.0f, 0.0f))
@@ -176,29 +195,29 @@
 #define GAME_GAMERESULT_HIGHSCORENUMBER_HEIGHT_INI   (15.0f)
 #define GAME_GAMERESULT_HIGHSCORENUMBER_INTERVAL_INI (D3DXVECTOR3(-GAME_GAMERESULT_HIGHSCORENUMBER_WIDTH_INI - 14.0f, 0.0f, 0.0f))
 #define GAME_GAMERESULT_HIGHSCORENUMBER_TEXIDX       (28)
-#define GAME_GAMERESULT_HIGHSCORENUMBER_PRIORITY     (6)
+#define GAME_GAMERESULT_HIGHSCORENUMBER_PRIORITY     (8)
 
 // ゲーム内リザルト用ステージロゴポリゴン初期化用
-#define GAME_GAMERESULT_STAGELOGO_POS_INI            (D3DXVECTOR3(600.0f, 80.0f, 0.0f))
+#define GAME_GAMERESULT_STAGELOGO_POS_INI            (D3DXVECTOR3(620.0f, 85.0f, 0.0f))
 #define GAME_GAMERESULT_STAGELOGO_COL_INI            (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define GAME_GAMERESULT_STAGELOGO_WIDTH_INI          (120.0f)
-#define GAME_GAMERESULT_STAGELOGO_HEIGHT_INI         (20.0f)
-#define GAME_GAMERESULT_STAGELOGO_PRIORITY           (6)
+#define GAME_GAMERESULT_STAGELOGO_WIDTH_INI          (100.0f)
+#define GAME_GAMERESULT_STAGELOGO_HEIGHT_INI         (25.0f)
+#define GAME_GAMERESULT_STAGELOGO_PRIORITY           (8)
 #define GAME_GAMERESULT_STAGELOGO_TEXIDX             (1)
 
 // ゲーム内リザルト用ステージ番号ポリゴン初期化用
-#define GAME_GAMERESULT_STAGENUMBER_POS_INI          (D3DXVECTOR3(760.0f, 80.0f, 0.0f))
+#define GAME_GAMERESULT_STAGENUMBER_POS_INI          (D3DXVECTOR3(740.0f, 85.0f, 0.0f))
 #define GAME_GAMERESULT_STAGENUMBER_COL_INI          (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define GAME_GAMERESULT_STAGENUMBER_WIDTH_INI        (15.0f)
-#define GAME_GAMERESULT_STAGENUMBER_HEIGHT_INI       (15.0f)
-#define GAME_GAMERESULT_STAGENUMBER_PRIORITY         (6)
+#define GAME_GAMERESULT_STAGENUMBER_WIDTH_INI        (20.0f)
+#define GAME_GAMERESULT_STAGENUMBER_HEIGHT_INI       (20.0f)
+#define GAME_GAMERESULT_STAGENUMBER_PRIORITY         (8)
 
 // ゲーム内リザルト用プレイヤーロゴポリゴン初期化用
 #define GAME_GAMERESULT_PLAYERLOGO_POS_INI           (D3DXVECTOR3(SCREEN_WIDTH / 4.0f, 135.0f, 0.0f))
 #define GAME_GAMERESULT_PLAYERLOGO_COL_INI           (D3DXCOLOR(1.0f,0.0f,0.0f,1.0f))
 #define GAME_GAMERESULT_PLAYERLOGO_WIDTH_INI         (120.0f)
 #define GAME_GAMERESULT_PLAYERLOGO_HEIGHT_INI        (17.0f)
-#define GAME_GAMERESULT_PLAYERLOGO_PRIORITY          (6)
+#define GAME_GAMERESULT_PLAYERLOGO_PRIORITY          (8)
 #define GAME_GAMERESULT_PLAYERLOGO_TEXIDX            (13)
 
 // ゲーム内リザルト用プレイヤースコアポリゴン初期化用
@@ -207,7 +226,7 @@
 #define GAME_GAMERESULT_PLAYERNUMBER_WIDTH_INI       (15.0f)
 #define GAME_GAMERESULT_PLAYERNUMBER_HEIGHT_INI      (15.0f)
 #define GAME_GAMERESULT_PLAYERNUMBER_INTERVAL_INI    (D3DXVECTOR3(-GAME_GAMERESULT_PLAYERNUMBER_WIDTH_INI - 14.0f, 0.0f, 0.0f))
-#define GAME_GAMERESULT_PLAYERNUMBER_PRIORITY        (6)
+#define GAME_GAMERESULT_PLAYERNUMBER_PRIORITY        (8)
 
 // ゲーム内リザルト用敵矢印ポリゴン初期化用
 #define GAME_GAMERESULT_ENEMY_INTERVAL_INI           (80.0f)
@@ -217,7 +236,7 @@
 #define GAME_GAMERESULT_ENEMYARROW_HEIGHT_INI        (15.0f)
 #define GAME_GAMERESULT_ENEMYARROW_INTERVAL_INI      (D3DXVECTOR3(50.0f, GAME_GAMERESULT_ENEMY_INTERVAL_INI, 0.0f))
 #define GAME_GAMERESULT_ENEMYARROW_TEXIDX            (9)
-#define GAME_GAMERESULT_ENEMYARROW_PRIORITY          (6)
+#define GAME_GAMERESULT_ENEMYARROW_PRIORITY          (8)
 
 // ゲーム内リザルト用敵ポイントロゴポリゴン初期化用
 #define GAME_GAMERESULT_ENEMYPOINTLOGO_POS_INI       (D3DXVECTOR3(430.0f, 250.0f, 0.0f))
@@ -226,7 +245,7 @@
 #define GAME_GAMERESULT_ENEMYPOINTLOGO_HEIGHT_INI    (20.0f)
 #define GAME_GAMERESULT_ENEMYPOINTLOGO_INTERVAL_INI  (D3DXVECTOR3(210.0f, GAME_GAMERESULT_ENEMY_INTERVAL_INI, 0.0f))
 #define GAME_GAMERESULT_ENEMYPOINTLOGO_TEXIDX        (11)
-#define GAME_GAMERESULT_ENEMYPOINTLOGO_PRIORITY      (6)
+#define GAME_GAMERESULT_ENEMYPOINTLOGO_PRIORITY      (8)
 
 // ゲーム内リザルト用敵アイコンポリゴン初期化用
 #define GAME_GAMERESULT_ENEMYICON_POS_INI            (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 250.0f, 0.0f))
@@ -234,7 +253,7 @@
 #define GAME_GAMERESULT_ENEMYICON_WIDTH_INI          (20.0f)
 #define GAME_GAMERESULT_ENEMYICON_HEIGHT_INI         (20.0f)
 #define GAME_GAMERESULT_ENEMYICON_INTERVAL_INI       (D3DXVECTOR3(0.0f, GAME_GAMERESULT_ENEMY_INTERVAL_INI, 0.0f))
-#define GAME_GAMERESULT_ENEMYICON_PRIORITY           (6)
+#define GAME_GAMERESULT_ENEMYICON_PRIORITY           (8)
 #define GAME_GAMERESULT_ENEMYICON_TEXIDX             (15)
 
 // ゲーム内リザルト用敵スコアポリゴンポリゴン初期化用
@@ -243,7 +262,7 @@
 #define GAME_GAMERESULT_ENEMYSCORE_WIDTH_INI         (15.0f)
 #define GAME_GAMERESULT_ENEMYSCORE_HEIGHT_INI        (15.0f)
 #define GAME_GAMERESULT_ENEMYSCORE_INTERVAL_INI      (D3DXVECTOR3(-30.0f, GAME_GAMERESULT_ENEMY_INTERVAL_INI, 0.0f))
-#define GAME_GAMERESULT_ENEMYSCORE_PRIORITY          (6)
+#define GAME_GAMERESULT_ENEMYSCORE_PRIORITY          (8)
 
 // ゲーム内リザルト用敵撃破数ポリゴンポリゴン初期化用
 #define GAME_GAMERESULT_ENEMYBREAK_POS_INI           (D3DXVECTOR3(540.0f, 250.0f, 0.0f))
@@ -251,22 +270,22 @@
 #define GAME_GAMERESULT_ENEMYBREAK_WIDTH_INI         (15.0f)
 #define GAME_GAMERESULT_ENEMYBREAK_HEIGHT_INI        (15.0f)
 #define GAME_GAMERESULT_ENEMYBREAK_INTERVAL_INI      (D3DXVECTOR3(-30.0f, GAME_GAMERESULT_ENEMY_INTERVAL_INI, 0.0f))
-#define GAME_GAMERESULT_ENEMYBREAK_PRIORITY          (6)
+#define GAME_GAMERESULT_ENEMYBREAK_PRIORITY          (8)
 
 // ゲーム内リザルト用トータルロゴポリゴン初期化用
 #define GAME_GAMERESULT_TOTALLOGO_POS_INI            (D3DXVECTOR3(370.0f, 580.0f, 0.0f))
 #define GAME_GAMERESULT_TOTALLOGO_COL_INI            (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define GAME_GAMERESULT_TOTALLOGO_WIDTH_INI          (80.0f)
 #define GAME_GAMERESULT_TOTALLOGO_HEIGHT_INI         (15.0f)
-#define GAME_GAMERESULT_TOTALLOGO_PRIORITY           (6)
+#define GAME_GAMERESULT_TOTALLOGO_PRIORITY           (8)
 #define GAME_GAMERESULT_TOTALLOGO_TEXIDX             (12)
 
 // ゲーム内リザルト用トータルラインポリゴン初期化用
 #define GAME_GAMERESULT_TOTALLINE_POS_INI            (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 545.0f, 0.0f))
 #define GAME_GAMERESULT_TOTALLINE_COL_INI            (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define GAME_GAMERESULT_TOTALLINE_WIDTH_INI          (180.0f)
-#define GAME_GAMERESULT_TOTALLINE_HEIGHT_INI         (5.0f)
-#define GAME_GAMERESULT_TOTALLINE_PRIORITY           (6)
+#define GAME_GAMERESULT_TOTALLINE_HEIGHT_INI         (3.2f)
+#define GAME_GAMERESULT_TOTALLINE_PRIORITY           (8)
 
 // ゲーム内リザルト用トータルスコアポリゴン初期化用
 #define GAME_GAMERESULT_TOTALSCORE_POS_INI           (D3DXVECTOR3(540.0f, 580.0f, 0.0f))
@@ -274,7 +293,7 @@
 #define GAME_GAMERESULT_TOTALSCORE_WIDTH_INI         (15.0f)
 #define GAME_GAMERESULT_TOTALSCORE_HEIGHT_INI        (15.0f)
 #define GAME_GAMERESULT_TOTALSCORE_INTERVAL_INI      (D3DXVECTOR3(-30.0f, 0.0f, 0.0f))
-#define GAME_GAMERESULT_TOTALSCORE_PRIORITY          (6)
+#define GAME_GAMERESULT_TOTALSCORE_PRIORITY          (8)
 
 // ゲーム内リザルト用ボーナススコアロゴポリゴン初期化用
 #define GAME_GAMERESULT_BONUS_ADDPOS                 (SCREEN_WIDTH / 2.0f)
@@ -283,7 +302,7 @@
 #define GAME_GAMERESULT_BONUSSCORELOGO_WIDTH_INI     (120.0f)
 #define GAME_GAMERESULT_BONUSSCORELOGO_HEIGHT_INI    (17.0f)
 #define GAME_GAMERESULT_BONUSSCORELOGO_TEXIDX        (25)
-#define GAME_GAMERESULT_BONUSSCORELOGO_PRIORITY      (6)
+#define GAME_GAMERESULT_BONUSSCORELOGO_PRIORITY      (8)
 
 // ゲーム内リザルト用ボーナスポイントロゴポリゴン初期化用
 #define GAME_GAMERESULT_BONUSPOINTLOGO_POS_INI       (D3DXVECTOR3(430.0f, 680.0f, 0.0f))
@@ -291,7 +310,7 @@
 #define GAME_GAMERESULT_BONUSPOINTLOGO_WIDTH_INI     (30.0f)
 #define GAME_GAMERESULT_BONUSPOINTLOGO_HEIGHT_INI    (20.0f)
 #define GAME_GAMERESULT_BONUSPOINTLOGO_TEXIDX        (11)
-#define GAME_GAMERESULT_BONUSPOINTLOGO_PRIORITY      (6)
+#define GAME_GAMERESULT_BONUSPOINTLOGO_PRIORITY      (8)
 
 // ゲーム内リザルト用ボーナススコアロゴポリゴン初期化用
 #define GAME_GAMERESULT_BONUSSCORE_POS_INI           (D3DXVECTOR3(320.0f, 680.0f, 0.0f))
@@ -299,7 +318,7 @@
 #define GAME_GAMERESULT_BONUSSCORE_WIDTH_INI         (15.0f)
 #define GAME_GAMERESULT_BONUSSCORE_HEIGHT_INI        (15.0f)
 #define GAME_GAMERESULT_BONUSSCORE_INTERVAL_INI      (D3DXVECTOR3(-30.0f, 0.0f, 0.0f))
-#define GAME_GAMERESULT_BONUSSCORE_PRIORITY          (6)
+#define GAME_GAMERESULT_BONUSSCORE_PRIORITY          (8)
 
 // ポーズしたプレイヤー番号表示用ポリゴン初期化用
 #define GAME_PAUSE_PLAYERNUMBER_POS_INI              (D3DXVECTOR3(120.0f, 60.0f, 0.0f))
@@ -614,6 +633,7 @@ void CGame::Update(void)
 		break;
 	}
 
+#ifdef GAME_MAPEVENT
 	// マップの状態によって処理わけ
 	switch (CCharaSelect::GetStageType())
 	{
@@ -621,6 +641,7 @@ void CGame::Update(void)
 		MapEvent_Hinamatsuri();
 		break;
 	}
+#endif
 
 	// プレイヤーをリスポーンさせるかチェック
 	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
@@ -666,17 +687,16 @@ void CGame::Update(void)
 	strcpy(m_aDeleteEnemy, "\0");
 	m_nNumDeleteBlock = 0;
 	strcpy(m_aDeleteBlock, "\0");
+	m_nNumDeleteItem = 0;
+	strcpy(m_aDeleteItem, "\0");
 
 	CDebugProc::Print(1, "ゲーム画面\n");
 	if (CManager::GetClient() != NULL)
 	{
 		CDebugProc::Print(1, "クライアント番号      : %d\n", CManager::GetClient()->GetClientId());
 	}
-	CDebugProc::Print(1, "読み込んだマップ数    : %d\n", m_nNumMap);
-	CDebugProc::Print(1, "マップの種類番号      : %d\n", CCharaSelect::GetStageType());
 	CDebugProc::Print(1, "プレイヤー1の種類番号 : %d\n", CCharaSelect::GetPlayerNumber(0));
 	CDebugProc::Print(1, "プレイヤー2の種類番号 : %d\n\n", CCharaSelect::GetPlayerNumber(1));
-	CDebugProc::Print(1, "現在のマップ番号      : %d\n", m_nMapIdx);
 	CDebugProc::Print(1, "現在のステージ番号    : %d\n", m_nStageIdx);
 	CDebugProc::Print(1, "ゲームカウンター      : %d\n", m_nGameCounter);
 	CDebugProc::Print(1, "現在生成された敵の数  : %d\n", m_nSpawnEnemyCount);
@@ -738,6 +758,18 @@ void CGame::DeleteEnemy(const int nIdx)
 }
 
 //=============================================================================
+// ゲームの消すアイテムのデータを設定
+//=============================================================================
+void CGame::DeleteItem(const int nIdx)
+{
+	m_nNumDeleteItem++;
+	char aData[64] = "\0";
+	sprintf(aData, "%d", nIdx);
+	strcat(m_aDeleteItem, aData);
+	strcat(m_aDeleteItem, " ");
+}
+
+//=============================================================================
 // ゲームのプレイヤーを空にする処理
 //=============================================================================
 void CGame::DeletePlayer(CPlayer *pPlayer, const int nIdx)
@@ -770,12 +802,24 @@ void CGame::SetDataToServer(void)
 	{// 自分がホストなら
 	    // ゲームのデータを設定
 		SetDataToServerFromGame();
+
 		// 敵のデータを設定
 		SetDataToServerFromEnemy();
+
 		// 敵の弾のデータを設定
 		SetDataToServerFromEnemyBullet();
+
 		// 消すブロックのデータを設定
 		SetDataToServerFromDeleteBlock();
+
+		// アイテムのデータを設定
+		SetDataToServerFromItem();
+
+		// 敵のスポーン数を設定
+		SetDataToServerFromSpawnEnemyCount();
+
+		// マップイベントのデータを設定
+		SetDataToServerFromMapEvent();
 	}
 
 	// プレイヤーの弾情報を設定
@@ -791,6 +835,9 @@ void CGame::SetDataToServer(void)
 
 		// 自身の状態を設定
 		SetDataToServerFromClientState();
+
+		// 消すアイテムのデータを設定
+		SetDataToServerFromDeleteItem();
 	}
 
 	// 倒した敵の数を設定
@@ -1075,6 +1122,73 @@ char *CGame::GetDataToEnemyBullet(CBullet *pBullet, char *pStr)
 }
 
 //=============================================================================
+// ゲームのサーバーに送るアイテムデータを設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromItem(void)
+{
+	int nNumItem = 0;
+	char aData[64] = "\0";
+	char aItemData[MAX_SERVER_DATA] = "\0";
+
+	// アイテムの数を設定
+	nNumItem = CItem::GetNumAll();
+
+	// アイテムの数を設定
+	CManager::GetClient()->Print("%d", nNumItem);
+	CManager::GetClient()->Print(" ");
+	if (nNumItem < 1) return;
+
+	// アイテムのデータを設定する
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ITEM)
+			{// アイテムクラスだった
+				strcat(aItemData, GetDataToItem((CItem*)pScene, aData));
+				strcpy(aData, "\0");
+			}
+			pScene = pSceneNext;
+		}
+	}
+
+	// アイテムのデータを設定
+	CManager::GetClient()->Print("%s", aItemData);
+}
+
+//=============================================================================
+// ゲームのアイテムのデータを文字列に変換する処理
+//=============================================================================
+char *CGame::GetDataToItem(CItem *pItem, char *pStr)
+{
+	char aData[64] = "\0";
+
+	// アイテムの座標を設定
+	D3DXVECTOR3 ItemPos = pItem->GetPos();
+	sprintf(aData, "%.1f %.1f %.1f", ItemPos.x, ItemPos.y, ItemPos.z);
+	strcat(pStr, aData);
+	strcat(pStr, " ");
+
+	// アイテムの番号を設定
+	int nItemIdx = pItem->GetIdx();
+	sprintf(aData, "%d", nItemIdx);
+	strcat(pStr, aData);
+	strcat(pStr, " ");
+
+	// アイテムの種類を設定
+	int nItemType = pItem->GetType();
+	sprintf(aData, "%d", nItemType);
+	strcat(pStr, aData);
+	strcat(pStr, " ");
+
+	return pStr;
+}
+
+//=============================================================================
 // ゲームのサーバーに送る消すブロックのデータを設定する処理
 //=============================================================================
 void CGame::SetDataToServerFromDeleteBlock(void)
@@ -1105,6 +1219,15 @@ void CGame::SetDataToServerFromDeleteEnemy(void)
 }
 
 //=============================================================================
+// ゲームのサーバーに送る敵の数を設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromSpawnEnemyCount(void)
+{
+	CManager::GetClient()->Print("%d", m_nSpawnEnemyCount);
+	CManager::GetClient()->Print(" ");
+}
+
+//=============================================================================
 // ゲームのサーバーに送る状態を設定する処理
 //=============================================================================
 void CGame::SetDataToServerFromClientState(void)
@@ -1112,6 +1235,20 @@ void CGame::SetDataToServerFromClientState(void)
 	// 状態を設定
 	CManager::GetClient()->Print("%d", m_State);
 	CManager::GetClient()->Print(" ");
+}
+
+//=============================================================================
+// ゲームのサーバーに消すアイテムのデータを設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromDeleteItem(void)
+{
+	CManager::GetClient()->Print("%d", m_nNumDeleteItem);
+	CManager::GetClient()->Print(" ");
+	if (m_nNumDeleteItem > 0)
+	{
+		CManager::GetClient()->Print("%s", m_aDeleteItem);
+		CManager::GetClient()->Print(" ");
+	}
 }
 
 //=============================================================================
@@ -1132,6 +1269,21 @@ void CGame::SetDataToServerFromBreakEnemy(void)
 		CManager::GetClient()->Print("%d", m_nNumBreakEnemy[nIdxClient][nCntType]);
 		CManager::GetClient()->Print(" ");
 	}
+
+	CManager::GetClient()->Print("%d", m_nScore[nIdxClient]);
+	CManager::GetClient()->Print(" ");
+}
+
+//=============================================================================
+// ゲームのサーバーに送る倒した敵の数を設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromMapEvent(void)
+{
+	int nHinaEvent = m_HinaEvent;
+	CManager::GetClient()->Print("%d", nHinaEvent);
+	CManager::GetClient()->Print(" ");
+	CManager::GetClient()->Print("%d", m_nNextEvent);
+	CManager::GetClient()->Print(" ");
 }
 
 //=============================================================================
@@ -1160,12 +1312,24 @@ void CGame::GetDataFromServer(void)
 	{// ホストじゃなかったら
 	    // ゲームの状態を設定
 		pStr = SetDataToGameFromServer(pStr);
+
 		// 敵のデータを設定
 		pStr = SetDataToEnemyFromServer(pStr);
+
 		// 敵の弾のデータを設定
 		pStr = SetDataToEnemyBulletFromServer(pStr);
+
 		// 消すブロックのデータを設定
 		pStr = SetDataToDeleteBlock(pStr);
+
+		// アイテムのデータを設定
+		pStr = SetDataToItemFromServer(pStr);
+
+		// 敵の数のデータを設定
+		pStr = SetDataToSpawnEnemyCount(pStr);
+
+		// マップイベントのデータを設定
+		pStr = SetDataToMapEvent(pStr);
 	}
 
 	// プレイヤーの弾のデータを設定
@@ -1181,6 +1345,9 @@ void CGame::GetDataFromServer(void)
 
 		// 相手の状態を設定
 		pStr = SetDataToClientState(pStr);
+
+		// 消すアイテムのデータを設定
+		pStr = SetDataToDeleteItem(pStr);
 	}
 
 	// 敵を倒した数を設定
@@ -1210,6 +1377,10 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 			m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->Uninit();
 			m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] = NULL;
 			m_nPlayerStock[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]--;
+			if (m_pUI != NULL)
+			{
+				m_pUI->ReCreatePlayerStock(&m_nPlayerStock[0]);
+			}
 		}
 	}
 	else if(nNumPlayer == 1)
@@ -1494,7 +1665,7 @@ char *CGame::SetDataToEnemy(CEnemy *pEnemy, char *pStr)
 		D3DXVECTOR3 pos = D3DXVECTOR3(fEnemyPosX, fEnemyPosY, fEnemyPosZ);
 		D3DXVECTOR3 rot = D3DXVECTOR3(fEnemyRotX, fEnemyRotY, fEnemyRotZ);
 		pEnemy = m_pEnemyManager[nEnemyType]->SetEnemy(pos, rot, nEnemyType);
-		if (pEnemy == NULL)return pStr;
+		if (pEnemy == NULL && pEnemyData != NULL)return pStr;
 		if (pEnemyData->GetItem() == true)
 		{
 			pEnemy->SetItemData(pEnemyData->GetItemType());
@@ -1969,6 +2140,188 @@ char *CGame::SetDataToCreateEnemyBullet(char *pStr)
 }
 
 //=============================================================================
+// ゲームのサーバーから送られたデータをアイテムに設定する処理
+//=============================================================================
+char *CGame::SetDataToItemFromServer(char *pStr)
+{
+	int nWord = 0;
+	int nNumItem = 0;
+
+	// 生成されている弾の数を読み取る
+	nNumItem = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// 数合わせ
+	ReleaseItem(nNumItem);
+	if (nNumItem == 0) return pStr;
+
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ITEM && nNumItem > 0)
+			{// アイテムクラスだった
+				pStr = SetDataToItem((CItem*)pScene, pStr, &nNumItem);
+			}
+			pScene = pSceneNext;
+		}
+	}
+
+	// 足りないアイテムは新たに生成しデータを設定
+	for (int nCntItem = 0; nCntItem < nNumItem; nCntItem++)
+	{
+		pStr = SetDataToCreateItem(pStr);
+	}
+
+	return pStr;
+}
+
+//=============================================================================
+// 文字列をデータに変換しアイテムに設定する
+//=============================================================================
+char *CGame::SetDataToItem(CItem *pItem, char *pStr, int *pNumItem)
+{
+	int nWord = 0;
+	float fItemPosX = 0.0f;
+	float fItemPosY = 0.0f;
+	float fItemPosZ = 0.0f;
+	int nItemIdx = 0;
+	int nItemType = 0;
+
+	// アイテムの座標を読み取る
+	fItemPosX = CFunctionLib::ReadFloat(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+	fItemPosY = CFunctionLib::ReadFloat(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+	fItemPosZ = CFunctionLib::ReadFloat(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// アイテムの番号
+	nItemIdx = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// アイテムの種類番号
+	nItemType = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// アイテムの種類を取得し違うなら作り替える
+	int nItemTypeOld = pItem->GetType();
+	if (nItemType != nItemTypeOld)
+	{
+		// 破棄する
+		pItem->Uninit();
+		pItem = NULL;
+		CScene::DeathCheck();
+
+		// 生成しなおす
+		pItem = CreateItem(D3DXVECTOR3(fItemPosX, fItemPosY, fItemPosZ), INITIALIZE_D3DXVECTOR3, nItemType);
+		pItem->SetIdx(nItemIdx);
+	}
+	else
+	{// 同じ種類のアイテムである
+	    // アイテムにデータを設定
+		pItem->SetPos(D3DXVECTOR3(fItemPosX, fItemPosY, fItemPosZ));
+		pItem->SetIdx(nItemIdx);
+	}
+	*pNumItem = *pNumItem - 1;
+
+	return pStr;
+}
+
+//=============================================================================
+// 文字列をデータに変換し生成したアイテムに設定する
+//=============================================================================
+char *CGame::SetDataToCreateItem(char *pStr)
+{
+	int nWord = 0;
+	float fItemPosX = 0.0f;
+	float fItemPosY = 0.0f;
+	float fItemPosZ = 0.0f;
+	int nItemIdx = 0;
+	int nItemType = 0;
+
+	// アイテムの座標を読み取る
+	fItemPosX = CFunctionLib::ReadFloat(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+	fItemPosY = CFunctionLib::ReadFloat(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+	fItemPosZ = CFunctionLib::ReadFloat(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// アイテムの番号を読み取る
+	nItemIdx = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// アイテムの種類を読み取る
+	nItemType = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// アイテムを生成する(同時に必要なデータを設定)
+	CItem *pItem = CreateItem(D3DXVECTOR3(fItemPosX, fItemPosY, fItemPosZ), INITIALIZE_D3DXVECTOR3, nItemType);
+	if (pItem != NULL)
+	{
+		pItem->SetIdx(nItemIdx);
+	}
+
+	return pStr;
+}
+
+//=============================================================================
+// アイテムの数を合わせる処理
+//=============================================================================
+void CGame::ReleaseItem(int nNumItem)
+{
+	// 現在のアイテムの数を設定
+	int nAllItem = 0;
+	nAllItem = CItem::GetNumAll();
+	if (nAllItem < nNumItem)return;
+
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ITEM && nAllItem > nNumItem)
+			{// アイテムクラスだった
+				ReleaseCheckItem((CItem*)pScene, &nAllItem);
+			}
+			pScene = pSceneNext;
+		}
+	}
+
+	// 死亡フラグチェック
+	CScene::DeathCheck();
+}
+
+//=============================================================================
+// アイテムを破棄するかチェックする処理
+//=============================================================================
+void CGame::ReleaseCheckItem(CItem *pItem, int *pNumItem)
+{
+	pItem->Uninit();
+	pItem = NULL;
+	*pNumItem = *pNumItem - 1;
+}
+
+//=============================================================================
 // ゲームの消すブロックのデータを設定
 //=============================================================================
 char *CGame::SetDataToDeleteBlock(char *pStr)
@@ -1981,7 +2334,7 @@ char *CGame::SetDataToDeleteBlock(char *pStr)
 	nNumDeleteBlock = CFunctionLib::ReadInt(pStr, "");
 	nWord = CFunctionLib::PopString(pStr, "");
 	pStr += nWord;
-	if (nNumDeleteBlock == 0) return pStr;
+	if (nNumDeleteBlock <= 0) return pStr;
 
 	// 消す分だけメモリを確保
 	pDeleteIdx = new int[nNumDeleteBlock];
@@ -2052,7 +2405,7 @@ char *CGame::SetDataToDeleteEnemy(char *pStr)
 	nNumDeleteEnemy = CFunctionLib::ReadInt(pStr, "");
 	nWord = CFunctionLib::PopString(pStr, "");
 	pStr += nWord;
-	if (nNumDeleteEnemy == 0) return pStr;
+	if (nNumDeleteEnemy <= 0) return pStr;
 
 	// 消す分だけメモリを確保
 	pDeleteIdx = new int[nNumDeleteEnemy];
@@ -2106,6 +2459,77 @@ void CGame::ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nNumDe
 			pEnemy->SetDeathEffect();
 			pEnemy->Uninit();
 			pEnemy = NULL;
+		}
+	}
+}
+
+//=============================================================================
+// ゲームの消すアイテムのデータを設定
+//=============================================================================
+char *CGame::SetDataToDeleteItem(char *pStr)
+{
+	int nWord = 0;
+	int nNumDeleteItem = 0;
+	int nCntDelete = 0;
+	int *pDeleteIdx = NULL;
+
+	// 消す敵の数を読み取る
+	nNumDeleteItem = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+	if (nNumDeleteItem <= 0) return pStr;
+
+	// 消す分だけメモリを確保
+	pDeleteIdx = new int[nNumDeleteItem];
+	for (int nCnt = 0; nCnt < nNumDeleteItem; nCnt++)
+	{
+		pDeleteIdx[nCnt] = CFunctionLib::ReadInt(pStr, "");
+		nWord = CFunctionLib::PopString(pStr, "");
+		pStr += nWord;
+	}
+
+	// 消す数だけ敵を開放する
+	CScene *pScene = NULL;
+	CScene *pSceneNext = NULL;
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{// 処理優先順位の数だけ繰り返し
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// ポインタが空になるまで
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_ITEM && m_State == STATE_NORMAL)
+			{// アイテムクラスだった
+				ReleaseCheckDeleteItem((CItem*)pScene, pDeleteIdx, &nNumDeleteItem);
+			}
+			pScene = pSceneNext;
+		}
+	}
+
+	// 死亡フラグチェック
+	CScene::DeathCheck();
+
+	// メモリの開放
+	if (pDeleteIdx != NULL)
+	{
+		delete[] pDeleteIdx;
+		pDeleteIdx = NULL;
+	}
+
+	return pStr;
+}
+
+//=============================================================================
+// ゲームのアイテムを破棄するかチェックする処理
+//=============================================================================
+void CGame::ReleaseCheckDeleteItem(CItem *pItem, int *pDeleteIdx, int *nNumDeleteItem)
+{
+	int nIdx = pItem->GetIdx();
+	for (int nCntDeleteNum = 0; nCntDeleteNum < *nNumDeleteItem; nCntDeleteNum++)
+	{// 消す数分繰り返し
+		if (nIdx == pDeleteIdx[nCntDeleteNum] && pItem != NULL)
+		{// 番号一致
+			pItem->Uninit();
+			pItem = NULL;
 		}
 	}
 }
@@ -2180,6 +2604,82 @@ char *CGame::SetDataToBreakEnemy(char *pStr)
 		m_nNumBreakEnemy[(nIdxClient + 1) % MAX_NUM_PLAYER][nCntType] = nNumBreak;
 	}
 
+	// スコアを取得
+	m_nScore[(nIdxClient + 1) % MAX_NUM_PLAYER] = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	return pStr;
+}
+
+//=============================================================================
+// ゲームの敵のスポーン数を取得する処理
+//=============================================================================
+char *CGame::SetDataToSpawnEnemyCount(char *pStr)
+{
+	// スポーン数を読み取る
+	int nSpawn = CFunctionLib::ReadInt(pStr, "");
+	int nWord = 0;
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	if (nSpawn > m_nSpawnEnemyCount)
+	{
+		m_nSpawnEnemyCount = nSpawn;
+
+		// UIを整える
+		CMap *pMap = GetMap();
+		if (m_pUI != NULL && pMap != NULL)
+		{
+			m_pUI->ReCreateEnemyIcon(pMap->GetNumEnemyListData() - nSpawn);
+		}
+	}
+
+	return pStr;
+}
+
+//=============================================================================
+// ゲームのマップイベントを取得する処理
+//=============================================================================
+char *CGame::SetDataToMapEvent(char *pStr)
+{
+	// マップイベントを読み取る
+	int nHinaEvent = CFunctionLib::ReadInt(pStr, "");
+	int nWord = 0;
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+	int nNextEvent = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// イベントの種類によって処理わけ
+	int nHinaEventOld = m_HinaEvent;
+	m_HinaEvent = (HINAEVENT)nHinaEvent;
+	m_nNextEvent = nNextEvent;
+
+	if (nHinaEventOld == HINAEVENT_NORMAL && m_HinaEvent == HINAEVENT_EVENTSTART)
+	{
+		CreateEventStartLogo();
+	}
+	else if (nHinaEventOld == HINAEVENT_EVENTSTART && m_HinaEvent == HINAEVENT_CHERRYBLOSSOMS)
+	{
+		CManager::GetSound()->PlaySound(GAME_BLOSSOMS_BGMIDX);
+		ReleaseEventStartLogo();
+	}
+	else if (nHinaEventOld == HINAEVENT_CHERRYBLOSSOMS && m_HinaEvent == HINAEVENT_NORMAL)
+	{
+		CManager::GetSound()->StopSound(GAME_BLOSSOMS_BGMIDX);
+	}
+	else if (nHinaEventOld == HINAEVENT_EVENTSTART && m_HinaEvent == HINAEVENT_DROP_HINAARARE)
+	{
+		CManager::GetSound()->PlaySound(GAME_HINAARARE_BGMIDX);
+		ReleaseEventStartLogo();
+	}
+	else if (nHinaEventOld == HINAEVENT_DROP_HINAARARE && m_HinaEvent == HINAEVENT_NORMAL)
+	{
+		CManager::GetSound()->StopSound(GAME_HINAARARE_BGMIDX);
+	}
+
 	return pStr;
 }
 
@@ -2214,11 +2714,17 @@ void CGame::StageSelectUpdate(void)
 	}
 
 
-	if (CManager::GetClient()->GetClientId() != 0)
+	int nIdxClient = 0;
+	CClient *pClient = CManager::GetClient();
+	if(pClient != NULL)
 	{
-		ReleaseStageNumber();
-		CalcStageDigits();
-		CreateStageNumber();
+		nIdxClient = pClient->GetClientId();
+		if (nIdxClient != 0)
+		{
+			ReleaseStageNumber();
+			CalcStageDigits();
+			CreateStageNumber();
+		}
 	}
 
 	CInputKeyboard *pKey = CManager::GetKeyboard();
@@ -2322,6 +2828,11 @@ void CGame::NormalUpdate(void)
 		m_bPauseOpen = true;
 		CManager::GetSound()->PlaySound(GAME_SE_PAUSE_OPEN_IDX);
 		CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX, true);
+		CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX, true);
+		CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX + 1, true);
+		CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX + 2, true);
+		CManager::GetSound()->StopSound(GAME_BLOSSOMS_BGMIDX);
+		CManager::GetSound()->StopSound(GAME_HINAARARE_BGMIDX);
 	}
 	else if (pXInput != NULL)
 	{// コントローラー判定
@@ -2334,6 +2845,11 @@ void CGame::NormalUpdate(void)
 				CreatePause(nCntPlayer);
 				CManager::GetSound()->PlaySound(GAME_SE_PAUSE_OPEN_IDX);
 				CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX, true);
+				CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX, true);
+				CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX + 1, true);
+				CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX + 2, true);
+				CManager::GetSound()->StopSound(GAME_BLOSSOMS_BGMIDX);
+				CManager::GetSound()->StopSound(GAME_HINAARARE_BGMIDX);
 			}
 		}
 	}
@@ -2350,14 +2866,17 @@ void CGame::NormalUpdate(void)
 		if (pKey->GetTrigger(DIK_1) == true && pKey->GetPress(DIK_LSHIFT) == true)
 		{
 			SetState(STATE_PREV_MAP);
+			StopBGM();
 		}
 		else if (pKey->GetTrigger(DIK_2) == true && pKey->GetPress(DIK_LSHIFT) == true)
 		{
 			SetState(STATE_NEXT_MAP);
+			StopBGM();
 		}
 		else if (pKey->GetTrigger(DIK_3) == true && pKey->GetPress(DIK_LSHIFT) == true)
 		{
 			SetState(STATE_STAGE_SELECT);
+			StopBGM();
 		}
 	}
 
@@ -2424,21 +2943,27 @@ void CGame::NormalUpdate(void)
 	// ステージイベントデバッグ
 	if (CManager::GetKeyboard()->GetTrigger(DIK_1) == true && CManager::GetKeyboard()->GetPress(DIK_RSHIFT) == true)
 	{
-		m_HinaEvent = HINAEVENT_CHERRYBLOSSOMS;
+		m_nNextEvent = HINAEVENT_CHERRYBLOSSOMS;
+		m_HinaEvent = HINAEVENT_EVENTSTART;
 		m_nEventCounter = 0;
 		m_nNotEventCounter = 0;
+		CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + (m_nNextEvent - 1));
 	}
 	else if (CManager::GetKeyboard()->GetTrigger(DIK_2) == true && CManager::GetKeyboard()->GetPress(DIK_RSHIFT) == true)
 	{
-		m_HinaEvent = HINAEVENT_DROP_ITEM;
+		m_nNextEvent = HINAEVENT_DROP_ITEM;
+		m_HinaEvent = HINAEVENT_EVENTSTART;
 		m_nEventCounter = 0;
 		m_nNotEventCounter = 0;
+		CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + (m_nNextEvent - 1));
 	}
 	else if (CManager::GetKeyboard()->GetTrigger(DIK_3) == true && CManager::GetKeyboard()->GetPress(DIK_RSHIFT) == true)
 	{
-		m_HinaEvent = HINAEVENT_DROP_HINAARARE;
+		m_nNextEvent = HINAEVENT_DROP_HINAARARE;
+		m_HinaEvent = HINAEVENT_EVENTSTART;
 		m_nEventCounter = 0;
 		m_nNotEventCounter = 0;
+		CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + (m_nNextEvent - 1));
 	}
 
 	CDebugProc::Print(1, "デバッグコマンド\n");
@@ -2454,7 +2979,9 @@ void CGame::NormalUpdate(void)
 	CDebugProc::Print(1, "[LSHIFT]キー + [F6]キー       : スコップアイテムイベント\n");
 	CDebugProc::Print(1, "[LSHIFT]キー + [F7]キー       : 時計アイテムイベント\n");
 	CDebugProc::Print(1, "[LSHIFT]キー + [F8]～[F9]キー : ヘルメットアイテムイベント\n");
-	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : 花びら舞い散る\n\n");
+	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : 桜吹雪マップイベント開始\n");
+	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : アイテム投下マップイベント開始\n");
+	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : ひなあられ投下マップイベント開始\n\n");
 
 #endif
 
@@ -2485,6 +3012,36 @@ void CGame::PauseUpdate(void)
 			ReleasePause();
 			CScene::DeathCheck();
 			CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+
+			// マップイベント待機状態ならば次のイベントによって処理分けする
+			if (m_HinaEvent == HINAEVENT_EVENTSTART)
+			{
+				switch (m_nNextEvent)
+				{
+				case HINAEVENT_CHERRYBLOSSOMS:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX, true);
+					break;
+				case HINAEVENT_DROP_ITEM:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + 1, true);
+					break;
+				case HINAEVENT_DROP_HINAARARE:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + 2, true);
+					break;
+				}
+			}
+
+			// マップイベント中だったら再生しなおす
+			switch (m_HinaEvent)
+			{
+			case HINAEVENT_CHERRYBLOSSOMS:
+				CManager::GetSound()->PlaySound(GAME_BLOSSOMS_BGMIDX);
+				break;
+			case HINAEVENT_DROP_ITEM:
+				break;
+			case HINAEVENT_DROP_HINAARARE:
+				CManager::GetSound()->PlaySound(GAME_HINAARARE_BGMIDX);
+				break;
+			}
 		}
 	}
 	else if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL2P)
@@ -2503,6 +3060,36 @@ void CGame::PauseUpdate(void)
 			ReleasePause();
 			CScene::DeathCheck();
 			CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+
+			// マップイベント待機状態ならば次のイベントによって処理分けする
+			if (m_HinaEvent == HINAEVENT_EVENTSTART)
+			{
+				switch (m_nNextEvent)
+				{
+				case HINAEVENT_CHERRYBLOSSOMS:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX, true);
+					break;
+				case HINAEVENT_DROP_ITEM:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + 1, true);
+					break;
+				case HINAEVENT_DROP_HINAARARE:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + 2, true);
+					break;
+				}
+			}
+
+			// マップイベント中だったら再生しなおす
+			switch (m_HinaEvent)
+			{
+			case HINAEVENT_CHERRYBLOSSOMS:
+				CManager::GetSound()->PlaySound(GAME_BLOSSOMS_BGMIDX);
+				break;
+			case HINAEVENT_DROP_ITEM:
+				break;
+			case HINAEVENT_DROP_HINAARARE:
+				CManager::GetSound()->PlaySound(GAME_HINAARARE_BGMIDX);
+				break;
+			}
 		}
 	}
 	else if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
@@ -2520,6 +3107,36 @@ void CGame::PauseUpdate(void)
 			ReleasePause();
 			CScene::DeathCheck();
 			CManager::GetSound()->PlaySound(GAME_BGM_HINAMAP_IDX, true);
+
+			// マップイベント待機状態ならば次のイベントによって処理分けする
+			if (m_HinaEvent == HINAEVENT_EVENTSTART)
+			{
+				switch (m_nNextEvent)
+				{
+				case HINAEVENT_CHERRYBLOSSOMS:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX, true);
+					break;
+				case HINAEVENT_DROP_ITEM:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + 1, true);
+					break;
+				case HINAEVENT_DROP_HINAARARE:
+					CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + 2, true);
+					break;
+				}
+			}
+
+			// マップイベント中だったら再生しなおす
+			switch (m_HinaEvent)
+			{
+			case HINAEVENT_CHERRYBLOSSOMS:
+				CManager::GetSound()->PlaySound(GAME_BLOSSOMS_BGMIDX);
+				break;
+			case HINAEVENT_DROP_ITEM:
+				break;
+			case HINAEVENT_DROP_HINAARARE:
+				CManager::GetSound()->PlaySound(GAME_HINAARARE_BGMIDX);
+				break;
+			}
 		}
 	}
 }
@@ -3041,7 +3658,9 @@ void CGame::EndUpdate(void)
 	{// ある程度時間がたった
 		SetState(STATE_RESULT);
 		CreateGameResult();
-		CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX);
+
+		// 音楽を停止
+		StopBGM();
 	}
 }
 
@@ -3058,6 +3677,9 @@ void CGame::EndRetryUpdate(void)
 	if (pFade->GetFade() == CFade::FADE_NONE)
 	{
 		pFade->SetFade(CManager::MODE_GAME);
+
+		// 音楽を停止
+		StopBGM();
 	}
 }
 
@@ -3074,7 +3696,23 @@ void CGame::EndQuitUpdate(void)
 	if (pFade->GetFade() == CFade::FADE_NONE)
 	{
 		pFade->SetFade(CManager::MODE_TITLE);
+
+		// 音楽を停止
+		StopBGM();
 	}
+}
+
+//=============================================================================
+// ゲームのBGMを停止させる処理
+//=============================================================================
+void CGame::StopBGM(void)
+{
+	CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX);
+	CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX, true);
+	CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX + 1, true);
+	CManager::GetSound()->StopSound(GAME_MAPEVENT_SOUNDIDX + 2, true);
+	CManager::GetSound()->StopSound(GAME_BLOSSOMS_BGMIDX);
+	CManager::GetSound()->StopSound(GAME_HINAARARE_BGMIDX);
 }
 
 
@@ -3092,6 +3730,9 @@ void CGame::ItemEvent_Star(int nPlayerNumber)
 {
 	// スコアを加算する
 	m_nScore[nPlayerNumber] += GAME_ITEM_SCORE;
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(GAME_ITEMEVENT_SE_STAR);
 }
 
 //=============================================================================
@@ -3123,6 +3764,9 @@ void CGame::ItemEvent_Grenade(int nPlayerNumber)
 
 	// スコアを加算する
 	m_nScore[nPlayerNumber] += GAME_ITEM_SCORE;
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(GAME_ITEMEVENT_SE_GRENADE);
 }
 
 //=============================================================================
@@ -3161,6 +3805,9 @@ void CGame::ItemEvent_1Up(int nPlayerNumber)
 
 	// スコアを加算する
 	m_nScore[nPlayerNumber] += GAME_ITEM_SCORE;
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(GAME_ITEMEVENT_SE_1UP);
 }
 
 //=============================================================================
@@ -3172,6 +3819,9 @@ void CGame::ItemEvent_Scoop(int nPlayerNumber)
 
 	// スコアを加算する
 	m_nScore[nPlayerNumber] += GAME_ITEM_SCORE;
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(GAME_ITEMEVENT_SE_SCOOP);
 }
 
 //=============================================================================
@@ -3185,6 +3835,9 @@ void CGame::ItemEvent_Clock(int nPlayerNumber)
 
 	// スコアを加算する
 	m_nScore[nPlayerNumber] += GAME_ITEM_SCORE;
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(GAME_ITEMEVENT_SE_CLOCK);
 }
 
 //=============================================================================
@@ -3194,6 +3847,9 @@ void CGame::ItemEvent_Helmet(int nPlayerNumber)
 {
 	// スコアを加算する
 	m_nScore[nPlayerNumber] += GAME_ITEM_SCORE;
+
+	// 音を鳴らす
+	CManager::GetSound()->PlaySound(GAME_ITEMEVENT_SE_HELMET);
 }
 
 
@@ -3305,6 +3961,9 @@ void CGame::MapEvent_Hinamatsuri_Normal(void)
 
 		// マップイベント開始状態に設定
 		m_HinaEvent = HINAEVENT_EVENTSTART;
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_MAPEVENT_SOUNDIDX + (m_nNextEvent - 1));
 	}
 }
 
@@ -3324,10 +3983,26 @@ void CGame::MapEvent_Hinamatsuri_CherryBlossoms(void)
 
 	// イベントカウンター進行
 	m_nEventCounter++;
+
+	// ホストではないなら処理しない
+	int nIdxClient = 0;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{
+		CClient *pClient = CManager::GetClient();
+		if (pClient != NULL)
+		{
+			nIdxClient = pClient->GetClientId();
+		}
+	}
+	if (nIdxClient != 0) { return; }
+
 	if (m_nEventCounter >= m_CherryBlossomsData.nTime)
 	{// カウンターが一定値になった
 		m_nEventCounter = 0;
 		m_HinaEvent = HINAEVENT_NORMAL;
+
+		// 音を止める
+		CManager::GetSound()->StopSound(GAME_BLOSSOMS_BGMIDX);
 	}
 }
 
@@ -3339,20 +4014,44 @@ void CGame::MapEvent_Hinamatsuri_Drop_Item(void)
 	CDebugProc::Print(1, "アイテムドロップイベント\n");
 	if (m_State != STATE_NORMAL) { return; }
 
+	// ホストではないなら処理しない
+	int nIdxClient = 0;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{
+		CClient *pClient = CManager::GetClient();
+		if (pClient != NULL)
+		{
+			nIdxClient = pClient->GetClientId();
+		}
+	}
+	if (nIdxClient != 0) { return; }
+
 	// 円筒の生成
 	if (m_pItemCylinder == NULL)
 	{
 		// アイテムを出す位置をマス目からランダムで計算
-		int nMassX = rand() % MASS_BLOCK_X;
-		int nMassZ = rand() % MASS_BLOCK_Z;
-		m_ItemDropPos.x = (nMassX * MASS_SIZE_X) + MASS_SIZE_X_HALF - (MASS_BLOCK_X * MASS_SIZE_X_HALF);
-		m_ItemDropPos.z = (nMassZ * MASS_SIZE_Z) + MASS_SIZE_Z_HALF - (MASS_BLOCK_Z * MASS_SIZE_Z_HALF);
-		m_ItemDropPos.y = GAME_DROPITEM_POS_Y;
+		int nCntCheck = 0;
+		do
+		{// 川がある場所以外になったら抜ける
+			int nMassX = rand() % MASS_BLOCK_X;
+			int nMassZ = rand() % MASS_BLOCK_Z;
+			m_ItemDropPos.x = (nMassX * MASS_SIZE_X) + MASS_SIZE_X_HALF - (MASS_BLOCK_X * MASS_SIZE_X_HALF);
+			m_ItemDropPos.z = (nMassZ * MASS_SIZE_Z) + MASS_SIZE_Z_HALF - (MASS_BLOCK_Z * MASS_SIZE_Z_HALF);
+			m_ItemDropPos.y = GAME_DROPITEM_POS_Y;
+			nCntCheck++;
+			if (nCntCheck == 3000)
+			{// 3000回チェックしてだめなら抜ける(ストップバグ防止)
+				break;
+			}
+		} while (MapEvent_Hinamatsuri_Drop_Item_CheckPos() == false);
 
 		// 円筒生成
 		m_pItemCylinder = CItemCylinder::Create(m_ItemDropPos, INITIALIZE_D3DXVECTOR3,
 			GAME_DROPITEM_CYLINDER_COL, GAME_DROPITEM_CYLINDER_HEIGHT, GAME_DROPITEM_CYLINDER_RADIUS,
 			GAME_DROPITEM_CYLINDER_XBLOCK, GAME_DROPITEM_CYLINDER_YBLOCK, GAME_DROPITEM_CYLINDER_PRIORITY);
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_DROPITEM_CYLINDER_SE_IDX);
 
 		// 処理をここで終了させる
 		return;
@@ -3376,6 +4075,9 @@ void CGame::MapEvent_Hinamatsuri_Drop_Item(void)
 
 		// アイテム生成
 		m_pItem = CreateItem(m_ItemDropPos, INITIALIZE_D3DXVECTOR3, (CItem::TYPE)nItemType);
+
+		// 音を鳴らす
+		CManager::GetSound()->PlaySound(GAME_DROPITEM_ITEM_SE_IDX);
 	}
 
 	// アイテムの座標を取得
@@ -3425,6 +4127,55 @@ void CGame::MapEvent_Hinamatsuri_Drop_Item(void)
 	m_HinaEvent = HINAEVENT_NORMAL;
 }
 
+
+//=============================================================================
+// ゲームのアイテムを投下する位置に川がないか判定する処理
+//=============================================================================
+bool CGame::MapEvent_Hinamatsuri_Drop_Item_CheckPos(void)
+{
+	bool bCol = false;
+
+	CScene *pScene = NULL;               // オブジェクトのポインタ
+	CScene *pSceneNext = NULL;           // 次のオブジェクトのポインタ
+
+	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	{
+		pScene = CScene::GetTop(nCntPriority);
+		while (pScene != NULL)
+		{// NULLになるまで繰り返す
+			pSceneNext = pScene->GetNext();
+			if (pScene->GetObjType() == CScene::OBJTYPE_RIVER)
+			{// 川だったら
+				bCol = MapEvent_Hinamatsuri_Drop_Item_CheckRiver((CRiver*)pScene);
+			}
+			// 次のオブジェクトへのポインタを取得
+			pScene = pSceneNext;
+		}
+	}
+
+	return bCol;
+}
+
+//=============================================================================
+// ゲームのアイテムを投下する位置に川がないか判定する処理
+//=============================================================================
+bool CGame::MapEvent_Hinamatsuri_Drop_Item_CheckRiver(CRiver *pRiver)
+{
+	if (pRiver != NULL)
+	{
+		CBoxCollider *pBoxCollider = pRiver->GetBoxCollider();
+		if (pBoxCollider != NULL)
+		{
+			if (pBoxCollider->Collision(&m_ItemDropPos, &m_ItemDropPos, &INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, NULL) == true)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 //=============================================================================
 // ゲームのひな祭りのひなあられを投下するマップイベント処理
 //=============================================================================
@@ -3453,10 +4204,26 @@ void CGame::MapEvent_Hinamatsuri_Drop_Hinaarare(void)
 
 	// イベントカウンター進行
 	m_nEventCounter++;
+
+	// ホストではないなら処理しない
+	int nIdxClient = 0;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{
+		CClient *pClient = CManager::GetClient();
+		if (pClient != NULL)
+		{
+			nIdxClient = pClient->GetClientId();
+		}
+	}
+	if (nIdxClient != 0) { return; }
+
 	if (m_nEventCounter >= m_HinarareData.nTime)
 	{// カウンターが一定値になった
 		m_nEventCounter = 0;
 		m_HinaEvent = HINAEVENT_NORMAL;
+
+		// 音を止める
+		CManager::GetSound()->StopSound(GAME_HINAARARE_BGMIDX);
 	}
 }
 
@@ -3468,18 +4235,25 @@ void CGame::MapEvent_Hinamatsuri_EventStart(void)
 	CDebugProc::Print(1, "マップイベント開始\n");
 
 	// ポリゴンを生成する
-	if (m_pEventStartLogo == NULL)
-	{
-		m_pEventStartLogo = CScene2D::Create(GAME_MAPEVENT_STARTLOGO_POS, GAME_MAPEVENT_STARTLOGO_COL,
-			GAME_MAPEVENT_STARTLOGO_WIDTH, GAME_MAPEVENT_STARTLOGO_HEIGHT, GAME_MAPEVENT_STARTLOGO_PRIORITY);
-		return;
-	}
+	CreateEventStartLogo();
 
 	// 生成されていたら横に動かす
 	D3DXVECTOR3 logoPos = m_pEventStartLogo->GetPos();
 	logoPos.x += GAME_MAPEVENT_STARTLOGO_MOVE;
 	m_pEventStartLogo->SetPos(logoPos);
 	m_pEventStartLogo->SetVtxBuffPos();
+
+	// ホストではないなら処理しない
+	int nIdxClient = 0;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{
+		CClient *pClient = CManager::GetClient();
+		if (pClient != NULL)
+		{
+			nIdxClient = pClient->GetClientId();
+		}
+	}
+	if (nIdxClient != 0) { return; }
 
 	// イベントカウンター進行
 	m_nEventCounter++;
@@ -3488,10 +4262,20 @@ void CGame::MapEvent_Hinamatsuri_EventStart(void)
 		m_nEventCounter = 0;
 		m_HinaEvent = (HINAEVENT)m_nNextEvent;
 
-		if (m_pEventStartLogo != NULL)
+		// イベント開始ロゴを開放
+		ReleaseEventStartLogo();
+
+		// 鳴らす音を開始するイベントよって分ける
+		switch (m_HinaEvent)
 		{
-			m_pEventStartLogo->Uninit();
-			m_pEventStartLogo = NULL;
+		case HINAEVENT_CHERRYBLOSSOMS:
+			CManager::GetSound()->PlaySound(GAME_BLOSSOMS_BGMIDX);
+			break;
+		case HINAEVENT_DROP_ITEM:
+			break;
+		case HINAEVENT_DROP_HINAARARE:
+			CManager::GetSound()->PlaySound(GAME_HINAARARE_BGMIDX);
+			break;
 		}
 	}
 }
@@ -3521,6 +4305,7 @@ void CGame::SetPlayerPosToSpawn(void)
 		{
 			m_pPlayer[CManager::GetClient()->GetClientId()]->SetPos(PlayerPos);
 			m_pPlayer[CManager::GetClient()->GetClientId()]->SetRot(D3DXVECTOR3(0.0f, D3DX_PI, 0.0f));
+			m_pPlayer[CManager::GetClient()->GetClientId()]->SetNowRotInfo(CCharacter::ROT_UP);
 		}
 	}
 	else
@@ -3532,6 +4317,7 @@ void CGame::SetPlayerPosToSpawn(void)
 			{
 				m_pPlayer[nCntPlayer]->SetPos(PlayerPos);
 				m_pPlayer[nCntPlayer]->SetRot(D3DXVECTOR3(0.0f, D3DX_PI, 0.0f));
+				m_pPlayer[nCntPlayer]->SetNowRotInfo(CCharacter::ROT_UP);
 			}
 		}
 	}
@@ -3570,6 +4356,9 @@ void CGame::CheckPlayerResSpawn(int nCntPlayer)
 				pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, GAME_PLAYER_SPAWN_EFFECT_IDX);
 				pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, GAME_PLAYER_SPAWN_EFFECT_IDX + 1);
 			}
+
+			// 音を鳴らす
+			CManager::GetSound()->PlaySound(GAME_SE_PLAYER_RESPAWN_IDX);
 
 			// UIの数字を減らす
 			if (m_pUI != NULL)
@@ -4134,6 +4923,10 @@ void CGame::CreateGameResult_HighScore(void)
 	{
 		m_pHighScoreLogo = CScene2D::Create(GAME_GAMERESULT_HIGHSCORELOGO_POS_INI, GAME_GAMERESULT_HIGHSCORELOGO_COL_INI,
 			GAME_GAMERESULT_HIGHSCORELOGO_WIDTH_INI, GAME_GAMERESULT_HIGHSCORELOGO_HEIGHT_INI, GAME_GAMERESULT_HIGHSCORELOGO_PRIORITY);
+		if (m_pHighScoreLogo != NULL)
+		{
+			m_pHighScoreLogo->BindTexture(GetTextureManager()->GetTexture(GAME_GAMERESULT_HIGHSCORELOGO_TEXIDX));
+		}
 	}
 
 	// 番号表示用ポリゴン生成
@@ -4491,6 +5284,30 @@ void CGame::CreateNotPause(void)
 	if (m_pNotPause != NULL)
 	{
 		m_pNotPause->BindTexture(GetTextureManager()->GetTexture(GAME_PAUSE_NOT_TEXIDX));
+	}
+}
+
+//=============================================================================
+// ゲームのイベント開始ロゴを生成する
+//=============================================================================
+void CGame::CreateEventStartLogo(void)
+{
+	if (m_pEventStartLogo == NULL)
+	{
+		// テクスチャU座標はランダムで計算
+		float fStartTexU = (rand() % GAME_MAPEVENT_STARTLOGO_TEXU_SPLIT) * (1.0f / GAME_MAPEVENT_STARTLOGO_TEXU_SPLIT);
+
+		// テクスチャV座標は次のイベントによって設定
+		float fStartTexV = (1.0f / GAME_MAPEVENT_STARTLOGO_TEXV_SPLIT) * (m_nNextEvent - 1);
+
+		m_pEventStartLogo = CScene2D::Create(GAME_MAPEVENT_STARTLOGO_POS, GAME_MAPEVENT_STARTLOGO_COL,
+			GAME_MAPEVENT_STARTLOGO_WIDTH, GAME_MAPEVENT_STARTLOGO_HEIGHT, GAME_MAPEVENT_STARTLOGO_PRIORITY, 0.0f,
+			fStartTexU, fStartTexV, (1.0f / GAME_MAPEVENT_STARTLOGO_TEXU_SPLIT),
+			(1.0f / GAME_MAPEVENT_STARTLOGO_TEXV_SPLIT));
+		if (m_pEventStartLogo != NULL)
+		{
+			m_pEventStartLogo->BindTexture(GetTextureManager()->GetTexture(GAME_MAPEVENT_STARTLOGO_TEXIDX));
+		}
 	}
 }
 
@@ -4865,6 +5682,21 @@ void CGame::ReleaseNotPause(void)
 		m_pNotPauseBlackBg = NULL;
 	}
 }
+
+
+//=============================================================================
+// ゲームのポーズを押されてない側のポリゴンを開放する
+//=============================================================================
+void CGame::ReleaseEventStartLogo(void)
+{
+	if (m_pEventStartLogo != NULL)
+	{
+		m_pEventStartLogo->Uninit();
+		m_pEventStartLogo = NULL;
+	}
+}
+
+
 
 //*****************************************************************************
 //

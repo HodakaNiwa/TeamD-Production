@@ -197,12 +197,13 @@ void CModel::SetMtxWorld(const LPDIRECT3DDEVICE9 pDevice)
 {
 	D3DXMATRIX mtxRot, mtxTrans, mtxScale, mtxParent; // 計算用マトリックス
 
-													  // ワールドマトリックスの初期化
+	 // ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_MtxWorld);
 
 	// 大きさを反映
-	D3DXMatrixScaling(&mtxScale, m_Scale.x, m_Scale.y, m_Scale.z);
-	D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxScale);
+	m_MtxWorld._11 = m_Scale.x;
+	m_MtxWorld._22 = m_Scale.y;
+	m_MtxWorld._33 = m_Scale.z;
 
 	// 回転を反映
 	D3DXMatrixRotationYawPitchRoll(&mtxRot, m_Rot.y, m_Rot.x, m_Rot.z);

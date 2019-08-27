@@ -10,6 +10,8 @@
 #include "renderer.h"
 #include "basemode.h"
 #include "game.h"
+#include "title.h"
+#include "server.h"
 #include "player.h"
 #include "effectManager.h"
 
@@ -120,6 +122,14 @@ HRESULT CItem::Init(void)
 //=============================================================================
 void CItem::Uninit(void)
 {
+	// 総数を減らす
+	m_nNumAll--;
+
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{// オンライン2人プレイならば
+		OnlineUninit();
+	}
+
 	// オブジェクト3Dの終了処理
 	CObject3D::Uninit();
 }
@@ -242,8 +252,9 @@ void CItem::SetMtxWorld(LPDIRECT3DDEVICE9 pDevice)
 	D3DXMatrixIdentity(&mtxWorld);
 
 	// 大きさを反映
-	D3DXMatrixScaling(&mtxScale, m_Scale.x, m_Scale.y, m_Scale.z);
-	D3DXMatrixMultiply(&mtxWorld, &mtxWorld, &mtxScale);
+	mtxWorld._11 = m_Scale.x;
+	mtxWorld._22 = m_Scale.y;
+	mtxWorld._33 = m_Scale.z;
 
 	// 回転を反映
 	D3DXMatrixRotationYawPitchRoll(&mtxRot, GetRot().y, GetRot().x, GetRot().z);
@@ -308,6 +319,29 @@ void CItem::BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LP
 	m_pTexture = pTexture;
 	m_VtxMax = VtxMax;
 	m_VtxMin = VtxMin;
+}
+
+//=============================================================================
+//    オンライン用の終了処理
+//=============================================================================
+void CItem::OnlineUninit(void)
+{
+	int nIdxClient = 0;
+	CClient *pClient = CManager::GetClient();
+	if (pClient == NULL) { return; }
+
+	// 自分がホストでなければ処理実行
+	nIdxClient = pClient->GetClientId();
+	if (nIdxClient == 0) { return; }
+
+	if (CManager::GetMode() == CManager::MODE_GAME)
+	{// ゲーム画面だったら
+		CGame *pGame = CManager::GetGame();
+		if (pGame == NULL)
+		{
+			pGame->DeleteItem(m_nIdx);
+		}
+	}
 }
 
 //=============================================================================
@@ -477,6 +511,14 @@ int CItem::GetIdx(void)
 void CItem::ResetNumAll(void)
 {
 	m_nNumAll = 0;
+}
+
+//=============================================================================
+//    総数を取得する
+//=============================================================================
+int CItem::GetNumAll(void)
+{
+	return m_nNumAll;
 }
 
 

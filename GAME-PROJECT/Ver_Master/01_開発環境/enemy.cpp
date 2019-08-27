@@ -23,17 +23,21 @@
 #include "tutorial.h"
 #include "title.h"
 #include "effectManager.h"
+#include "sound.h"
 
 //*****************************************************************************
 // ƒ}ƒNƒ’è‹`
 //*****************************************************************************
 #define ENEMY_SPAWN_EFFECT_IDX   (3)     // “G¶¬Žž‚ÌƒGƒtƒFƒNƒg”Ô†
 #define ENEMY_DEATH_EFFECT_IDX   (7)     // “GŽ€–SŽž‚ÌƒGƒtƒFƒNƒg”Ô†
-#define ENEMY_AI_NONE_TIME       (3)     // “®‚«‚ðŽ~‚ß‚Ä‚©‚ç“®‚«o‚·‚Ü‚Å‚ÌŽžŠÔ
+#define ENEMY_SPAWN_SE_IDX       (15)    // “G¶¬Žž‚Ì‰¹”Ô†
+#define ENEMY_DEATH_SE_IDX       (16)    // “GŽ€–SŽž‚Ì‰¹”Ô†
+#define ENEMY_AI_NONE_TIME       (2)     // “®‚«‚ðŽ~‚ß‚Ä‚©‚ç“®‚«o‚·‚Ü‚Å‚ÌŽžŠÔ
 #define ENEMY_AI_MOVE_TIME       (120)   // “®‚¢‚Ä‚©‚ç“®‚«‚ðŽ~‚ß‚ç‚ê‚é‚Ü‚Å‚ÌŽžŠÔ
 #define ENEMY_MASS_COLRANGE      (2.0f)  // ƒ}ƒX‚Ì”ÍˆÍ“à‚Æ”»’è‚³‚ê‚é”ÍˆÍ
 #define ENEMY_LIFE               (1)     // “G‚Ì‘Ì—Í
 #define ENEMY_HEAVY_LIFE         (3)     // ƒwƒr[ƒ^ƒ“ƒN‚Ì‘Ì—Í
+#define ENEMY_FAST_BULLETMOVE_UP (1.2f)  // ‘¬ŽË–Cƒ^ƒ“ƒN‚Ì’e‚Ì‘¬‚³‚ðã‚°‚é”{—¦
 
 //*****************************************************************************
 // Ã“Iƒƒ“ƒo•Ï”
@@ -141,9 +145,17 @@ void CEnemy::Uninit(void)
 			}
 		}
 		else
-		{
+		{// “G‚ª‚Ü‚¾‚¢‚é
+			// Ž©g‚ÌƒNƒ‰ƒCƒAƒ“ƒg”Ô†‚ðŽæ“¾
+			int nIdxClient = 0;
+			CClient *pClient = CManager::GetClient();
+			if (pClient != NULL)
+			{
+				nIdxClient = pClient->GetClientId();
+			}
+
 			// ƒAƒCƒeƒ€‚ð¶¬‚·‚é
-			if (m_bItem == true)
+			if (m_bItem == true && nIdxClient == 0)
 			{
 				pGame->CreateItem(GetPos(), INITIALIZE_D3DXVECTOR3, m_nItemType);
 			}
@@ -615,6 +627,12 @@ void CEnemy::SetBullet(void)
 		break;
 	}
 
+	// ‘¬ŽË–Cƒ^ƒ“ƒN‚¾‚Á‚½‚ç’e‚Ì‘¬“x‚ðã‚°‚é
+	if (m_Type == TYPE_FAST)
+	{
+		BulletMove *= ENEMY_FAST_BULLETMOVE_UP;
+	}
+
 	// ’e‚Ì¶¬
 	CBulletEnemy::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), D3DXVECTOR3(0.0f, 0.0f, 0.0f), BulletMove, this); //’e‚Ì¶¬
 }
@@ -945,6 +963,9 @@ void CEnemy::SetSpawnEffect(void)
 		rot.y += D3DX_PI * 0.1f;
 		pEffectManager->SetEffect(GetPos(), rot, ENEMY_SPAWN_EFFECT_IDX + 2);
 	}
+
+	// ‰¹‚ðo‚·
+	CManager::GetSound()->PlaySound(ENEMY_SPAWN_SE_IDX);
 }
 
 //=============================================================================
@@ -957,6 +978,9 @@ void CEnemy::SetDeathEffect(void)
 	{
 		pEffectManager->SetEffect(GetPos(), INITIALIZE_D3DXVECTOR3, ENEMY_DEATH_EFFECT_IDX);
 	}
+
+	// ‰¹‚ðo‚·
+	CManager::GetSound()->PlaySound(ENEMY_DEATH_SE_IDX);
 }
 
 //=============================================================================

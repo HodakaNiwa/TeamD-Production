@@ -78,12 +78,42 @@
 #define TUTORIAL_SKIPCHECKLOGO_1_HEIGHT_SELECT (80.0f)
 
 // 操作方法表示用ポリゴン初期化用
-#define TUTORIAL_OPEINFO_POS_INI               (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 60.0f, 0.0f))
+#define TUTORIAL_OPEINFO_POS_INI               (D3DXVECTOR3(SCREEN_WIDTH / 2.0f, 78.0f, 0.0f))
 #define TUTORIAL_OPEINFO_COL_INI               (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
-#define TUTORIAL_OPEINFO_WIDTH_INI             (300.0f)
-#define TUTORIAL_OPEINFO_HEIGHT_INI            (60.0f)
-#define TUTORIAL_OPEINFO_TEXIDX                (0)
+#define TUTORIAL_OPEINFO_WIDTH_INI             (220.0f)
+#define TUTORIAL_OPEINFO_HEIGHT_INI            (80.0f)
+#define TUTORIAL_OPEINFO_TEXIDX                (3)
 #define TUTORIAL_OPEINFO_PRIORITY              (7)
+
+// ブロックを壊したレスポンス表示用ポリゴン初期化用
+#define TUTORIAL_BREAKBLOCKINFO_POS_INI        (D3DXVECTOR3(145.0f, 210.0f, 0.0f))
+#define TUTORIAL_BREAKBLOCKINFO_COL_INI        (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TUTORIAL_BREAKBLOCKINFO_WIDTH_INI      (145.0f)
+#define TUTORIAL_BREAKBLOCKINFO_HEIGHT_INI     (80.0f)
+#define TUTORIAL_BREAKBLOCKINFO_TEXIDX         (4)
+#define TUTORIAL_BREAKBLOCKINFO_PRIORITY       (7)
+#define TUTORIAL_BREAKBLOCKINFO_DISP           (180)
+#define TUTORIAL_BREAKBLOCKINFO_ALPHACUT       (0.02f)
+
+// プレイヤーに弾が当たった時のレスポンス表示用ポリゴン初期化用
+#define TUTORIAL_ATTACKPLAYERINFO_POS_INI      (D3DXVECTOR3(SCREEN_WIDTH - 145.0f, 390.0f, 0.0f))
+#define TUTORIAL_ATTACKPLAYERINFO_COL_INI      (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TUTORIAL_ATTACKPLAYERINFO_WIDTH_INI    (145.0f)
+#define TUTORIAL_ATTACKPLAYERINFO_HEIGHT_INI   (80.0f)
+#define TUTORIAL_ATTACKPLAYERINFO_TEXIDX       (5)
+#define TUTORIAL_ATTACKPLAYERINFO_PRIORITY     (7)
+#define TUTORIAL_ATTACKPLAYERINFO_DISP         (180)
+#define TUTORIAL_ATTACKPLAYERINFO_ALPHACUT     (0.02f)
+
+// ゴールが近いレスポンス表示用ポリゴン初期化用
+#define TUTORIAL_NEARGOALINFO_POS_INI          (D3DXVECTOR3(145.0f, 560.0f, 0.0f))
+#define TUTORIAL_NEARGOALINFO_COL_INI          (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TUTORIAL_NEARGOALINFO_WIDTH_INI        (145.0f)
+#define TUTORIAL_NEARGOALINFO_HEIGHT_INI       (80.0f)
+#define TUTORIAL_NEARGOALINFO_TEXIDX           (6)
+#define TUTORIAL_NEARGOALINFO_PRIORITY         (7)
+#define TUTORIAL_NEARGOALINFO_DISP             (180)
+#define TUTORIAL_NEARGOALINFO_ALPHACUT         (0.02f)
 
 // 値読み込み用のパス
 // テクスチャ用
@@ -153,6 +183,7 @@ CTutorial *CTutorial::Create()
 			pTutorial->Init();
 		}
 	}
+
 	return pTutorial;
 }
 
@@ -188,6 +219,9 @@ void CTutorial::Uninit(void)
 	ReleasePlayer();
 	ReleasePlayerManager();
 	ReleaseOpeInfo();
+	ReleaseBreakBlockInfo();
+	ReleaseAttackPlayerInfo();
+	ReleaseNearGoalInfo();
 
 	// 全てのオブジェクト開放
 	CScene::ReleaseAll();
@@ -212,6 +246,11 @@ void CTutorial::Update(void)
 			m_pPlayer[MAX_NUM_PLAYER - 1] = NULL;
 		}
 	}
+
+	// レスポンスポリゴンの確認
+	CheckBreakBlockInfo();
+	CheckAttackPlayerInfo();
+	CheckNearGoalInfo();
 
 	// 全ての更新処理
 	CScene::UpdateAll();
@@ -238,6 +277,7 @@ void CTutorial::Update(void)
 		EndUpdate();
 		break;
 	}
+
 
 	// プレイヤーをリスポーンさせるかチェック
 	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P && m_State != STATE_SKIP_CHECK)
@@ -864,6 +904,7 @@ char *CTutorial::SetDataToGameFromServer(char *pStr)
 		CScene::DeathCheck();
 		CreateMap();
 		CreatePlayer();
+		CreateOpeInfo();
 		SetPlayerPosToSpawn();
 	}
 
@@ -1678,7 +1719,162 @@ void CTutorial::CreateOpeInfo(void)
 	}
 }
 
+//=============================================================================
+// チュートリアルのブロックを壊したレスポンス表示用ポリゴン生成処理
+//=============================================================================
+void CTutorial::CreateBreakBlockInfo(void)
+{
+	if (m_pBreakBlockInfo == NULL)
+	{// 生成されていない
+		m_pBreakBlockInfo = CScene2D::Create(TUTORIAL_BREAKBLOCKINFO_POS_INI, TUTORIAL_BREAKBLOCKINFO_COL_INI,
+			TUTORIAL_BREAKBLOCKINFO_WIDTH_INI, TUTORIAL_BREAKBLOCKINFO_HEIGHT_INI, TUTORIAL_BREAKBLOCKINFO_PRIORITY);
+		if (m_pBreakBlockInfo != NULL)
+		{
+			m_pBreakBlockInfo->BindTexture(GetTextureManager()->GetTexture(TUTORIAL_BREAKBLOCKINFO_TEXIDX));
+		}
+	}
+	else
+	{// 既に生成されている
+		D3DXCOLOR col = m_pBreakBlockInfo->GetCol();
+		col.a = 1.0f;
+		m_pBreakBlockInfo->SetCol(col);
+		m_pBreakBlockInfo->SetVtxBuffCol();
+	}
 
+	// 表示カウンターリセット
+	m_nCntBreakBlockInfoDisp = 0;
+}
+
+//=============================================================================
+// チュートリアルのプレイヤーを攻撃したレスポンス表示用ポリゴン生成処理
+//=============================================================================
+void CTutorial::CreateAttackPlayerInfo(void)
+{
+	if (m_pAttackPlayerInfo == NULL)
+	{// 生成されていない
+		m_pAttackPlayerInfo = CScene2D::Create(TUTORIAL_ATTACKPLAYERINFO_POS_INI, TUTORIAL_ATTACKPLAYERINFO_COL_INI,
+			TUTORIAL_ATTACKPLAYERINFO_WIDTH_INI, TUTORIAL_ATTACKPLAYERINFO_HEIGHT_INI,
+			TUTORIAL_ATTACKPLAYERINFO_PRIORITY);
+		if (m_pAttackPlayerInfo != NULL)
+		{
+			m_pAttackPlayerInfo->BindTexture(GetTextureManager()->GetTexture(TUTORIAL_ATTACKPLAYERINFO_TEXIDX));
+		}
+	}
+	else
+	{// 既に生成されている
+		D3DXCOLOR col = m_pAttackPlayerInfo->GetCol();
+		col.a = 1.0f;
+		m_pAttackPlayerInfo->SetCol(col);
+		m_pAttackPlayerInfo->SetVtxBuffCol();
+	}
+
+	// 表示カウンターリセット
+	m_nCntAttackInfoDisp = 0;
+}
+
+//=============================================================================
+// チュートリアルのゴールが近いレスポンス表示用ポリゴン生成処理
+//=============================================================================
+void CTutorial::CreateNearGoalInfo(void)
+{
+	if (m_pNearGoalInfo == NULL)
+	{// 生成されていない
+		m_pNearGoalInfo = CScene2D::Create(TUTORIAL_NEARGOALINFO_POS_INI, TUTORIAL_NEARGOALINFO_COL_INI,
+			TUTORIAL_NEARGOALINFO_WIDTH_INI, TUTORIAL_NEARGOALINFO_HEIGHT_INI, TUTORIAL_NEARGOALINFO_PRIORITY);
+		if (m_pNearGoalInfo != NULL)
+		{
+			m_pNearGoalInfo->BindTexture(GetTextureManager()->GetTexture(TUTORIAL_NEARGOALINFO_TEXIDX));
+		}
+	}
+	else
+	{// 既に生成されている
+		D3DXCOLOR col = m_pNearGoalInfo->GetCol();
+		col.a = 1.0f;
+		m_pNearGoalInfo->SetCol(col);
+		m_pNearGoalInfo->SetVtxBuffCol();
+	}
+
+	// 表示カウンターリセット
+	m_nCntNearGoalInfoDisp = 0;
+}
+
+//=============================================================================
+// チュートリアルのゴールが近いレスポンス表示用ポリゴンチェック処理
+//=============================================================================
+void CTutorial::CheckBreakBlockInfo(void)
+{
+	// 生成されていなかったら処理しない
+	if (m_pBreakBlockInfo == NULL) { return; }
+
+	// カウンター増加
+	m_nCntBreakBlockInfoDisp++;
+
+	if (m_nCntBreakBlockInfoDisp >= TUTORIAL_ATTACKPLAYERINFO_DISP)
+	{// 一定時間表示され続けた
+		// 透明度を上げる
+		D3DXCOLOR col = m_pBreakBlockInfo->GetCol();
+		col.a -= TUTORIAL_ATTACKPLAYERINFO_ALPHACUT;
+		m_pBreakBlockInfo->SetCol(col);
+		m_pBreakBlockInfo->SetVtxBuffCol();
+
+		if (col.a <= 0.0f)
+		{// 透明になり切った
+			ReleaseBreakBlockInfo();
+		}
+	}
+}
+
+//=============================================================================
+// チュートリアルのゴールが近いレスポンス表示用ポリゴンチェック処理
+//=============================================================================
+void CTutorial::CheckAttackPlayerInfo(void)
+{
+	// 生成されていなかったら処理しない
+	if (m_pAttackPlayerInfo == NULL) { return; }
+
+	// カウンター増加
+	m_nCntAttackInfoDisp++;
+
+	if (m_nCntAttackInfoDisp >= TUTORIAL_ATTACKPLAYERINFO_DISP)
+	{// 一定時間表示され続けた
+	 // 透明度を上げる
+		D3DXCOLOR col = m_pAttackPlayerInfo->GetCol();
+		col.a -= TUTORIAL_ATTACKPLAYERINFO_ALPHACUT;
+		m_pAttackPlayerInfo->SetCol(col);
+		m_pAttackPlayerInfo->SetVtxBuffCol();
+
+		if (col.a <= 0.0f)
+		{// 透明になり切った
+			ReleaseAttackPlayerInfo();
+		}
+	}
+}
+
+//=============================================================================
+// チュートリアルのゴールが近いレスポンス表示用ポリゴンチェック処理
+//=============================================================================
+void CTutorial::CheckNearGoalInfo(void)
+{
+	// 生成されていなかったら処理しない
+	if (m_pNearGoalInfo == NULL) { return; }
+
+	// カウンター増加
+	m_nCntNearGoalInfoDisp++;
+
+	if (m_nCntNearGoalInfoDisp >= TUTORIAL_NEARGOALINFO_DISP)
+	{// 一定時間表示され続けた
+	 // 透明度を上げる
+		D3DXCOLOR col = m_pNearGoalInfo->GetCol();
+		col.a -= TUTORIAL_NEARGOALINFO_ALPHACUT;
+		m_pNearGoalInfo->SetCol(col);
+		m_pNearGoalInfo->SetVtxBuffCol();
+
+		if (col.a <= 0.0f)
+		{// 透明になり切った
+			ReleaseNearGoalInfo();
+		}
+	}
+}
 
 
 //*****************************************************************************
@@ -1791,6 +1987,41 @@ void CTutorial::ReleaseOpeInfo(void)
 	}
 }
 
+//=============================================================================
+// チュートリアルのブロックを壊したレスポンス表示用ポリゴン開放処理
+//=============================================================================
+void CTutorial::ReleaseBreakBlockInfo(void)
+{
+	if (m_pBreakBlockInfo != NULL)
+	{
+		m_pBreakBlockInfo->Uninit();
+		m_pBreakBlockInfo = NULL;
+	}
+}
+
+//=============================================================================
+// チュートリアルのプレイヤーを攻撃したレスポンス表示用ポリゴン開放処理
+//=============================================================================
+void CTutorial::ReleaseAttackPlayerInfo(void)
+{
+	if (m_pAttackPlayerInfo != NULL)
+	{
+		m_pAttackPlayerInfo->Uninit();
+		m_pAttackPlayerInfo = NULL;
+	}
+}
+
+//=============================================================================
+// チュートリアルのゴールが近いレスポンス表示用ポリゴン開放処理
+//=============================================================================
+void CTutorial::ReleaseNearGoalInfo(void)
+{
+	if (m_pNearGoalInfo != NULL)
+	{
+		m_pNearGoalInfo->Uninit();
+		m_pNearGoalInfo = NULL;
+	}
+}
 
 
 //*****************************************************************************
@@ -1955,6 +2186,10 @@ void CTutorial::EndCameraMoving(void)
 	if (CManager::GetClient() != NULL)
 	{
 		nClientId = CManager::GetClient()->GetClientId();
+	}
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL2P)
+	{// ローカル2人プレイならば
+		nClientId = m_nGoalPlayIdx;
 	}
 	if (m_pPlayer[nClientId] == NULL) { return; }
 	D3DXVECTOR3 DestPos = m_pPlayer[nClientId]->GetPos();
@@ -2153,25 +2388,21 @@ void CTutorial::SetPlayerPosToSpawn(void)
 		if (m_pPlayer[CManager::GetClient()->GetClientId()] != NULL)
 		{
 			m_pPlayer[CManager::GetClient()->GetClientId()]->SetPos(PlayerPos);
+			m_pPlayer[CManager::GetClient()->GetClientId()]->SetRot(D3DXVECTOR3(0.0f, D3DX_PI, 0.0f));
+			m_pPlayer[CManager::GetClient()->GetClientId()]->SetNowRotInfo(CCharacter::ROT_UP);
 		}
 	}
-	else if(CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL2P)
-	{// ローカル2Pプレイならば
+	else
+	{// ローカルプレイならば
 		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 		{// プレイヤーの人数分繰り返し
 			PlayerPos = pMap->GetPlayerRespawn(nCntPlayer)->GetPos();
 			if (m_pPlayer[nCntPlayer] != NULL)
 			{
 				m_pPlayer[nCntPlayer]->SetPos(PlayerPos);
+				m_pPlayer[nCntPlayer]->SetRot(D3DXVECTOR3(0.0f, D3DX_PI, 0.0f));
+				m_pPlayer[nCntPlayer]->SetNowRotInfo(CCharacter::ROT_UP);
 			}
-		}
-	}
-	else if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL1P)
-	{// ローカル1Pプレイならば
-		PlayerPos = pMap->GetPlayerRespawn(0)->GetPos();
-		if (m_pPlayer[0] != NULL)
-		{
-			m_pPlayer[0]->SetPos(PlayerPos);
 		}
 	}
 }
@@ -2573,6 +2804,7 @@ void CTutorial::ClearVariable(void)
 	m_bDeletePlayerFlag = 0;
 	m_pGoalCylinder = NULL;
 	m_pOpeInfo = NULL;
+	m_nGoalPlayIdx = 0;
 	for (int nCntPlayer = NULL; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
 		m_pPlayer[nCntPlayer] = NULL;
@@ -2582,6 +2814,14 @@ void CTutorial::ClearVariable(void)
 	{
 		m_pEnemyManager[nCntEnemy] = NULL;
 	}
+
+	// レスポンス用
+	m_pBreakBlockInfo = NULL;
+	m_nCntBreakBlockInfoDisp = 0;
+	m_pAttackPlayerInfo = NULL;
+	m_nCntAttackInfoDisp = 0;
+	m_pNearGoalInfo = NULL;
+	m_nCntNearGoalInfoDisp = 0;
 }
 
 //=============================================================================
@@ -2600,6 +2840,14 @@ void CTutorial::SetState(const STATE state)
 {
 	m_State = state;
 	m_nStateCounter = 0;
+}
+
+//=============================================================================
+// チュートリアルのゴールしたプレイヤーの番号を設定する
+//=============================================================================
+void CTutorial::SetGoalPlayerIdx(const int nIdx)
+{
+	m_nGoalPlayIdx = nIdx;
 }
 
 //=============================================================================

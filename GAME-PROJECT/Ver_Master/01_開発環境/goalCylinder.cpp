@@ -7,11 +7,13 @@
 #include "goalCylinder.h"
 #include "manager.h"
 #include "renderer.h"
+#include "tutorial.h"
 
 //*****************************************************************************
 //     マクロ定義
 //*****************************************************************************
-#define GOALCYLINDER_COL_RANGE (0.2f)  // 当たり判定に使用する長さの倍率
+#define GOALCYLINDER_COL_RANGE          (0.2f)  // 当たり判定に使用する長さの倍率
+#define GOALCYLINDER_COL_RANGE_TUTORIAL (5.0f)  // ゴールに近いレスポンスを返すのに使用する長さの倍率
 
 //*****************************************************************************
 //    静的メンバ変数宣言
@@ -296,6 +298,15 @@ bool CGoalCylinder::Collision(D3DXVECTOR3 *pPos)
 	if (fLength <= GetRadius() * GOALCYLINDER_COL_RANGE)
 	{// 距離が判定する長さより短い
 		return true;
+	}
+
+	if (fLength <= GetRadius() * GOALCYLINDER_COL_RANGE_TUTORIAL && CManager::GetMode() == CManager::MODE_TUTORIAL)
+	{// チュートリアル画面でレスポンスを返す距離にプレイヤーがいる
+		CTutorial *pTutorial = CManager::GetTutorial();
+		if (pTutorial != NULL)
+		{
+			pTutorial->CreateNearGoalInfo();
+		}
 	}
 
 	return false;

@@ -4775,54 +4775,6 @@ END_BLOCKSET
 BLOCKSET
 	TYPE = 0				# 種類
 	MODELIDX = 6			# 使用するモデルの番号
-	POS = -693.8 0.0 18.8		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 6			# 使用するモデルの番号
-	POS = -656.3 0.0 18.8		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 6			# 使用するモデルの番号
-	POS = -693.8 0.0 -18.8		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 6			# 使用するモデルの番号
-	POS = -656.3 0.0 -18.8		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 6			# 使用するモデルの番号
 	POS = 656.3 0.0 18.8		# 座標
 	ROT = 0.0 0.0 0.0		# 向き
 	COLLISION
@@ -5315,30 +5267,6 @@ END_BLOCKSET
 BLOCKSET
 	TYPE = 0				# 種類
 	MODELIDX = 7			# 使用するモデルの番号
-	POS = 581.3 0.0 393.8		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 7			# 使用するモデルの番号
-	POS = 543.8 0.0 393.8		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 7			# 使用するモデルの番号
 	POS = 506.3 0.0 393.8		# 座標
 	ROT = 0.0 0.0 0.0		# 向き
 	COLLISION
@@ -5495,18 +5423,6 @@ END_BLOCKSET
 BLOCKSET
 	TYPE = 0				# 種類
 	MODELIDX = 7			# 使用するモデルの番号
-	POS = -356.3 0.0 431.3		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 7			# 使用するモデルの番号
 	POS = -318.8 0.0 431.3		# 座標
 	ROT = 0.0 0.0 0.0		# 向き
 	COLLISION
@@ -5520,18 +5436,6 @@ BLOCKSET
 	TYPE = 0				# 種類
 	MODELIDX = 7			# 使用するモデルの番号
 	POS = -281.3 0.0 431.3		# 座標
-	ROT = 0.0 0.0 0.0		# 向き
-	COLLISION
-		WIDTH = 37.5		# 当たり判定の幅
-		HEIGHT = 37.5		# 当たり判定の高さ
-		DEPTH = 37.5		# 当たり判定の奥行
-	END_COLLISION
-END_BLOCKSET
-
-BLOCKSET
-	TYPE = 0				# 種類
-	MODELIDX = 7			# 使用するモデルの番号
-	POS = -356.3 0.0 393.8		# 座標
 	ROT = 0.0 0.0 0.0		# 向き
 	COLLISION
 		WIDTH = 37.5		# 当たり判定の幅

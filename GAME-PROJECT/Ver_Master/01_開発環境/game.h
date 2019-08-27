@@ -34,6 +34,7 @@ class CBlock;
 class CCharacterManager;
 class CItem;
 class CItemCylinder;
+class CRiver;
 
 //*****************************************************************************
 // ポーズクラス定義
@@ -208,6 +209,7 @@ protected: // このクラスと派生クラスだけがアクセス可能
 
 private:	// 自分だけがアクセス可能
 	void ClearVariable(void);
+	void StopBGM(void);
 
 	// 生成処理用関数
 	void CreateMapFilePointer(void);
@@ -235,6 +237,7 @@ private:	// 自分だけがアクセス可能
 	void CreateGameResult_BonusScore(void);
 	void CreatePause(int nIdxPlayer = 0);
 	void CreateNotPause(void);
+	void CreateEventStartLogo(void);
 
 
 	// 開放処理用関数
@@ -256,6 +259,7 @@ private:	// 自分だけがアクセス可能
 	void ReleaseGameResult_TortalScore(void);
 	void ReleaseGameResult_BonusScore(void);
 	void ReleaseNotPause(void);
+	void ReleaseEventStartLogo(void);
 
 
 	// サーバーとのメッセージ交換用関数
@@ -271,9 +275,12 @@ private:	// 自分だけがアクセス可能
 	void SetDataToServerFromItem(void);
 	void SetDataToServerFromClientState(void);
 	void SetDataToServerFromBreakEnemy(void);
+	void SetDataToServerFromSpawnEnemyCount(void);
+	void SetDataToServerFromMapEvent(void);
 	char *GetDataToEnemy(CEnemy *pEnemy, char *pStr);
 	char *GetDataToEnemyBullet(CBullet *pBullet, char *pStr);
 	char *GetDataToPlayerBullet(CBullet *pBullet, char *pStr);
+	char *GetDataToItem(CItem *pItem, char *pStr);
 	void GetDataFromServer(void);
 	char *SetDataToPlayerFromServer(char *pStr);
 	char *SetDataToGameFromServer(char *pStr);
@@ -296,13 +303,17 @@ private:	// 自分だけがアクセス可能
 	void ReleaseCheckBlock(CBlock *pBlock, int *pDeleteIdx, int *nNumDeleteBlock);
 	char *SetDataToDeleteEnemy(char *pStr);
 	void ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nNumDeleteEnemy);
-	char *SetDataToItem(char *pStr);
+	char *SetDataToItemFromServer(char *pStr);
+	char *SetDataToItem(CItem *pItem, char *pStr, int *pNumItem);
+	char *SetDataToCreateItem(char *pStr);
 	void ReleaseItem(int nNumItem);
 	void ReleaseCheckItem(CItem *pItem, int *pNumItem);
 	char *SetDataToDeleteItem(char *pStr);
 	void ReleaseCheckDeleteItem(CItem *pItem, int *pDeleteIdx, int *nNumDeleteItem);
 	char *SetDataToClientState(char *pStr);
 	char *SetDataToBreakEnemy(char *pStr);
+	char *SetDataToSpawnEnemyCount(char *pStr);
+	char *SetDataToMapEvent(char *pStr);
 
 
 	// 状態による更新処理分け用関数
@@ -330,6 +341,8 @@ private:	// 自分だけがアクセス可能
 	void MapEvent_Hinamatsuri_Normal(void);
 	void MapEvent_Hinamatsuri_CherryBlossoms(void);
 	void MapEvent_Hinamatsuri_Drop_Item(void);
+	bool MapEvent_Hinamatsuri_Drop_Item_CheckPos(void);
+	bool MapEvent_Hinamatsuri_Drop_Item_CheckRiver(CRiver *pRiver);
 	void MapEvent_Hinamatsuri_Drop_Hinaarare(void);
 	void MapEvent_Hinamatsuri_EventStart(void);
 

@@ -26,7 +26,7 @@ MODEL_FILENAME = data/MODEL/ENEMY/Tank_Shield02.x		# [4]シールド
 CHARACTERSET
 	MOVE = 3.0						# 移動量
 	INERTIA = 0.456					# 慣性量
-	RIVISION_ROT = 0.03				# 向きを補正する倍率
+	RIVISION_ROT = 0.06				# 向きを補正する倍率
 	NUM_PARTS = 5					# パーツ数
 
 	PARTSSET

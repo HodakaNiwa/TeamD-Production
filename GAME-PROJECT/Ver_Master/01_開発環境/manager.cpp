@@ -192,7 +192,7 @@ void CManager::Uninit(void)
 void CManager::Update(void)
 {
 	// デバッグコマンド
-	if (m_pInputKeyboard->GetTrigger(DIK_F1) == true)
+	if (m_pInputKeyboard->GetTrigger(DIK_F1) == true && m_pInputKeyboard->GetPress(DIK_LSHIFT) == false)
 	{
 		m_pDebugproc->SwitchDisp();
 	}

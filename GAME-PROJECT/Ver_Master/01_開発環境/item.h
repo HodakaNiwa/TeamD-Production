@@ -48,6 +48,7 @@ public:    // 誰でもアクセス可能
 	virtual void RemakeBoxCollider(float fBoxWidth, float fBoxHeight, float fBoxDepth);
 	void Hit(CScene *pScene);
 	void BindModel(LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, D3DXVECTOR3 VtxMax = D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3 VtxMin = D3DXVECTOR3(0.0f, 0.0f, 0.0f));
+	void OnlineUninit(void);
 
 	void SetType(const int nType);
 	void SetModelIdx(const int nModelIdx);
@@ -71,6 +72,7 @@ public:    // 誰でもアクセス可能
 	float GetAlpha(void);
 	int GetIdx(void);
 
+	static int GetNumAll(void);
 	static void ResetNumAll(void);
 
 protected: // このクラスと派生クラスだけがアクセス可能

@@ -25,7 +25,8 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define BULLET_EFFECT_IDX (2)
+#define BULLET_ENEMY_BREAK_HEADQUARTERS    // 宣言時敵の弾でもゲームオーバーになる
+#define BULLET_EFFECT_IDX (2)              // 弾のエフェクト番号
 
 //*****************************************************************************
 // 静的メンバ変数
@@ -539,6 +540,14 @@ void CBulletPlayer::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DX
 		{// 当たっている
 			if (pPlayer->GetPlayerIdx() != GetType())
 			{
+				if (CManager::GetMode() == CManager::MODE_TUTORIAL)
+				{// チュートリアル画面だったら
+					CTutorial *pTutorial = CManager::GetTutorial();
+					if (pTutorial != NULL)
+					{
+						pTutorial->CreateAttackPlayerInfo();
+					}
+				}
 				pObj->Hit(this);
 				*pDeath = true;
 			}
@@ -639,6 +648,14 @@ bool CBulletPlayer::CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DX
 	{//当たり判定箱がNULLでない場合
 		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
 		{//当たり判定箱に当たった場合
+			if (CManager::GetMode() == CManager::MODE_TUTORIAL)
+			{// チュートリアル画面だったら
+				CTutorial *pTutorial = CManager::GetTutorial();
+				if (pTutorial != NULL)
+				{
+					pTutorial->CreateBreakBlockInfo();
+				}
+			}
 			return true;
 		};
 	}
@@ -986,7 +1003,9 @@ bool CBulletEnemy::CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld
 	{//当たり判定箱がNULLでない場合
 		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange, NULL) == true)
 		{//当たり判定箱に当たった場合
-			//return true;
+#ifdef BULLET_ENEMY_BREAK_HEADQUARTERS
+			return true;
+#endif
 		};
 	}
 
