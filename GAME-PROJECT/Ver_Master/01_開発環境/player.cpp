@@ -975,15 +975,13 @@ void CPlayer::SetDiffAngle(float fDiffAngle)
 //=============================================================================
 void CPlayer::CreateBullet(void)
 {
-	//移動量の取得
-	D3DXVECTOR3 move = CCharacter::GetMove();
-
 	//位置の取得
 	D3DXVECTOR3 pos = CCharacter::GetPos();
 
 	//向きの取得
 	D3DXVECTOR3 rot = CCharacter::GetRot();
 
+	// 弾を打っているか取得
 	bool bShoot = GetShoot();
 
 	//弾の種類の切り替え処理
@@ -1003,23 +1001,25 @@ void CPlayer::CreateBullet(void)
 		// 音を鳴らす
 		CManager::GetSound()->PlaySound(PLAYER_SE_BULLET_IDX);
 
-		if (m_ability == PLAYER_ABILITY_NOMAL || m_ability == PLAYER_ABILITY_MOVE_SPEEDUP)
+		// 移動量を設定
+		D3DXVECTOR3 BulletMove;
+
+		if (m_ability == PLAYER_ABILITY_NOMAL)
 		{
 			switch (GetNowRotInfo())
 			{
 			case ROT_UP:	//上を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(0.0f, 0.0f, 8.0f), type, this);
+				BulletMove = D3DXVECTOR3(0.0f, 0.0f, 8.0f);
 				break;
 			case ROT_DOWN:	//下を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(0.0f, 0.0f, -8.0f), type, this);
+				BulletMove = D3DXVECTOR3(0.0f, 0.0f, -8.0f);
 				break;
 			case ROT_RIGHT:	//右を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(8.0f, 0.0f, 0.0f), type, this);
+				BulletMove = D3DXVECTOR3(8.0f, 0.0f, 0.0f);
 				break;
 			case ROT_LEFT:	//左を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(-8.0f, 0.0f, 0.0f), type, this);
+				BulletMove = D3DXVECTOR3(-8.0f, 0.0f, 0.0f);
 				break;
-
 			}
 		}
 		else
@@ -1027,20 +1027,23 @@ void CPlayer::CreateBullet(void)
 			switch (GetNowRotInfo())
 			{
 			case ROT_UP:	//上を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(0.0f, 0.0f, 15.0f), type, this);
+				BulletMove = D3DXVECTOR3(0.0f, 0.0f, 15.0f);
 				break;
 			case ROT_DOWN:	//下を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(0.0f, 0.0f, -15.0f), type, this);
+				BulletMove = D3DXVECTOR3(0.0f, 0.0f, -15.0f);
 				break;
 			case ROT_RIGHT:	//右を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(15.0f, 0.0f, 0.0f), type, this);
+				BulletMove = D3DXVECTOR3(15.0f, 0.0f, 0.0f);
 				break;
 			case ROT_LEFT:	//左を向いている場合
-				CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, D3DXVECTOR3(-15.0f, 0.0f, 0.0f), type, this);
+				BulletMove = D3DXVECTOR3(-15.0f, 0.0f, 0.0f);
 				break;
-
 			}
 		}
+
+		// 弾を生成
+		CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, BulletMove, type, this);
+
 		//弾の数設置処理
 		SetCntBullet(GetCntBullet() + 1);
 	}
