@@ -38,6 +38,7 @@
 #define ENEMY_LIFE               (1)     // 敵の体力
 #define ENEMY_HEAVY_LIFE         (3)     // ヘビータンクの体力
 #define ENEMY_FAST_BULLETMOVE_UP (1.2f)  // 速射砲タンクの弾の速さを上げる倍率
+#define ENEMY_COL_PRIORITY       (4)     // コリジョンを行う優先順位
 
 //*****************************************************************************
 // 静的メンバ変数
@@ -652,7 +653,7 @@ void CEnemy::Collision(void)
 	// 当たり判定開始
 	CScene *pScene = NULL;     // オブジェクトのポインタ
 	CScene *pSceneNext = NULL; // 次のオブジェクトのポインタ
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < ENEMY_COL_PRIORITY + 1; nCntPriority++)
 	{
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)

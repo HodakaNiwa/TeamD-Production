@@ -15,12 +15,16 @@
 #include "tutorial.h"
 #include "bullet.h"
 #include "effectManager.h"
+#include "map.h"
+#include "modelcreate.h"
 
 //*****************************************************************************
 //    マクロ定義
 //*****************************************************************************
 #define BLOCK_EFFECT_POSUP                (30.0f)  // エフェクトをどれくらい高くして生成するか
 #define BLOCK_DESTROY_EFFECT_IDX_BLOSSOMS (6)      // ブロック破壊時のエフェクト番号(桜の場合)
+#define BLOCK_UNINIT_TIMER				  (1200)   // 終了するまでのカウンター
+#define BLOCK_UNINIT_SIGN				  (1000)   // 終了の点滅サイン
 
 //*****************************************************************************
 //    静的メンバ変数
@@ -861,6 +865,7 @@ void CBlockType3::Hit(CScene *pScene)
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{// プレイヤーだった
 		// 飛沫ポリゴン生成
+		CreateSplash();
 	}
 	else if (pScene->GetObjType() == OBJTYPE_ENEMY)
 	{// 敵だった
@@ -878,5 +883,202 @@ void CBlockType3::Hit(CScene *pScene)
 		{
 			Uninit();
 		}
+	}
+}
+
+//*****************************************************************************
+//    CBlockScoopの処理
+//*****************************************************************************
+//=============================================================================
+//    コンストラクタ
+//=============================================================================
+CBlockScoop::CBlockScoop(int nPriority, OBJTYPE objType) : CBlock(nPriority, objType)
+{
+	m_nUninitTimer = 0;		//終了するまでのカウンター
+	m_bUninitSign = false;	//終了の点滅サイン
+}
+
+//=============================================================================
+//    デストラクタ
+//=============================================================================
+CBlockScoop::~CBlockScoop()
+{
+
+}
+
+//=============================================================================
+//    生成処理
+//=============================================================================
+CBlockScoop *CBlockScoop::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nModelIdx, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth, int nPriority)
+{
+	CBlockScoop *pBlockScoop = NULL;      // タイプ2のブロッククラス型のポインタ
+	if (pBlockScoop == NULL)
+	{// メモリが空になっている
+		pBlockScoop = new CBlockScoop(nPriority);
+		if (pBlockScoop != NULL)
+		{// インスタンスを生成できた
+			if (FAILED(pBlockScoop->Init(pos, rot, nType, nModelIdx, pMesh, pBuffMat, nNumMat, pTexture, fBoxWidth, fBoxHeight, fBoxDepth)))
+			{// 初期化に失敗した
+				return NULL;
+			}
+		}
+		else
+		{// インスタンスを生成できなかった
+			return NULL;
+		}
+	}
+	else
+	{// インスタンスを生成できなかった
+		return NULL;
+	}
+
+	return pBlockScoop;
+}
+
+//=============================================================================
+//    初期化処理
+//=============================================================================
+HRESULT CBlockScoop::Init(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nModelIdx, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth)
+{
+	// 共通の初期化処理
+	if (FAILED(CBlock::Init()))
+	{
+		return E_FAIL;
+	}
+
+	// 各種値の設定
+	SetPos(pos);                                     // 座標
+	SetRot(rot);                                     // 向き
+	SetType(nType);                                  // 種類番号
+	SetModelIdx(nModelIdx);                          // 使用するモデルの番号
+	SetAlpha(1.0f);                                  // モデルの透明度
+	BindModel(pMesh, pBuffMat, nNumMat, pTexture);   // モデル情報割り当て
+
+													 // 当たり判定用箱モデルを作成
+	SetColRange(D3DXVECTOR3(fBoxWidth, fBoxHeight, fBoxDepth));
+	CreateBoxCollider(fBoxWidth, fBoxHeight, fBoxDepth);
+
+	m_nUninitTimer = 0;								 // 終了するまでのカウンター
+	m_bUninitSign = false;							 // 終了の点滅サイン
+	return S_OK;
+}
+
+//=============================================================================
+//    終了処理
+//=============================================================================
+void CBlockScoop::Uninit(void)
+{
+	// 共通の終了処理
+	CBlock::Uninit();
+}
+
+//=============================================================================
+//    更新処理
+//=============================================================================
+void CBlockScoop::Update(void)
+{
+	//終了するまでのカウンターの加算
+	m_nUninitTimer++;
+
+	if (m_nUninitTimer == BLOCK_UNINIT_SIGN)
+	{
+		//ブロックの生成
+		CreateBlock();
+	}
+	if (m_nUninitTimer >= BLOCK_UNINIT_SIGN)
+	{
+		m_bUninitSign = true;
+	}
+	if (m_nUninitTimer >= BLOCK_UNINIT_TIMER)
+	{//終了するまでのカウンターが一定数を超えた場合
+		//終了処理
+		Uninit();
+	}
+}
+
+//=============================================================================
+//    描画処理
+//=============================================================================
+void CBlockScoop::Draw(void)
+{
+	if (m_bUninitSign == false)
+	{//終了の点滅サインがfalseの場合
+	 // 共通の描画処理
+		CBlock::Draw();
+	}
+	else if (m_bUninitSign == true)
+	{//終了の点滅サインがfalseの場合
+		if (m_nUninitTimer % 4 != 0)
+		{
+			// 共通の描画処理
+			CBlock::Draw();
+		}
+	}
+
+}
+
+//=============================================================================
+//    当たり判定用箱モデルを作り直す処理
+//=============================================================================
+void CBlockScoop::RemakeBoxCollider(float fBoxWidth, float fBoxHeight, float fBoxDepth)
+{
+	// 現在の当たり判定用箱モデルを開放する
+	CBoxCollider *pBoxCollider = GetBoxCollider();
+	if (pBoxCollider != NULL)
+	{
+		pBoxCollider->Uninit();
+		delete pBoxCollider;
+		pBoxCollider = NULL;
+	}
+
+	// 当たり判定用箱モデルを生成しなおす
+	CreateBoxCollider(fBoxWidth, fBoxHeight, fBoxDepth);
+}
+
+//=============================================================================
+//    当たったときの処理
+//=============================================================================
+void CBlockScoop::Hit(CScene *pScene)
+{
+	// 当たってきたオブジェクトの種類で処理わけ
+	if (pScene->GetObjType() == OBJTYPE_BULLET)
+	{// 弾だった
+		CBullet *pBullet = (CBullet*)pScene;
+		if (pBullet->GetType() == CBullet::TYPE_ENEMY) { return; }
+
+		// プレイヤーの弾の場合最大強化時ならば壊れるようにする
+		CPlayer *pPlayer = (CPlayer*)pBullet->GetParent();
+		if (pPlayer == NULL || pPlayer->GetObjType() != OBJTYPE_PLAYER) { return; }
+		if (pPlayer->GetAllBlockDestroy() == true)
+		{
+			Uninit();
+		}
+	}
+}
+
+//=============================================================================
+//    ブロックの生成処理
+//=============================================================================
+void CBlockScoop::CreateBlock(void)
+{
+	//マップの取得
+	CMap *pMap = CManager::GetBaseMode()->GetMap();
+
+	//ゲームの取得
+	CGame *pGame = CManager::GetGame();
+
+	D3DXVECTOR3 BlockPos = GetPos();
+	if (pGame->GetStageIdx() == 0)
+	{//ステージ0の場合
+		CBlockScoop::Create(D3DXVECTOR3(BlockPos.x, 0.0f, BlockPos.z), INITIALIZE_D3DXVECTOR3,
+			0, 0, pMap->GetModelCreate()->GetMesh(7), pMap->GetModelCreate()->GetBuffMat(7), pMap->GetModelCreate()->GetNumMat(7), pMap->GetModelCreate()->GetTexture(7)
+			, MASS_SIZE_X_HALF, MASS_SIZE_Z_HALF, MASS_SIZE_Z_HALF);
+	}
+	else if (pGame->GetStageIdx() == 1 ||
+		pGame->GetStageIdx() == 2)
+	{//ステージ1～2の場合
+		CBlockScoop::Create(D3DXVECTOR3(BlockPos.x, 0.0f, BlockPos.z), INITIALIZE_D3DXVECTOR3,
+			0, 0, pMap->GetModelCreate()->GetMesh(6), pMap->GetModelCreate()->GetBuffMat(6), pMap->GetModelCreate()->GetNumMat(6), pMap->GetModelCreate()->GetTexture(6)
+			, MASS_SIZE_X_HALF, MASS_SIZE_Z_HALF, MASS_SIZE_Z_HALF);
 	}
 }

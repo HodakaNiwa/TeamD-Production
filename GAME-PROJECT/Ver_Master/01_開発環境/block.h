@@ -170,4 +170,31 @@ private:   // このクラスだけがアクセス可能
 	void CreateSplash(void);
 };
 
+//*****************************************************************************
+//    スコップ用のブロッククラスの定義
+//*****************************************************************************
+class CBlockScoop : public CBlock
+{
+public:    // 誰でもアクセス可能
+	CBlockScoop(int nPriority = 3, OBJTYPE objType = OBJTYPE_BLOCK);
+	~CBlockScoop();
+
+	static CBlockScoop *Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nModelIdx, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth = 75.0f, float fBoxHeight = 75.0f, float fBoxDepth = 75.0f, int nPriority = 3);
+
+	HRESULT Init(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nModelIdx, LPD3DXMESH pMesh, LPD3DXBUFFER pBuffMat, DWORD nNumMat, LPDIRECT3DTEXTURE9 *pTexture, float fBoxWidth, float fBoxHeight, float fBoxDepth);
+	void Uninit(void);
+	void Update(void);
+	void Draw(void);
+	void RemakeBoxCollider(float fBoxWidth, float fBoxHeight, float fBoxDepth);
+	void Hit(CScene *pScene);
+
+protected: // このクラスと派生クラスだけがアクセス可能
+
+private:   // このクラスだけがアクセス可能
+	void CreateBlock(void);
+
+	int m_nUninitTimer;		//終了するまでのカウンター
+	bool m_bUninitSign;		//終了の点滅サイン
+};
+
 #endif

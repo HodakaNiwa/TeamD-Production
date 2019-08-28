@@ -30,17 +30,23 @@
 #include "meshfield.h"
 #include "hinaarare.h"
 #include "headquarters.h"
+#include "map.h"
+#include "modelcreate.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define PLAYER_MOVE             (2.8f)     // プレイヤーの移動量
-#define PLAYER_MOVE_POWERUP     (4.2f)     // パワーアップ時のプレイヤーの移動量
-#define PLAYER_DEATH_EFFECT_IDX (7)        // 死んだときのエフェクト番号
-#define PLAYER_MOVE_EFFECT_IDX  (15)       // 移動している時のエフェクト番号
-#define PLAYER_SE_BULLET_IDX    (6)        // 弾発射時の音番号
-#define PLAYER_SE_DEATH_IDX     (18)       // 死んだときのエフェクト番号
-#define PLAYER_SE_DAMAGE_IDX    (12)       // プレイヤーが動けなくなる攻撃をくらったときの音番号
+#define PLAYER_MOVE                      (2.8f)     // プレイヤーの移動量
+#define PLAYER_MOVE_POWERUP              (4.2f)     // パワーアップ時のプレイヤーの移動量
+#define PLAYER_DEATH_EFFECT_IDX          (7)        // 死んだときのエフェクト番号
+#define PLAYER_MOVE_EFFECT_IDX           (15)       // 移動している時のエフェクト番号
+#define PLAYER_INVINCIBLE_EFFECT_IDX     (16)       // 無敵状態時のエフェクト番号
+#define PLAYER_INVINCIBLE_EFFECT_APPEAR  (5)        // 無敵状態時のエフェクトを出す間隔
+#define PLAYER_SE_BULLET_IDX             (6)        // 弾発射時の音番号
+#define PLAYER_SE_DEATH_IDX              (18)       // 死んだときのエフェクト番号
+#define PLAYER_SE_DAMAGE_IDX             (12)       // プレイヤーが動けなくなる攻撃をくらったときの音番号
+#define PLAYER_COL_PRIORITY              (4)        // コリジョンを行う優先順位
+#define PLAYER_INVINCIBLE_TIME           (1200)     // 無敵状態を維持する時間
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -225,8 +231,8 @@ void CPlayer::Draw(void)
 void CPlayer::Hit(CScene *pScene)
 {
 	// 当たったオブジェクトによって処理わけ
-	if (pScene->GetObjType() == OBJTYPE_BULLET)
-	{// 弾だった
+	if (pScene->GetObjType() == OBJTYPE_BULLET && m_bHelmet == false)
+	{// 弾だったかつ無敵状態でない
 		CBullet *pBullet = (CBullet*)pScene;
 		if (pBullet->GetType() == CBullet::TYPE_ENEMY)
 		{// 敵の弾だった
@@ -240,6 +246,19 @@ void CPlayer::Hit(CScene *pScene)
 		{// 違うプレイヤーの弾だった
 			m_state = STATE_STOP;
 		}
+	}
+}
+
+//=============================================================================
+// プレイヤーの無敵状態のエフェクト生成処理
+//=============================================================================
+void CPlayer::SetInvincibleEffect(void)
+{
+	D3DXVECTOR3 EffectPos = GetPos();
+	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+	if (pEffectManager != NULL)
+	{
+		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, PLAYER_INVINCIBLE_EFFECT_IDX);
 	}
 }
 
@@ -277,6 +296,64 @@ void CPlayer::SetMoveEffect(void)
 		EffectPos.x -= sinf(EffectRot.y - (D3DX_PI * 0.5f)) * 20.0f - sinf(EffectRot.y) * 30.0f;
 		EffectPos.z -= cosf(EffectRot.y - (D3DX_PI * 0.5f)) * 20.0f - cosf(EffectRot.y) * 30.0f;
 		pEffectManager->SetEffect(EffectPos, EffectRot, PLAYER_MOVE_EFFECT_IDX);
+	}
+}
+
+//=============================================================================
+// プレイヤーがアイテムを取得時の処理
+//=============================================================================
+void CPlayer::SwitchItem(CItem *pItem)
+{
+	//マップの取得
+	CMap *pMap = CManager::GetBaseMode()->GetMap();
+
+	//アイテムの種類別処理
+	switch (pItem->GetType())
+	{
+	case CItem::TYPE_STAR:	//スターの場合
+		break;
+
+	case CItem::TYPE_GRENADE: //グレネードの場合
+		break;
+
+	case CItem::TYPE_1UP_TANK: //1UPの場合
+		break;
+
+	case CItem::TYPE_SCOOP: //スコップの場合
+		if (pMap != NULL)
+		{
+			//司令部の取得
+			CHeadQuarters *pHeadQuarters = pMap->GetHeadQuarters();
+
+			int nVirtical = 0; //縦の配置個数の情報
+
+			for (int nCntSide = 0; nCntSide < 6; nCntSide++)
+			{//
+				if (nCntSide <= 1 || nCntSide >= 4)
+				{//1以下または4以上の場合
+					nVirtical = 4;
+				}
+				else if (nCntSide >= 2 || nCntSide <= 3)
+				{//2以下または3以上の場合
+					nVirtical = 2;
+				}
+
+				for (int nCntVirtical = 0; nCntVirtical < nVirtical; nCntVirtical++)
+				{//ブロックの生成
+					CBlockScoop::Create(D3DXVECTOR3(-93.8f + (MASS_SIZE_X_HALF * nCntSide), 30.0f, -431.3f - (MASS_SIZE_Z_HALF * nCntVirtical)), INITIALIZE_D3DXVECTOR3,
+						0, 0, pMap->GetModelCreate()->GetMesh(14), pMap->GetModelCreate()->GetBuffMat(14), pMap->GetModelCreate()->GetNumMat(14), pMap->GetModelCreate()->GetTexture(14)
+						, MASS_SIZE_X_HALF, MASS_SIZE_Z_HALF * 2, MASS_SIZE_Z_HALF);
+				}
+			}
+		}
+		break;
+
+	case CItem::TYPE_CLOCK:	//時計の場合
+		break;
+
+	case CItem::TYPE_HELMET: //ヘルメットの場合
+		m_bHelmet = true;
+		break;
 	}
 }
 
@@ -329,6 +406,14 @@ void CPlayer::SetAllBlockDestroy(bool bAllBlockDestroy)
 }
 
 //=============================================================================
+// ヘルメットを使用しているかどうかの設置処理
+//=============================================================================
+void CPlayer::SetHelmet(bool bHelmet)
+{
+	m_bHelmet = bHelmet;
+}
+
+//=============================================================================
 // プレイヤーの取得処理
 //=============================================================================
 CPlayer *CPlayer::GetPlayer(void)
@@ -374,6 +459,14 @@ int CPlayer::GetMaxBullet(void)
 bool CPlayer::GetAllBlockDestroy(void)
 {
 	return m_bAllBlockDestroy;
+}
+
+//=============================================================================
+// ヘルメットを使用しているかどうか取得処理
+//=============================================================================
+bool CPlayer::GetHelmet(void)
+{
+	return m_bHelmet;
 }
 
 //=============================================================================
@@ -719,7 +812,7 @@ void CPlayer::Collision(void)
 	bool bLand = false;					 // 着地しているかどうか
 	bool bIceLand = false;				 // 氷の上にいるかどうか
 
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < PLAYER_COL_PRIORITY + 1; nCntPriority++)
 	{
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -746,36 +839,11 @@ void CPlayer::Collision(void)
 				CItem *pItem = (CItem*)pScene;
 
 				if (CollisionItem(&pos, &posOld, &move, colRange, pItem) == true)
-				{
+				{// アイテムに当たっている
 					bLand = true;
 
-
-					switch (pItem->GetType())
-					{
-					case CItem::TYPE_STAR:
-						SwitchAbility();
-						break;
-
-					case CItem::TYPE_GRENADE:
-
-						break;
-
-					case CItem::TYPE_1UP_TANK:
-
-						break;
-
-					case CItem::TYPE_SCOOP:
-
-						break;
-
-					case CItem::TYPE_CLOCK:
-
-						break;
-
-					case CItem::TYPE_HELMET:
-
-						break;
-					}
+					//アイテム取得時の処理
+					SwitchItem(pItem);
 				}
 			}
 			else if (pScene->GetObjType() == OBJTYPE_GOALCYLINDER)
@@ -823,6 +891,24 @@ void CPlayer::Collision(void)
 //=============================================================================
 void CPlayer::State(void)
 {
+	// 無敵状態時の処理
+	if (m_bHelmet == true)
+	{
+		// エフェクトを出す
+		if (m_nCntHelmet % PLAYER_INVINCIBLE_EFFECT_APPEAR == 0)
+		{
+			SetInvincibleEffect();
+		}
+
+		// カウンター増加
+		m_nCntHelmet++;
+		if (m_nCntHelmet >= PLAYER_INVINCIBLE_TIME)
+		{
+			m_bHelmet = false;
+			m_nCntHelmet = 0;
+		}
+	}
+
 	switch (m_state)
 	{
 	case STATE_NOMAL:	//通常状態
@@ -1018,6 +1104,8 @@ void CPlayer::ClearVariable(void)
 	m_nCntSplash = 0;			//汚れカウンター
 	m_motion = MOTION_NEUTAL;	//モーション情報
 	m_ability = PLAYER_ABILITY_NOMAL;	//能力の情報
+	m_bHelmet = false;			//ヘルメットを使用しているかどうか
+	m_nCntHelmet = 0;			//ヘルメットカウンター
 }
 
 //=============================================================================
@@ -1224,8 +1312,11 @@ bool CPlayer::CollisionHinaarare(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVE
 			if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange / 2, NULL) == true)
 			{
 				pHinaarare->Hit(this);
-				SetState(STATE_STOP);
-				bLand = true;
+				if (m_bHelmet == false)
+				{
+					SetState(STATE_STOP);
+					bLand = true;
+				}
 			}
 		}
 	}

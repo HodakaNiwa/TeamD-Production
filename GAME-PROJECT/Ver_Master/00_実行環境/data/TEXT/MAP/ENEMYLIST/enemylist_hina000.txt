@@ -19,8 +19,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 50			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 9		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -33,8 +33,8 @@ ENEMYLISTSET
 		TYPE = 0		# 出現させるアイテムの種類
 	END_ITEM
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 11		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 6		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -44,8 +44,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 250			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 8		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 4		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -55,8 +55,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 750			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 12		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 6		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -69,8 +69,8 @@ ENEMYLISTSET
 		TYPE = 2		# 出現させるアイテムの種類
 	END_ITEM
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 10		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -80,8 +80,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 950			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 10		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -91,8 +91,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 240			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 12		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 7		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -102,8 +102,8 @@ ENEMYLISTSET
 	TYPE = 2			# 種類
 	TIME = 1550			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 9		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -116,8 +116,8 @@ ENEMYLISTSET
 		TYPE = 0		# 出現させるアイテムの種類
 	END_ITEM
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 10		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -127,8 +127,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 1750			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 11		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 6		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -138,8 +138,8 @@ ENEMYLISTSET
 	TYPE = 2			# 種類
 	TIME = 360			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 11		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 6		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -149,8 +149,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 2150			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 10		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -160,8 +160,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 2250			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 8		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 4		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -171,8 +171,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 2350			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 9		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 4		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -182,8 +182,8 @@ ENEMYLISTSET
 	TYPE = 2			# 種類
 	TIME = 2650			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 10		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -196,8 +196,8 @@ ENEMYLISTSET
 		TYPE = 0		# 出現させるアイテムの種類
 	END_ITEM
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 12		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 7		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -207,8 +207,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 2850			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 9		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 5		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -218,8 +218,8 @@ ENEMYLISTSET
 	TYPE = 0			# 種類
 	TIME = 3150			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 10		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 6		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -229,8 +229,8 @@ ENEMYLISTSET
 	TYPE = 2			# 種類
 	TIME = 3250			# 出現させる時間
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 12		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 7		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET
@@ -243,8 +243,8 @@ ENEMYLISTSET
 		TYPE = 2		# 出現させるアイテムの種類
 	END_ITEM
 	AISET
-		BULLET = 300	# 弾を打つ際のランダム評価値
-		MASS = 11		# 向きを変えさせるランダム評価値
+		BULLET = 90		# 弾を打つ際のランダム評価値
+		MASS = 6		# 向きを変えさせるランダム評価値
 		DOWN = 2		# 下向きに動かせるランダム評価値
 	END_AISET
 END_ENEMYLISTSET

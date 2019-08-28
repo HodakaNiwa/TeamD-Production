@@ -245,7 +245,7 @@ void CResult::CreateHighScore(void)
 			RESULT_HIGHSCORELOGO_WIDTH_INI, RESULT_HIGHSCORELOGO_HEIGHT_INI);
 		if (m_pHighScoreLogo != NULL && GetTextureManager() != NULL)
 		{
-			m_pHighScoreLogo->BindTexture(GetTextureManager()->GetTexture(m_ResultLogoData.nTexIdx));
+			m_pHighScoreLogo->BindTexture(GetTextureManager()->GetTexture(RESULT_HIGHSCORELOGO_TEXIDX));
 		}
 	}
 

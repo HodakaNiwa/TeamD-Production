@@ -2980,8 +2980,8 @@ void CGame::NormalUpdate(void)
 	CDebugProc::Print(1, "[LSHIFT]キー + [F7]キー       : 時計アイテムイベント\n");
 	CDebugProc::Print(1, "[LSHIFT]キー + [F8]～[F9]キー : ヘルメットアイテムイベント\n");
 	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : 桜吹雪マップイベント開始\n");
-	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : アイテム投下マップイベント開始\n");
-	CDebugProc::Print(1, "[RSHIFT]キー + [1]キー        : ひなあられ投下マップイベント開始\n\n");
+	CDebugProc::Print(1, "[RSHIFT]キー + [2]キー        : アイテム投下マップイベント開始\n");
+	CDebugProc::Print(1, "[RSHIFT]キー + [3]キー        : ひなあられ投下マップイベント開始\n\n");
 
 #endif
 
@@ -3154,7 +3154,7 @@ void CGame::GameOverUpdate(void)
 	}
 
 	// BGMを止める
-	CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX);
+	StopBGM();
 
 	// ゲームオーバーロゴポリゴンを上げる
 	GameOverLogoUp();
@@ -3728,6 +3728,12 @@ void CGame::StopBGM(void)
 //=============================================================================
 void CGame::ItemEvent_Star(int nPlayerNumber)
 {
+	// アビリティ変更
+	if (m_pPlayer[nPlayerNumber] != NULL)
+	{
+		m_pPlayer[nPlayerNumber]->SwitchAbility();
+	}
+
 	// スコアを加算する
 	m_nScore[nPlayerNumber] += GAME_ITEM_SCORE;
 
@@ -4043,7 +4049,7 @@ void CGame::MapEvent_Hinamatsuri_Drop_Item(void)
 			{// 3000回チェックしてだめなら抜ける(ストップバグ防止)
 				break;
 			}
-		} while (MapEvent_Hinamatsuri_Drop_Item_CheckPos() == false);
+		} while (MapEvent_Hinamatsuri_Drop_Item_CheckPos() == true);
 
 		// 円筒生成
 		m_pItemCylinder = CItemCylinder::Create(m_ItemDropPos, INITIALIZE_D3DXVECTOR3,
@@ -4072,6 +4078,8 @@ void CGame::MapEvent_Hinamatsuri_Drop_Item(void)
 	{
 		// アイテムを出す種類を設定
 		int nItemType = rand() % CItem::TYPE_MAX;
+
+		nItemType = CItem::TYPE_SCOOP;
 
 		// アイテム生成
 		m_pItem = CreateItem(m_ItemDropPos, INITIALIZE_D3DXVECTOR3, (CItem::TYPE)nItemType);
@@ -6556,4 +6564,12 @@ int CGame::GetNumEnemy(void)
 bool CGame::GetEnemyMove(void)
 {
 	return m_bEnemyMove;
+}
+
+//=============================================================================
+// ゲームのステージ番号を取得する
+//=============================================================================
+int CGame::GetStageIdx(void)
+{
+	return m_nStageIdx;
 }

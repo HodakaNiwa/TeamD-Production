@@ -20,6 +20,16 @@ class CItem : public CObject3D
 {
 public:    // 誰でもアクセス可能
 	//-------------------
+	//   状態
+	//-------------------
+	typedef enum
+	{
+		STATE_NORMAL = 0,   // 通常
+		STATE_DEATH,        // 死亡
+		STATE_MAX
+	}STATE;
+
+	//-------------------
 	//   種類
 	//-------------------
 	typedef enum
@@ -92,6 +102,8 @@ private:   // このクラスだけがアクセス可能
 	float               m_fAlpha;       // モデルの透明度
 	D3DXVECTOR3         m_Scale;        // 現在のスケール
 	float               m_fChangeScale; // スケールの倍率を変える値
+	int                 m_nLife;        // 寿命
+	STATE               m_State;        // 状態
 };
 
 //*****************************************************************************

@@ -889,7 +889,10 @@ void CCharaSelect::GetDataFromServer(void)
 	int nPlayerNumber = CFunctionLib::ReadInt(pStr, "");
 	nWord = CFunctionLib::PopString(pStr, "");
 	pStr += nWord;
-	m_nSelectPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] = nPlayerNumber;
+	if (m_State[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] != STATE_END)
+	{
+		m_nSelectPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] = nPlayerNumber;
+	}
 
 	CDebugProc::Print(1, "相手の状態 : %d\n", nState);
 	CDebugProc::Print(1, "相手の選択しているプレイヤー番号 : %d\n", nPlayerNumber);
@@ -1042,6 +1045,18 @@ void CCharaSelect::WaitPartnerUpdate(int nIdx)
 	if (m_State[0] == STATE_WAIT_PARTNER && m_State[1] == STATE_WAIT_PARTNER)
 	{
 		m_State[0] = m_State[1] = STATE_END;
+	}
+
+	// タイトルに戻る処理
+	CInputKeyboard *pKey = CManager::GetKeyboard();
+	CFade *pFade = CManager::GetFade();
+	if (pKey == NULL || pFade == NULL) return;
+	if (pFade->GetFade() != CFade::FADE_NONE) { return; }
+	if (pKey->GetTrigger(DIK_BACK) == true ||
+		CManager::GetXInput()->GetTrigger(nIdx, CXInput::XIJS_BUTTON_5) == true)
+	{// 戻るボタンが押された
+		m_State[nIdx] = STATE_END_TITLE;
+		m_State[(nIdx + 1) % MAX_NUM_PLAYER] = STATE_END_TITLE;
 	}
 }
 

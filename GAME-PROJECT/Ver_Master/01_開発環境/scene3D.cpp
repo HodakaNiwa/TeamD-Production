@@ -167,18 +167,43 @@ void CScene3D::Draw(void)
 //=============================================================================
 void CScene3D::SetMtxWorld(const LPDIRECT3DDEVICE9 pDevice)
 {
-	D3DXMATRIX mtxRot, mtxTrans; // 計算用マトリックス
+	D3DXMATRIX mtxRot; // 計算用マトリックス
 
 	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_MtxWorld);
 
-	// 回転を反映
-	D3DXMatrixRotationYawPitchRoll(&mtxRot, m_Rot.y, m_Rot.x, m_Rot.z);
-	D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxRot);
+	// 回転行列を作成(D3DXMatrixRotationYawPitchRoll参照)
+	float fSinPitch = sinf(m_Rot.x);
+	float fCosPitch = cosf(m_Rot.x);
+	float fSinYaw = sinf(m_Rot.y);
+	float fCosYaw = cosf(m_Rot.y);
+	float fSinRoll = sinf(m_Rot.z);
+	float fCosRoll = cosf(m_Rot.z);
+	mtxRot._11 = fSinRoll * fSinPitch * fSinYaw + fCosRoll * fCosYaw;
+	mtxRot._12 = fSinRoll * fCosPitch;
+	mtxRot._13 = fSinRoll * fSinPitch * fCosYaw - fCosRoll * fSinYaw;
+	mtxRot._21 = fCosRoll * fSinPitch * fSinYaw - fSinRoll * fCosYaw;
+	mtxRot._22 = fCosRoll * fCosPitch;
+	mtxRot._23 = fCosRoll * fSinPitch * fCosYaw + fSinRoll * fSinYaw;
+	mtxRot._31 = fCosPitch * fSinYaw;
+	mtxRot._32 = -fSinPitch;
+	mtxRot._33 = fCosPitch * fCosYaw;
 
-	// 位置を反映
-	D3DXMatrixTranslation(&mtxTrans, m_Pos.x, m_Pos.y, m_Pos.z);
-	D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxTrans);
+	// 回転を反映する
+	m_MtxWorld._11 = mtxRot._11;
+	m_MtxWorld._12 = mtxRot._12;
+	m_MtxWorld._13 = mtxRot._13;
+	m_MtxWorld._21 = mtxRot._21;
+	m_MtxWorld._22 = mtxRot._22;
+	m_MtxWorld._23 = mtxRot._23;
+	m_MtxWorld._31 = mtxRot._31;
+	m_MtxWorld._32 = mtxRot._32;
+	m_MtxWorld._33 = mtxRot._33;
+
+	// オフセット位置を反映
+	m_MtxWorld._41 = m_Pos.x;
+	m_MtxWorld._42 = m_Pos.y;
+	m_MtxWorld._43 = m_Pos.z;
 
 	// ワールドマトリックスの設定
 	pDevice->SetTransform(D3DTS_WORLD, &m_MtxWorld);

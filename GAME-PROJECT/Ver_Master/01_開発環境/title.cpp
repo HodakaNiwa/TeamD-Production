@@ -27,6 +27,8 @@
 #include "player.h"
 #include "playerManager.h"
 #include "effectManager.h"
+#include "modelcreate.h"
+#include "block.h"
 #include "debugproc.h"
 
 //=============================================================================
@@ -135,10 +137,38 @@
 #define TITLE_HIGHSCORENUMBER_INTERVAL_INI  (D3DXVECTOR3(-55.0f, 0.0f, 0.0f))
 #define TITLE_HIGHSCORENUMBER_PRIORITY      (7)
 
+// タイトルアイコン初期化用
+#define TITLE_ICON_POS_INI                  (D3DXVECTOR3(230.0f, 560.0f, 0.0f))
+#define TITLE_ICON_COL_INI                  (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define TITLE_ICON_WIDTH_INI                (130.0f)
+#define TITLE_ICON_HEIGHT_INI               (130.0f)
+#define TITLE_ICON_TEXIDX                   (14)
+#define TITLE_ICON_PRIORITY                 (7)
+
+// タイトル道なりモデル初期化用
+#define TITLE_LOAD_MODEL_INTERVAL           (150.0f)
+#define TITLE_LOAD_ZPOS_INI                 (3000.0f)
+#define TITLE_LOAD_WIDTH                    (500.0f)
+#define TITLE_LOAD_MODELIDX                 (0)
+#define TITLE_LOAD_SETMODEL_NUM             (50)
+
+
+// タイトル配置物初期化用
+#define TITLE_OBJECT_MODELIDX               (1)
+#define TITLE_OBJECT_NUM_MODELTYPE          (3)
+#define TITLE_OBJECT_SET_WIDTH              (1300)
+#define TITLE_OBJECT_SET_DEPTH              (3000)
+#define TITLE_OBJECT_POS_INI                (D3DXVECTOR3(2000.0f, 560.0f, 2800.0f))
+#define TITLE_OBJECT_SETMODEL_NUM           (700)
+
 // 値読み込み用のパス
 // テクスチャ用
 #define NUM_TEXTURE "NUM_TEXTURE = "
 #define TEXTURE_FILENAME "TEXTURE_FILENAME = "
+
+// モデル用
+#define NUM_MODEL "NUM_MODEL = "
+#define MODEL_FILENAME "MODEL_FILENAME = "
 
 // エフェクト用
 #define EFFECT_FILENAME "EFFECT_FILENAME = "
@@ -281,6 +311,12 @@ HRESULT CTitle::Init(void)
 
 	// 走っているようなエフェクトを生成する
 	CreateDashEffect();
+
+	// 道なりにブロックを配置する
+	CreateLoad();
+
+	// 配置物生成
+	CreateObject();
 
 	// ゲームモード初期化
 	m_nGameMode = GAMEMODE_LOCAL1P;
@@ -452,6 +488,16 @@ void CTitle::CreateGameModeBg(void)
 	if (m_pRetrun != NULL)
 	{
 		m_pRetrun->BindTexture(GetTextureManager()->GetTexture(TITLERETURNLOGO_TEXIDX));
+	}
+
+	if (m_pIcon == NULL)
+	{
+		m_pIcon = CScene2D::Create(TITLE_ICON_POS_INI, TITLE_ICON_COL_INI,
+			TITLE_ICON_WIDTH_INI, TITLE_ICON_HEIGHT_INI, TITLE_ICON_PRIORITY);
+		if (m_pIcon != NULL && GetTextureManager() != NULL)
+		{
+			m_pIcon->BindTexture(GetTextureManager()->GetTexture(TITLE_ICON_TEXIDX));
+		}
 	}
 }
 
@@ -658,6 +704,83 @@ void CTitle::CreateHighScore(void)
 }
 
 //=============================================================================
+// タイトルの道なりモデルを生成する処理
+//=============================================================================
+void CTitle::CreateLoad(void)
+{
+	CModelCreate *pModelCreate = GetModelCreate();
+	if (pModelCreate == NULL) { return; }
+
+	D3DXVECTOR3 LoadPos = D3DXVECTOR3(TITLE_LOAD_WIDTH, 0.0f, TITLE_LOAD_ZPOS_INI);
+
+	// 右側
+	for (int nCntModel = 0; nCntModel < TITLE_LOAD_SETMODEL_NUM; nCntModel++)
+	{
+		CBlock::Create(LoadPos, INITIALIZE_D3DXVECTOR3, 0, 0, pModelCreate->GetMesh(TITLE_LOAD_MODELIDX),
+			pModelCreate->GetBuffMat(TITLE_LOAD_MODELIDX), pModelCreate->GetNumMat(TITLE_LOAD_MODELIDX),
+			pModelCreate->GetTexture(TITLE_LOAD_MODELIDX));
+		LoadPos.z -= TITLE_LOAD_MODEL_INTERVAL;
+	}
+
+	// 座標を初期値に設定
+	LoadPos.x = -TITLE_LOAD_WIDTH;
+	LoadPos.z = TITLE_LOAD_ZPOS_INI;
+
+	// 左側
+	for (int nCntModel = 0; nCntModel < TITLE_LOAD_SETMODEL_NUM; nCntModel++)
+	{
+		CBlock::Create(LoadPos, INITIALIZE_D3DXVECTOR3, 0, 0, pModelCreate->GetMesh(TITLE_LOAD_MODELIDX),
+			pModelCreate->GetBuffMat(TITLE_LOAD_MODELIDX), pModelCreate->GetNumMat(TITLE_LOAD_MODELIDX),
+			pModelCreate->GetTexture(TITLE_LOAD_MODELIDX));
+		LoadPos.z -= TITLE_LOAD_MODEL_INTERVAL;
+	}
+}
+
+//=============================================================================
+// タイトルの配置物生成処理
+//=============================================================================
+void CTitle::CreateObject(void)
+{
+	CModelCreate *pModelCreate = GetModelCreate();
+	if (pModelCreate == NULL) { return; }
+
+	int nModelIdx = 0;
+	D3DXVECTOR3 LoadPos = D3DXVECTOR3(TITLE_LOAD_WIDTH, 0.0f, TITLE_LOAD_ZPOS_INI);
+
+	// 右側
+	for (int nCntModel = 0; nCntModel < TITLE_OBJECT_SETMODEL_NUM; nCntModel++)
+	{
+		// 使用するモデル番号の設定
+		nModelIdx = rand() % TITLE_OBJECT_NUM_MODELTYPE + TITLE_OBJECT_MODELIDX;
+
+		// 配置する座標の設定
+		LoadPos.x = (float)(-(rand() % TITLE_OBJECT_SET_WIDTH) + TITLE_OBJECT_POS_INI.x);
+		LoadPos.z = (float)(-(rand() % TITLE_OBJECT_SET_DEPTH) + TITLE_OBJECT_POS_INI.z);
+
+		// モデル配置
+		CBlock::Create(LoadPos, INITIALIZE_D3DXVECTOR3, 0, 0, pModelCreate->GetMesh(nModelIdx),
+			pModelCreate->GetBuffMat(nModelIdx), pModelCreate->GetNumMat(nModelIdx),
+			pModelCreate->GetTexture(nModelIdx));
+	}
+
+	// 左側
+	for (int nCntModel = 0; nCntModel < TITLE_OBJECT_SETMODEL_NUM; nCntModel++)
+	{
+		// 使用するモデル番号の設定
+		nModelIdx = rand() % TITLE_OBJECT_NUM_MODELTYPE + TITLE_OBJECT_MODELIDX;
+
+		// 配置する座標の設定
+		LoadPos.x = (float)((rand() % TITLE_OBJECT_SET_WIDTH) - TITLE_OBJECT_POS_INI.x);
+		LoadPos.z = (float)(-(rand() % TITLE_OBJECT_SET_DEPTH) + TITLE_OBJECT_POS_INI.z);
+
+		// モデル配置
+		CBlock::Create(LoadPos, INITIALIZE_D3DXVECTOR3, 0, 0, pModelCreate->GetMesh(nModelIdx),
+			pModelCreate->GetBuffMat(nModelIdx), pModelCreate->GetNumMat(nModelIdx),
+			pModelCreate->GetTexture(nModelIdx));
+	}
+}
+
+//=============================================================================
 // タイトルのフェード用ポリゴン開放処理
 //=============================================================================
 void CTitle::ReleaseFadePolygon(void)
@@ -738,6 +861,12 @@ void CTitle::ReleaseGameModeBg(void)
 	{
 		m_pRetrun->Uninit();
 		m_pRetrun = NULL;
+	}
+
+	if (m_pIcon != NULL)
+	{
+		m_pIcon->Uninit();
+		m_pIcon = NULL;
 	}
 }
 
@@ -1065,6 +1194,10 @@ void CTitle::GameModeUpdate(void)
 		m_nGameMode = (m_nGameMode + (GAMEMODE_MAX - 1)) % GAMEMODE_MAX;
 		ChangeSelectGameModeLogoPoly(m_nGameMode);
 		CManager::GetSound()->PlaySound(TITLE_SE_SELECT_IDX);
+		if (m_pIcon != NULL)
+		{
+			m_pIcon->BindTexture(GetTextureManager()->GetTexture(TITLE_ICON_TEXIDX + m_nGameMode));
+		}
 	}
 	else if (pKey->GetTrigger(DIK_S) == true ||
 		pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_1) == true ||
@@ -1077,6 +1210,10 @@ void CTitle::GameModeUpdate(void)
 		m_nGameMode = (m_nGameMode + 1) % GAMEMODE_MAX;
 		ChangeSelectGameModeLogoPoly(m_nGameMode);
 		CManager::GetSound()->PlaySound(TITLE_SE_SELECT_IDX);
+		if (m_pIcon != NULL)
+		{
+			m_pIcon->BindTexture(GetTextureManager()->GetTexture(TITLE_ICON_TEXIDX + m_nGameMode));
+		}
 	}
 	else if (pKey->GetTrigger(DIK_RETURN) == true ||
 		pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
@@ -1304,6 +1441,7 @@ void CTitle::LoadSystem(void)
 void CTitle::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
 {
 	int nCntTex = 0;
+	int nCntModel = 0;
 	int nCntPlayerData = 0;
 	int nCntPlayer = 0;
 	int nCntLight = 0;
@@ -1318,6 +1456,17 @@ void CTitle::LoadSystemScript(CFileLoader *pFileLoader, char *pStr)
 		{// 読み込むテクスチャのファイル名だった
 			LoadTexFileName(pStr, nCntTex);
 			nCntTex++;
+		}
+		else if (CFunctionLib::Memcmp(pStr, NUM_MODEL) == 0)
+		{// 読み込むモデルの数だった
+			int nNumModel = CFunctionLib::ReadInt(pStr, NUM_MODEL);
+			CModelCreate *pModelCreate = CModelCreate::Create(nNumModel);
+			SetModelCreate(pModelCreate);
+		}
+		else if (CFunctionLib::Memcmp(pStr, MODEL_FILENAME) == 0)
+		{// 読み込むモデルのファイル名だった
+			LoadModel(pStr, nCntModel);
+			nCntModel++;
 		}
 		else if (CFunctionLib::Memcmp(pStr, EFFECT_FILENAME) == 0)
 		{// 読み込むエフェクトのファイル名だった
@@ -1404,6 +1553,30 @@ void CTitle::LoadTexFileName(char *pStr, int nCntTex)
 	CTextureManager *pTextureManager = GetTextureManager();
 	pTextureManager->SetTexture(pTexture, nCntTex);
 	pTextureManager->SetFileName(pStr, nCntTex);
+}
+
+//=============================================================================
+// タイトルのモデルを読み込む
+//=============================================================================
+void CTitle::LoadModel(char *pStr, int nCntModel)
+{
+	// モデルのファイルパス名を読み取る
+	LPD3DXMESH pMesh = NULL;
+	LPD3DXBUFFER pBuffMat = NULL;
+	DWORD nNumMat = 0;
+	char aModelFileName[256] = "\0";
+	strcpy(aModelFileName, CFunctionLib::ReadString(pStr, aModelFileName, MODEL_FILENAME));
+
+	// xファイルの読み込み
+	D3DXLoadMeshFromX(aModelFileName, D3DXMESH_SYSTEMMEM, CManager::GetRenderer()->GetDevice(), NULL,
+		&pBuffMat, NULL, &nNumMat, &pMesh);
+
+	// モデル管轄クラスに値を設定する
+	CModelCreate *pModelCreate = GetModelCreate();
+	if (pModelCreate == NULL)return;
+	pModelCreate->SetMesh(pMesh, nCntModel);
+	pModelCreate->SetMaterial(CManager::GetRenderer()->GetDevice(), pBuffMat, nNumMat, nCntModel);
+	pModelCreate->SetFileName(pStr, nCntModel);
 }
 
 //=============================================================================
@@ -1923,6 +2096,7 @@ void CTitle::ClearGameModeBg(void)
 	m_pGameLogoBg = NULL;
 	m_pDecide = NULL;
 	m_pRetrun = NULL;
+	m_pIcon = NULL;
 }
 
 //=============================================================================

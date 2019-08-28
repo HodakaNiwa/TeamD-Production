@@ -201,6 +201,7 @@ public:	// 誰からもアクセス可能
 	CPlayer *GetPlayer(const int nIdx);
 	int GetNumEnemy(void);
 	bool GetEnemyMove(void);
+	int GetStageIdx(void);
 
 	// 静的メンバ関数
 	static CGame *Create(void);

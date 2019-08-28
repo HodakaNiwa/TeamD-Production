@@ -18,13 +18,16 @@
 //*****************************************************************************
 //    マクロ定義
 //*****************************************************************************
-#define ITEM_EFFECT_IDX    (8)        // アイテムが使うエフェクトの番号
-#define ITEM_SCALE_MAX     (1.1f)     // 大きさの最大値
-#define ITEM_SCALE_MIN     (0.85f)    // 大きさの最小値
-#define ITEM_SCALE_CHANGE  (0.005f)   // 大きさの変化量初期値
+#define ITEM_EFFECT_IDX     (8)        // アイテムが使うエフェクトの番号
+#define ITEM_SCALE_MAX      (1.1f)     // 大きさの最大値
+#define ITEM_SCALE_MIN      (0.85f)    // 大きさの最小値
+#define ITEM_SCALE_CHANGE   (0.005f)   // 大きさの変化量初期値
+#define ITEM_LIFE_INI       (720)      // アイテムの寿命初期値
+#define ITEM_LIFE_DEATH     (480)      // アイテムの寿命(死亡時)
+#define ITEM_NOTDISP_TIMING (4)        // 死亡時にアイテムを描画しないタイミング
 
 // グレネード用
-#define GRANADE_EFFECT_IDX (9)        // グレネードを消すときに使うエフェクトの番号
+#define GRANADE_EFFECT_IDX  (9)        // グレネードを消すときに使うエフェクトの番号
 
 //*****************************************************************************
 //    静的メンバ変数
@@ -48,6 +51,8 @@ CItem::CItem(int nPriority, OBJTYPE objType) : CObject3D(nPriority, objType)
 	m_fAlpha = 0.0f;                     // モデルの透明度
 	m_Scale = INITIALIZE_D3DXVECTOR3;    // 現在のスケールの倍率
 	m_fChangeScale = 0.0f;               // スケール倍率を変更させる値
+	m_nLife = 0;                         // 寿命
+	m_State = STATE_NORMAL;              // 状態
 }
 
 //=============================================================================
@@ -114,6 +119,9 @@ HRESULT CItem::Init(void)
 	m_Scale = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	m_fChangeScale = ITEM_SCALE_CHANGE;
 
+	// 寿命を設定
+	m_nLife = ITEM_LIFE_INI;
+
 	return S_OK;
 }
 
@@ -166,6 +174,22 @@ void CItem::Update(void)
 	{
 		pEffectManager->SetEffect(GetPos() + D3DXVECTOR3(0.0f, 10.0f, 0.0f), INITIALIZE_D3DXVECTOR3, ITEM_EFFECT_IDX);
 	}
+
+	// 寿命を減らす
+	m_nLife--;
+	if (m_nLife <= 0)
+	{
+		switch (m_State)
+		{
+		case STATE_NORMAL:
+			m_nLife = ITEM_LIFE_DEATH;
+			m_State = STATE_DEATH;
+			break;
+		case STATE_DEATH:
+			Uninit();
+			break;
+		}
+	}
 }
 
 //=============================================================================
@@ -173,6 +197,11 @@ void CItem::Update(void)
 //=============================================================================
 void CItem::Draw(void)
 {
+	if (m_State == STATE_DEATH && m_nLife % ITEM_NOTDISP_TIMING == 0)
+	{// 死亡状態で描画しないタイミングだったら
+		return;
+	}
+
 	D3DMATERIAL9 matDef;     // 現在のマテリアル保存用
 	D3DXMATERIAL *pMat;      // マテリアルデータへのポインタ
 	float fAlphaDef = 0.0f;  // デフォルトの透明度
@@ -246,23 +275,45 @@ void CItem::Draw(void)
 //=============================================================================
 void CItem::SetMtxWorld(LPDIRECT3DDEVICE9 pDevice)
 {
-	D3DXMATRIX mtxRot, mtxTrans, mtxScale, mtxWorld;					//計算用マトリックス
+	D3DXMATRIX mtxWorld, mtxRot; // 計算用マトリックス
 
 	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&mtxWorld);
 
-	// 大きさを反映
-	mtxWorld._11 = m_Scale.x;
-	mtxWorld._22 = m_Scale.y;
-	mtxWorld._33 = m_Scale.z;
+	// 回転行列を作成(D3DXMatrixRotationYawPitchRoll参照)
+	D3DXVECTOR3 rot = GetRot();
+	float fSinPitch = sinf(rot.x);
+	float fCosPitch = cosf(rot.x);
+	float fSinYaw = sinf(rot.y);
+	float fCosYaw = cosf(rot.y);
+	float fSinRoll = sinf(rot.z);
+	float fCosRoll = cosf(rot.z);
+	mtxRot._11 = fSinRoll * fSinPitch * fSinYaw + fCosRoll * fCosYaw;
+	mtxRot._12 = fSinRoll * fCosPitch;
+	mtxRot._13 = fSinRoll * fSinPitch * fCosYaw - fCosRoll * fSinYaw;
+	mtxRot._21 = fCosRoll * fSinPitch * fSinYaw - fSinRoll * fCosYaw;
+	mtxRot._22 = fCosRoll * fCosPitch;
+	mtxRot._23 = fCosRoll * fSinPitch * fCosYaw + fSinRoll * fSinYaw;
+	mtxRot._31 = fCosPitch * fSinYaw;
+	mtxRot._32 = -fSinPitch;
+	mtxRot._33 = fCosPitch * fCosYaw;
 
-	// 回転を反映
-	D3DXMatrixRotationYawPitchRoll(&mtxRot, GetRot().y, GetRot().x, GetRot().z);
-	D3DXMatrixMultiply(&mtxWorld, &mtxWorld, &mtxRot);
+	// 大きさと回転を反映する
+	mtxWorld._11 = mtxRot._11 * m_Scale.x;
+	mtxWorld._12 = mtxRot._12 * m_Scale.x;
+	mtxWorld._13 = mtxRot._13 * m_Scale.x;
+	mtxWorld._21 = mtxRot._21 * m_Scale.y;
+	mtxWorld._22 = mtxRot._22 * m_Scale.y;
+	mtxWorld._23 = mtxRot._23 * m_Scale.y;
+	mtxWorld._31 = mtxRot._31 * m_Scale.z;
+	mtxWorld._32 = mtxRot._32 * m_Scale.z;
+	mtxWorld._33 = mtxRot._33 * m_Scale.z;
 
-	// 移動を反映
-	D3DXMatrixTranslation(&mtxTrans, GetPos().x, GetPos().y, GetPos().z);
-	D3DXMatrixMultiply(&mtxWorld, &mtxWorld, &mtxTrans);
+	// オフセット位置を反映
+	D3DXVECTOR3 pos = GetPos();
+	mtxWorld._41 = pos.x;
+	mtxWorld._42 = pos.y;
+	mtxWorld._43 = pos.z;
 
 	// ワールドマトリックスの設定
 	pDevice->SetTransform(D3DTS_WORLD, &mtxWorld);

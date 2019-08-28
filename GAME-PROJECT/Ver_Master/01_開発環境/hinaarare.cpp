@@ -163,18 +163,45 @@ void CHinaarare::Draw(void)
 //=============================================================================
 void CHinaarare::SetMtxWorld(LPDIRECT3DDEVICE9 pDevice)
 {
-	D3DXMATRIX mtxRot, mtxTrans, mtxScale, mtxWorld;  // 計算用マトリックス
+	D3DXMATRIX mtxWorld, mtxRot; // 計算用マトリックス
 
 	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&mtxWorld);
 
-	// 回転を反映
-	D3DXMatrixRotationYawPitchRoll(&mtxRot, GetRot().y, GetRot().x, GetRot().z);
-	D3DXMatrixMultiply(&mtxWorld, &mtxWorld, &mtxRot);
+	// 回転行列を作成(D3DXMatrixRotationYawPitchRoll参照)
+	D3DXVECTOR3 rot = GetRot();
+	float fSinPitch = sinf(rot.x);
+	float fCosPitch = cosf(rot.x);
+	float fSinYaw = sinf(rot.y);
+	float fCosYaw = cosf(rot.y);
+	float fSinRoll = sinf(rot.z);
+	float fCosRoll = cosf(rot.z);
+	mtxRot._11 = fSinRoll * fSinPitch * fSinYaw + fCosRoll * fCosYaw;
+	mtxRot._12 = fSinRoll * fCosPitch;
+	mtxRot._13 = fSinRoll * fSinPitch * fCosYaw - fCosRoll * fSinYaw;
+	mtxRot._21 = fCosRoll * fSinPitch * fSinYaw - fSinRoll * fCosYaw;
+	mtxRot._22 = fCosRoll * fCosPitch;
+	mtxRot._23 = fCosRoll * fSinPitch * fCosYaw + fSinRoll * fSinYaw;
+	mtxRot._31 = fCosPitch * fSinYaw;
+	mtxRot._32 = -fSinPitch;
+	mtxRot._33 = fCosPitch * fCosYaw;
 
-	// 移動を反映
-	D3DXMatrixTranslation(&mtxTrans, GetPos().x, GetPos().y, GetPos().z);
-	D3DXMatrixMultiply(&mtxWorld, &mtxWorld, &mtxTrans);
+	// 大きさと回転を反映する
+	mtxWorld._11 = mtxRot._11;
+	mtxWorld._12 = mtxRot._12;
+	mtxWorld._13 = mtxRot._13;
+	mtxWorld._21 = mtxRot._21;
+	mtxWorld._22 = mtxRot._22;
+	mtxWorld._23 = mtxRot._23;
+	mtxWorld._31 = mtxRot._31;
+	mtxWorld._32 = mtxRot._32;
+	mtxWorld._33 = mtxRot._33;
+
+	// オフセット位置を反映
+	D3DXVECTOR3 pos = GetPos();
+	mtxWorld._41 = pos.x;
+	mtxWorld._42 = pos.y;
+	mtxWorld._43 = pos.z;
 
 	// ワールドマトリックスの設定
 	pDevice->SetTransform(D3DTS_WORLD, &mtxWorld);

@@ -195,23 +195,43 @@ void CModel::Draw(void)
 //=============================================================================
 void CModel::SetMtxWorld(const LPDIRECT3DDEVICE9 pDevice)
 {
-	D3DXMATRIX mtxRot, mtxTrans, mtxScale, mtxParent; // 計算用マトリックス
+	D3DXMATRIX mtxRot, mtxParent; // 計算用マトリックス
 
-	 // ワールドマトリックスの初期化
+	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_MtxWorld);
 
-	// 大きさを反映
-	m_MtxWorld._11 = m_Scale.x;
-	m_MtxWorld._22 = m_Scale.y;
-	m_MtxWorld._33 = m_Scale.z;
+	// 回転行列を作成(D3DXMatrixRotationYawPitchRoll参照)
+	float fSinPitch = sinf(m_Rot.x);
+	float fCosPitch = cosf(m_Rot.x);
+	float fSinYaw = sinf(m_Rot.y);
+	float fCosYaw = cosf(m_Rot.y);
+	float fSinRoll = sinf(m_Rot.z);
+	float fCosRoll = cosf(m_Rot.z);
+	mtxRot._11 = fSinRoll * fSinPitch * fSinYaw + fCosRoll * fCosYaw;
+	mtxRot._12 = fSinRoll * fCosPitch;
+	mtxRot._13 = fSinRoll * fSinPitch * fCosYaw - fCosRoll * fSinYaw;
+	mtxRot._21 = fCosRoll * fSinPitch * fSinYaw - fSinRoll * fCosYaw;
+	mtxRot._22 = fCosRoll * fCosPitch;
+	mtxRot._23 = fCosRoll * fSinPitch * fCosYaw + fSinRoll * fSinYaw;
+	mtxRot._31 = fCosPitch * fSinYaw;
+	mtxRot._32 = -fSinPitch;
+	mtxRot._33 = fCosPitch * fCosYaw;
 
-	// 回転を反映
-	D3DXMatrixRotationYawPitchRoll(&mtxRot, m_Rot.y, m_Rot.x, m_Rot.z);
-	D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxRot);
+	// 大きさと回転を反映する
+	m_MtxWorld._11 = mtxRot._11 * m_Scale.x;
+	m_MtxWorld._12 = mtxRot._12 * m_Scale.x;
+	m_MtxWorld._13 = mtxRot._13 * m_Scale.x;
+	m_MtxWorld._21 = mtxRot._21 * m_Scale.y;
+	m_MtxWorld._22 = mtxRot._22 * m_Scale.y;
+	m_MtxWorld._23 = mtxRot._23 * m_Scale.y;
+	m_MtxWorld._31 = mtxRot._31 * m_Scale.z;
+	m_MtxWorld._32 = mtxRot._32 * m_Scale.z;
+	m_MtxWorld._33 = mtxRot._33 * m_Scale.z;
 
-	// 位置を反映
-	D3DXMatrixTranslation(&mtxTrans, m_Pos.x + m_AddPos.x, m_Pos.y + m_AddPos.y, m_Pos.z + m_AddPos.z);
-	D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxTrans);
+	// オフセット位置を反映
+	m_MtxWorld._41 = m_Pos.x + m_AddPos.x;
+	m_MtxWorld._42 = m_Pos.y + m_AddPos.y;
+	m_MtxWorld._43 = m_Pos.z + m_AddPos.z;
 
 	// 親モデルのワールドマトリックスを掛け合わせる
 	if (m_pParent != NULL)

@@ -204,8 +204,9 @@ void CSceneBillboard::SetMtxWorld(const LPDIRECT3DDEVICE9 pDevice)
 	m_MtxWorld._33 = mtxView._33;
 
 	// 位置を反映
-	D3DXMatrixTranslation(&mtxTrans, m_Pos.x, m_Pos.y, m_Pos.z);
-	D3DXMatrixMultiply(&m_MtxWorld, &m_MtxWorld, &mtxTrans);
+	m_MtxWorld._41 = m_Pos.x;
+	m_MtxWorld._42 = m_Pos.y;
+	m_MtxWorld._43 = m_Pos.z;
 
 	// ワールドマトリックスの設定
 	pDevice->SetTransform(D3DTS_WORLD, &m_MtxWorld);
