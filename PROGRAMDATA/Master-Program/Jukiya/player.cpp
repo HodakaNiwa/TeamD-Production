@@ -28,14 +28,20 @@
 #include "river.h"
 #include "icefield.h"
 #include "meshfield.h"
+#include "hinaarare.h"
 #include "headquarters.h"
+#include "map.h"
+#include "modelcreate.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define PLAYER_MOVE (2.5f)
-#define PLAYER_DEATH_EFFECT_IDX (7)
-#define PLAYER_SE_BULLET_IDX (6)
+#define PLAYER_MOVE             (2.8f)     // プレイヤーの移動量
+#define PLAYER_MOVE_POWERUP     (4.2f)     // パワーアップ時のプレイヤーの移動量
+#define PLAYER_DEATH_EFFECT_IDX (7)        // 死んだときのエフェクト番号
+#define PLAYER_MOVE_EFFECT_IDX  (15)       // 移動している時のエフェクト番号
+#define PLAYER_SE_BULLET_IDX    (6)        // 弾発射時の音番号
+#define PLAYER_SE_DAMAGE_IDX    (12)       // プレイヤーが動けなくなる攻撃をくらったときの音番号
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -55,7 +61,9 @@ CPlayer::CPlayer(int nPriority, OBJTYPE objType) : CCharacter(nPriority, objType
 	m_bSplash = false;			//汚れているかどうか
 	m_nCntSplash = 0;			//汚れカウンター
 	m_motion = MOTION_NEUTAL;	//モーション情報
-	m_nCntBullet = 0;
+	m_nCntBullet = 0;			//弾のカウンター
+	m_bHelmet = false;			//ヘルメットを使用しているかどうか
+	m_nCntHelmet = 0;			//ヘルメットカウンター
 }
 
 //=============================================================================
@@ -219,24 +227,27 @@ void CPlayer::Draw(void)
 //=============================================================================
 void CPlayer::Hit(CScene *pScene)
 {
+	if (m_bHelmet == false)
+	{//ヘルメットを使用していない場合
 	// 当たったオブジェクトによって処理わけ
-	if (pScene->GetObjType() == OBJTYPE_BULLET)
-	{// 弾だった
-		CBullet *pBullet = (CBullet*)pScene;
-		if (pBullet->GetType() == CBullet::TYPE_ENEMY)
-		{// 敵の弾だった
-		    // エフェクトを出す
-			CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
-			if (pEffectManager != NULL)
-			{
-				pEffectManager->SetEffect(GetPos(), INITIALIZE_D3DXVECTOR3, PLAYER_DEATH_EFFECT_IDX);
-			}
+		if (pScene->GetObjType() == OBJTYPE_BULLET)
+		{// 弾だった
+			CBullet *pBullet = (CBullet*)pScene;
+			if (pBullet->GetType() == CBullet::TYPE_ENEMY)
+			{// 敵の弾だった
+				// エフェクトを出す
+				CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+				if (pEffectManager != NULL)
+				{
+					pEffectManager->SetEffect(GetPos(), INITIALIZE_D3DXVECTOR3, PLAYER_DEATH_EFFECT_IDX);
+				}
 
-			Uninit();
-		}
-		else if(pBullet->GetType() != m_nPlayerIdx)
-		{// 違うプレイヤーの弾だった
-			m_state = STATE_STOP;
+				Uninit();
+			}
+			else if (pBullet->GetType() != m_nPlayerIdx)
+			{// 違うプレイヤーの弾だった
+				m_state = STATE_STOP;
+			}
 		}
 	}
 }
@@ -251,6 +262,86 @@ void CPlayer::SetDeathEffect(void)
 	if (pEffectManager != NULL)
 	{
 		pEffectManager->SetEffect(EffectPos, INITIALIZE_D3DXVECTOR3, PLAYER_DEATH_EFFECT_IDX);
+	}
+}
+
+//=============================================================================
+// プレイヤーが移動した時のエフェクト生成処理
+//=============================================================================
+void CPlayer::SetMoveEffect(void)
+{
+	D3DXVECTOR3 EffectPosDef = GetPos();
+	D3DXVECTOR3 EffectPos = EffectPosDef;
+	D3DXVECTOR3 EffectRot = GetRot();
+	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+	if (pEffectManager != NULL)
+	{
+		EffectPos.x += sinf(EffectRot.y - (D3DX_PI * 0.5f)) * 20.0f + sinf(EffectRot.y) * 30.0f;
+		EffectPos.z += cosf(EffectRot.y - (D3DX_PI * 0.5f)) * 20.0f + cosf(EffectRot.y) * 30.0f;
+		pEffectManager->SetEffect(EffectPos, EffectRot, PLAYER_MOVE_EFFECT_IDX);
+		EffectPos = EffectPosDef;
+		EffectPos.x -= sinf(EffectRot.y - (D3DX_PI * 0.5f)) * 20.0f - sinf(EffectRot.y) * 30.0f;
+		EffectPos.z -= cosf(EffectRot.y - (D3DX_PI * 0.5f)) * 20.0f - cosf(EffectRot.y) * 30.0f;
+		pEffectManager->SetEffect(EffectPos, EffectRot, PLAYER_MOVE_EFFECT_IDX);
+	}
+}
+
+//=============================================================================
+// プレイヤーがアイテムを取得時の処理
+//=============================================================================
+void CPlayer::SwitchItem(CItem *pItem)
+{
+	//マップの取得
+	CMap *pMap = CManager::GetBaseMode()->GetMap();
+
+	//アイテムの種類別処理
+	switch (pItem->GetType())
+	{
+	case CItem::TYPE_STAR:	//スターの場合
+		SwitchAbility();	//能力の切り替え処理
+		break;
+
+	case CItem::TYPE_GRENADE: //グレネードの場合
+		break;
+
+	case CItem::TYPE_1UP_TANK: //1UPの場合
+		break;
+
+	case CItem::TYPE_SCOOP: //スコップの場合
+		if (pMap != NULL)
+		{
+			//司令部の取得
+			CHeadQuarters *pHeadQuarters = pMap->GetHeadQuarters();
+
+			int nVirtical = 0; //縦の配置個数の情報
+
+			for (int nCntSide = 0; nCntSide < 6; nCntSide++)
+			{//
+				if (nCntSide <= 1 || nCntSide >= 4)
+				{//1以下または4以上の場合
+					nVirtical = 4;
+				}
+				else if(nCntSide >= 2 || nCntSide <= 3)
+				{//2以下または3以上の場合
+					nVirtical = 2;
+				}
+
+				for (int nCntVirtical = 0; nCntVirtical < nVirtical; nCntVirtical++)
+				{//ブロックの生成
+					CBlockScoop::Create(D3DXVECTOR3(-93.8f + (MASS_SIZE_X_HALF * nCntSide), 30.0f, -431.3f - (MASS_SIZE_Z_HALF * nCntVirtical)), INITIALIZE_D3DXVECTOR3,
+						0, 0, pMap->GetModelCreate()->GetMesh(14), pMap->GetModelCreate()->GetBuffMat(14), pMap->GetModelCreate()->GetNumMat(14), pMap->GetModelCreate()->GetTexture(14)
+					,MASS_SIZE_X_HALF, MASS_SIZE_Z_HALF * 2, MASS_SIZE_Z_HALF);
+				}
+			}
+		}
+		break;
+
+	case CItem::TYPE_CLOCK:	//時計の場合
+		break;
+
+	case CItem::TYPE_HELMET: //ヘルメットの場合
+		m_bHelmet = true;
+		break;
 	}
 }
 
@@ -303,6 +394,14 @@ void CPlayer::SetAllBlockDestroy(bool bAllBlockDestroy)
 }
 
 //=============================================================================
+// ヘルメットを使用しているかどうかの設置処理
+//=============================================================================
+void CPlayer::SetHelmet(bool bHelmet)
+{
+	m_bHelmet = bHelmet;
+}
+
+//=============================================================================
 // プレイヤーの取得処理
 //=============================================================================
 CPlayer *CPlayer::GetPlayer(void)
@@ -348,6 +447,14 @@ int CPlayer::GetMaxBullet(void)
 bool CPlayer::GetAllBlockDestroy(void)
 {
 	return m_bAllBlockDestroy;
+}
+
+//=============================================================================
+// ヘルメットを使用しているかどうか取得処理
+//=============================================================================
+bool CPlayer::GetHelmet(void)
+{
+	return m_bHelmet;
 }
 
 //=============================================================================
@@ -443,6 +550,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->z = fAccel;
 			*pDiffAngle = (D3DX_PI)-rot.y;
 			SetNowRotInfo(ROT_UP);	//現在の向きを上にする
+			SetMoveEffect();
 			return true;
 		}
 		else if (pInputKeyboard->GetPress(DIK_S) == true)
@@ -450,6 +558,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->z = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0) - rot.y;
 			SetNowRotInfo(ROT_DOWN);	//現在の向きを下にする
+			SetMoveEffect();
 			return true;
 		}
 		else if (pInputKeyboard->GetPress(DIK_A) == true)
@@ -457,6 +566,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->x = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0.5f) - rot.y;
 			SetNowRotInfo(ROT_LEFT);	//現在の向きを左にする
+			SetMoveEffect();
 			return true;
 		}
 		else if (pInputKeyboard->GetPress(DIK_D) == true)
@@ -464,6 +574,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->x = fAccel;
 			*pDiffAngle = (D3DX_PI * -0.5f) - rot.y;
 			SetNowRotInfo(ROT_RIGHT);	//現在の向きを右にする
+			SetMoveEffect();
 			return true;
 		}
 	}
@@ -480,6 +591,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->z = fAccel;
 			*pDiffAngle = (D3DX_PI)-rot.y;
 			SetNowRotInfo(ROT_UP);	//現在の向きを上にする
+			SetMoveEffect();
 			return true;
 		}
 		else if (pInputKeyboard->GetPress(DIK_DOWN) == true)
@@ -487,6 +599,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->z = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0) - rot.y;
 			SetNowRotInfo(ROT_DOWN);	//現在の向きを下にする
+			SetMoveEffect();
 			return true;
 		}
 		else if (pInputKeyboard->GetPress(DIK_LEFT) == true)
@@ -494,6 +607,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->x = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0.5f) - rot.y;
 			SetNowRotInfo(ROT_LEFT);	//現在の向きを左にする
+			SetMoveEffect();
 			return true;
 		}
 		else if (pInputKeyboard->GetPress(DIK_RIGHT) == true)
@@ -501,6 +615,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			pMove->x = fAccel;
 			*pDiffAngle = (D3DX_PI * -0.5f) - rot.y;
 			SetNowRotInfo(ROT_RIGHT);	//現在の向きを右にする
+			SetMoveEffect();
 			return true;
 		}
 	}
@@ -531,6 +646,7 @@ bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVE
 		pMove->z = fAccel;
 		*pDiffAngle = (D3DX_PI)-rot.y;
 		SetNowRotInfo(ROT_UP);	//現在の向きを上にする
+		SetMoveEffect();
 		return true;
 	}
 	else if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_1) == true ||
@@ -539,6 +655,7 @@ bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVE
 		pMove->z = -fAccel;
 		*pDiffAngle = (D3DX_PI * 0) - rot.y;
 		SetNowRotInfo(ROT_DOWN);	//現在の向きを下にする
+		SetMoveEffect();
 		return true;
 	}
 	else if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_2) == true ||
@@ -547,6 +664,7 @@ bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVE
 		pMove->x = -fAccel;
 		*pDiffAngle = (D3DX_PI * 0.5f) - rot.y;
 		SetNowRotInfo(ROT_LEFT);	//現在の向きを左にする
+		SetMoveEffect();
 		return true;
 	}
 	else if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_3) == true ||
@@ -555,6 +673,7 @@ bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVE
 		pMove->x = fAccel;
 		*pDiffAngle = (D3DX_PI * -0.5f) - rot.y;
 		SetNowRotInfo(ROT_RIGHT);	//現在の向きを右にする
+		SetMoveEffect();
 		return true;
 	}
 
@@ -689,6 +808,10 @@ void CPlayer::Collision(void)
 			{// オブジェクト3Dだったら
 				bLand = CollisionObject3D(&pos, &posOld, &move, colRange, (CObject3D*)pScene);
 			}
+			else if (pScene->GetObjType() == OBJTYPE_BULLET)
+			{// 弾だったら
+				bLand = CollisionBullet(&pos, &posOld, &move, colRange / 2, (CBullet*)pScene);
+			}
 			else if (pScene->GetObjType() == OBJTYPE_ENEMY)
 			{// 敵だったら
 				bLand = CollisionEnemy(&pos, &posOld, &move, colRange / 2, (CEnemy*)pScene);
@@ -704,34 +827,8 @@ void CPlayer::Collision(void)
 				if (CollisionItem(&pos, &posOld, &move, colRange, pItem) == true)
 				{
 					bLand = true;
-
-
-					switch (pItem->GetType())
-					{
-					case CItem::TYPE_STAR:
-						SwitchAbility();
-						break;
-
-					case CItem::TYPE_GRENADE:
-
-						break;
-
-					case CItem::TYPE_1UP_TANK:
-
-						break;
-
-					case CItem::TYPE_SCOOP:
-
-						break;
-
-					case CItem::TYPE_CLOCK:
-
-						break;
-
-					case CItem::TYPE_HELMET:
-
-						break;
-					}
+					//アイテム取得時の処理
+					SwitchItem(pItem);
 				}
 			}
 			else if (pScene->GetObjType() == OBJTYPE_GOALCYLINDER)
@@ -744,11 +841,15 @@ void CPlayer::Collision(void)
 			}
 			else if (pScene->GetObjType() == OBJTYPE_ICEFIELD)
 			{// 氷だったら
-				CollisionIceField(pos, (CIceField*)pScene);
+				CollisionIceField(pos, (CIceField*)pScene, &bIceLand);
 			}
 			else if (pScene->GetObjType() == OBJTYPE_HEADQUARTERS)
 			{// 司令部だったら
 				bLand = CollisionHeadQuarters(&pos, &posOld, &move, colRange, (CHeadQuarters*)pScene);
+			}
+			else if (pScene->GetObjType() == OBJTYPE_HINAARARE)
+			{// ひなあられだったら
+				bLand = CollisionHinaarare(&pos, &posOld, &move, colRange, (CHinaarare*)pScene);
 			}
 			// 次のオブジェクトへのポインタを取得
 			pScene = pSceneNext;
@@ -782,6 +883,10 @@ void CPlayer::State(void)
 		break;
 	case STATE_STOP:	//停止状態
 		m_nCntState++;	//状態カウンターの加算
+		if (m_nCntState == 1)
+		{// 停止状態になってからすぐの時に音を鳴らす
+			CManager::GetSound()->PlaySound(PLAYER_SE_DAMAGE_IDX);
+		}
 		if (m_nCntState >= 80)
 		{//状態カウンターが120以上の場合
 			m_state = STATE_NOMAL;	//通常状態に戻す
@@ -799,6 +904,22 @@ void CPlayer::State(void)
 	case STATE_DEATH:	//死亡状態
 
 		break;
+	}
+	if (m_bHelmet == true)
+	{
+		m_nCntHelmet++;
+		//// エフェクトを出す
+		//CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+		//if (pEffectManager != NULL)
+		//{
+		//	pEffectManager->SetEffect(GetPos(), INITIALIZE_D3DXVECTOR3, PLAYER_DEATH_EFFECT_IDX);
+		//}
+
+		if (m_nCntHelmet >= 1200)
+		{
+			m_bHelmet = false;
+			m_nCntHelmet = 0;
+		}
 	}
 }
 
@@ -865,7 +986,7 @@ void CPlayer::CreateBullet(void)
 		// 音を鳴らす
 		CManager::GetSound()->PlaySound(PLAYER_SE_BULLET_IDX);
 
-		if (m_ability == PLAYER_ABILITY_NOMAL)
+		if (m_ability == PLAYER_ABILITY_NOMAL || m_ability == PLAYER_ABILITY_SPEEDUP)
 		{
 			switch (GetNowRotInfo())
 			{
@@ -940,6 +1061,7 @@ void CPlayer::SwitchAbility(void)
 	case PLAYER_ABILITY_NOMAL:
 		break;
 	case PLAYER_ABILITY_SPEEDUP:
+		SetAccel(PLAYER_MOVE_POWERUP);
 		break;
 	case PLAYER_ABILITY_DOUBLEBULLET:
 		m_nMaxBullet = 1;	//最大弾数を２発にする
@@ -965,6 +1087,8 @@ void CPlayer::ClearVariable(void)
 	m_nCntSplash = 0;			//汚れカウンター
 	m_motion = MOTION_NEUTAL;	//モーション情報
 	m_ability = PLAYER_ABILITY_NOMAL;	//能力の情報
+	m_bHelmet = false;			//ヘルメットを使用しているかどうか
+	m_nCntHelmet = 0;			//ヘルメットカウンター
 }
 
 //=============================================================================
@@ -982,6 +1106,33 @@ bool CPlayer::CollisionObject3D(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVEC
 			bLand = true;
 		}
 	}
+	return bLand;
+}
+
+//=============================================================================
+// 弾当たり判定の処理
+//=============================================================================
+bool CPlayer::CollisionBullet(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBullet *pBullet)
+{
+	bool bLand = false;
+	if (CTitle::GetGameMode() != CTitle::GAMEMODE_ONLINE2P) { return false; }
+
+	CBoxCollider *pBoxCollider = pBullet->GetBoxCollider();
+	if (pBoxCollider == NULL) { return false; }
+
+	int nBulletType = pBullet->GetType();
+	if (nBulletType != CBulletPlayer::TYPE_PLAYER_0 && nBulletType != CBulletPlayer::TYPE_PLAYER_1) { return false; }
+
+
+	if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange) == true)
+	{
+		if (nBulletType != m_nPlayerIdx)
+		{// 自分以外が放った種類の弾に当たった
+			Hit(pBullet);
+		}
+		bLand = true;
+	}
+
 	return bLand;
 }
 
@@ -1081,7 +1232,7 @@ bool CPlayer::CollisionRiver(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR
 //=============================================================================
 // 氷当たり判定の処理
 //=============================================================================
-void CPlayer::CollisionIceField(D3DXVECTOR3 pos, CIceField *pIceField)
+void CPlayer::CollisionIceField(D3DXVECTOR3 pos, CIceField *pIceField, bool *pLandIce)
 {
 	bool  bIceLand = false;
 	//メッシュフィールドの取得
@@ -1095,9 +1246,13 @@ void CPlayer::CollisionIceField(D3DXVECTOR3 pos, CIceField *pIceField)
 		switch (bIceLand)
 		{
 		case false:	//氷の上にいない
-			SetInertia(0.8f);
+			if (*pLandIce == false)
+			{
+				SetInertia(0.8f);
+			}
 			break;
 		case true:	//氷の上にいる
+			*pLandIce = true;
 			SetInertia(0.05f);
 			break;
 		}
@@ -1118,6 +1273,28 @@ bool CPlayer::CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3D
 		{
 			if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange / 2, NULL) == true)
 			{
+				bLand = true;
+			}
+		}
+	}
+	return bLand;
+}
+
+//=============================================================================
+// ひなあられ当たり判定処理
+//=============================================================================
+bool CPlayer::CollisionHinaarare(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHinaarare *pHinaarare)
+{
+	bool bLand = false;
+	if (pHinaarare != NULL)
+	{
+		CBoxCollider *pBoxCollider = pHinaarare->GetBoxCollider();
+		if (pBoxCollider != NULL)
+		{
+			if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange / 2, NULL) == true)
+			{
+				pHinaarare->Hit(this);
+				SetState(STATE_STOP);
 				bLand = true;
 			}
 		}

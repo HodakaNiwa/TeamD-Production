@@ -12,9 +12,15 @@
 #include "character.h"
 
 //*****************************************************************************
+// マクロ定義
+//*****************************************************************************
+
+
+//*****************************************************************************
 // 前方宣言
 //*****************************************************************************
 class CObject3D;
+class CBullet;
 class CEnemy;
 class CBlock;
 class CItem;
@@ -74,6 +80,7 @@ public:	//誰からもアクセス可能
 	void SetMaxBullet(int nMaxBullet);
 	void SetSplash(bool bSplash);
 	void SetAllBlockDestroy(bool bAllBlockDestroy);
+	void SetHelmet(bool bHelmet);
 
 	CPlayer *GetPlayer(void);
 	int GetPlayerIdx(void);
@@ -81,6 +88,7 @@ public:	//誰からもアクセス可能
 	int GetMaxBullet(void);
 	bool GetSplash(void);
 	bool GetAllBlockDestroy(void);
+	bool GetHelmet(void);
 
 	//静的メンバ関数
 	static CPlayer *Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nPlayerIdx, CModel **apModel, CMotionManager *pMotionManager, int nNumParts, int nPriority = 3);
@@ -99,16 +107,19 @@ private:	//自分だけがアクセス可能
 	void SetDiffAngle(float fDiffAngle);
 	void CreateBullet(void);
 	void SwitchAbility(void);
+	void SetMoveEffect(void);
+	void SwitchItem(CItem *pItem);
 
 	bool CollisionObject3D(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CObject3D *pObject3D);
+	bool CollisionBullet(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBullet *pBullet);
 	bool CollisionEnemy(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CEnemy *pEnemy);
 	bool CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBlock *pBlock);
 	bool CollisionItem(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CItem *pItem);
 	void CollisionGoalCylinder(D3DXVECTOR3 *pPos,CGoalCylinder *pGoalCylinder);
 	bool CollisionRiver(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CRiver *pRiver);
-	void CollisionIceField(D3DXVECTOR3 pos ,CIceField *pIceField);
+	void CollisionIceField(D3DXVECTOR3 pos ,CIceField *pIceField, bool *pLandIce);
 	bool CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHeadQuarters);
-	bool CollisionHinaarare(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHeadQuarters);
+	bool CollisionHinaarare(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHinaarare *pHinaarare);
 
 	//メンバ変数
 	CPlayer						*m_pPlayer;					//プレイヤー
@@ -120,8 +131,11 @@ private:	//自分だけがアクセス可能
 	bool						m_bAllBlockDestroy;			//全てのブロックを消せるかどうか
 	bool						m_bSplash;					//汚れているかどうか
 	int							m_nCntSplash;				//汚れカウンター
-	MOTION						m_motion;
+	MOTION						m_motion;					//モーション情報
 	PLAYER_ABILITY				m_ability;					//プレイヤー能力
-	int							m_nCntBullet;
+	int							m_nCntBullet;				//弾のカウンター
+	bool						m_bHelmet;					//ヘルメットをしようしているかどうか
+	int							m_nCntHelmet;				//ヘルメットカウンター
+
 };
 #endif
