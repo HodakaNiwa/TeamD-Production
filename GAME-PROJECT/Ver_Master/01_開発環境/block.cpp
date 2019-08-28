@@ -865,7 +865,6 @@ void CBlockType3::Hit(CScene *pScene)
 	if (pScene->GetObjType() == OBJTYPE_PLAYER)
 	{// ƒvƒŒƒCƒ„[‚¾‚Á‚½
 		// ”ò–—ƒ|ƒŠƒSƒ“¶¬
-		CreateSplash();
 	}
 	else if (pScene->GetObjType() == OBJTYPE_ENEMY)
 	{// “G‚¾‚Á‚½

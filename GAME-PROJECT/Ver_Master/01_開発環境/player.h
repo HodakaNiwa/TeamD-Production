@@ -58,7 +58,8 @@ public:	//誰からもアクセス可能
 	typedef enum
 	{
 		PLAYER_ABILITY_NOMAL = 0,		//通常
-		PLAYER_ABILITY_SPEEDUP,			//弾のスピードアップ
+		PLAYER_ABILITY_BULLET_SPEEDUP,	//弾スピードアップ
+		PLAYER_ABILITY_MOVE_SPEEDUP,	//移動速度アップ
 		PLAYER_ABILITY_DOUBLEBULLET,	//弾２発撃てる
 		PLAYER_ABILITY_ALLBLOCKDESTROY,	//全てのブロックが壊れる
 		PLAYER_ABILITY_MAX,

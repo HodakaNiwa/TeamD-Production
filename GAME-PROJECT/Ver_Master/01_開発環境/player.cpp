@@ -1003,7 +1003,7 @@ void CPlayer::CreateBullet(void)
 		// 音を鳴らす
 		CManager::GetSound()->PlaySound(PLAYER_SE_BULLET_IDX);
 
-		if (m_ability == PLAYER_ABILITY_NOMAL || m_ability == PLAYER_ABILITY_SPEEDUP)
+		if (m_ability == PLAYER_ABILITY_NOMAL || m_ability == PLAYER_ABILITY_MOVE_SPEEDUP)
 		{
 			switch (GetNowRotInfo())
 			{
@@ -1024,7 +1024,6 @@ void CPlayer::CreateBullet(void)
 		}
 		else
 		{
-
 			switch (GetNowRotInfo())
 			{
 			case ROT_UP:	//上を向いている場合
@@ -1057,27 +1056,16 @@ void CPlayer::SwitchAbility(void)
 		m_nCntAbility++;
 	}
 
-	switch (m_nCntAbility)
-	{
-	case 0:
-		m_ability = PLAYER_ABILITY_NOMAL;
-		break;
-	case 1:
-		m_ability = PLAYER_ABILITY_SPEEDUP;
-		break;
-	case 2:
-		m_ability = PLAYER_ABILITY_DOUBLEBULLET;
-		break;
-	case 3:
-		m_ability = PLAYER_ABILITY_ALLBLOCKDESTROY;
-		break;
-	}
+	// アビリティ上昇
+	m_ability = (PLAYER_ABILITY)m_nCntAbility;
 
 	switch (m_ability)
 	{
 	case PLAYER_ABILITY_NOMAL:
 		break;
-	case PLAYER_ABILITY_SPEEDUP:
+	case PLAYER_ABILITY_BULLET_SPEEDUP:
+		break;
+	case PLAYER_ABILITY_MOVE_SPEEDUP:
 		SetAccel(PLAYER_MOVE_POWERUP);
 		break;
 	case PLAYER_ABILITY_DOUBLEBULLET:
