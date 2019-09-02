@@ -69,6 +69,7 @@ public:	// 誰からもアクセス可能
 	void DeletePlayer(CPlayer *pPlayer, const int nIdx);
 	void DeleteBlock(const int nIdx);
 	void DeleteEnemy(const int nIdx);
+	void HitBullet(void);
 	void CreateBreakBlockInfo(void);
 	void CreateAttackPlayerInfo(void);
 	void CreateNearGoalInfo(void);
@@ -124,6 +125,7 @@ private:	// 自分だけがアクセス可能
 	void SetDataToServerFromPlayerBullet(void);
 	void SetDataToServerFromDeleteBlock(void);
 	void SetDataToServerFromDeleteEnemy(void);
+	void SetDataToServerFromHitBullet(void);
 	char *GetDataToEnemy(CEnemy *pEnemy, char *pStr);
 	char *GetDataToEnemyBullet(CBullet *pBullet, char *pStr);
 	char *GetDataToPlayerBullet(CBullet *pBullet, char *pStr);
@@ -149,6 +151,7 @@ private:	// 自分だけがアクセス可能
 	void ReleaseCheckBlock(CBlock *pBlock, int *pDeleteIdx, int *nNumDeleteBlock);
 	char *SetDataToDeleteEnemy(char *pStr);
 	void ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nNumDeleteEnemy);
+	char *SetDataToHitBullet(char *pStr);
 
 
 	// 状態による処理分け用関数
@@ -233,5 +236,8 @@ private:	// 自分だけがアクセス可能
 	// 敵の同期に必要
 	int m_nNumDeleteEnemy;
 	char m_aDeleteEnemy[2048];
+
+	// プレイヤー同士の弾ヒットの同期に必要
+	bool m_bHitBulletFlag;
 };
 #endif

@@ -122,6 +122,15 @@ HRESULT CPlayer::Init(void)
 //=============================================================================
 void CPlayer::Uninit(void)
 {
+	// 弾を打っていれば自身が消えることをお知らせ
+	for (int nCntBullet = 0; nCntBullet < PLAYER_MAX_BULLET; nCntBullet++)
+	{
+		if (m_pBulletPlayer[nCntBullet] != NULL)
+		{
+			m_pBulletPlayer[nCntBullet]->SetParent(NULL);
+		}
+	}
+
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
 		if (CManager::GetGame() != NULL)
@@ -245,6 +254,17 @@ void CPlayer::Hit(CScene *pScene)
 		else if(pBullet->GetType() != m_nPlayerIdx)
 		{// 違うプレイヤーの弾だった
 			m_state = STATE_STOP;
+			if (CManager::GetMode() == CManager::MODE_GAME)
+			{// ゲーム画面だったら
+				CGame *pGame = CManager::GetGame();
+				if (pGame == NULL) { return; }
+				pGame->HitBullet();
+			}
+			else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
+			{// チュートリアル画面だったら
+				CTutorial *pTutorial = CManager::GetTutorial();
+				if (pTutorial == NULL) { return; }
+			}
 		}
 	}
 }
@@ -379,6 +399,14 @@ void CPlayer::SetPlayerIdx(int nPlayerIdx)
 void CPlayer::SetState(STATE state)
 {
 	m_state = state;
+}
+
+//=============================================================================
+// プレイヤー状態管理カウンターの設置処理
+//=============================================================================
+void CPlayer::SetStateCounter(int nStateCounter)
+{
+	m_nCntState = nStateCounter;
 }
 
 //=============================================================================
@@ -521,16 +549,27 @@ void CPlayer::InputMove(void)
 	D3DXVECTOR3 move = CCharacter::GetMove();
 	float fDiffAngle = 0.0f;
 	bool bMoving = false;
+	float fAccel = GetAccel();
+
+	// キーボードの取得
+	CInputKeyboard *pInputKeyboard;
+	pInputKeyboard = CManager::GetKeyboard();
+
+	// コントローラーの取得
+	CXInput *pXInput = CManager::GetXInput();
+
+	// アクション処理
+	InputAction(pInputKeyboard, pXInput);
 
 	// 動けない状態なら処理しない
 	if (m_state == STATE_STOP) { return; }
 
 	// キーボードでの移動処理
-	bMoving = InputMove_Keyboard(&move, &fDiffAngle, rot);
+	bMoving = InputMove_Keyboard(&move, &fDiffAngle, rot, fAccel, pInputKeyboard);
 	if (bMoving == false)
 	{
 		// コントローラーでの移動処理
-		bMoving = InputMove_Controller(&move, &fDiffAngle, rot);
+		bMoving = InputMove_Controller(&move, &fDiffAngle, rot, fAccel, pXInput);
 	}
 
 	// 各種値の設定
@@ -539,25 +578,36 @@ void CPlayer::InputMove(void)
 }
 
 //=============================================================================
-// キーボードの入力移動処理
+// 入力アクション処理
 //=============================================================================
-bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot)
+void CPlayer::InputAction(CInputKeyboard *pKeyboard, CXInput *pXInput)
 {
-	// キーボードの取得
-	CInputKeyboard *pInputKeyboard;
-	pInputKeyboard = CManager::GetKeyboard();
-
-	float fAccel = GetAccel();
-
+	// 弾発射の処理
 	if (m_nPlayerIdx == 0 || CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
 	{// 0番のプレイヤーならば
-	    // 弾発射の処理
-		if (pInputKeyboard->GetTrigger(DIK_RETURN) == true)
+		if (pKeyboard->GetTrigger(DIK_RETURN) == true ||
+			pXInput->GetTrigger(m_nPlayerIdx, CXInput::XIJS_BUTTON_11) == true)
 		{// 弾発射ボタン押下
 			CreateBullet();
 		}
+	}
+	else
+	{// 1番のプレイヤーならば
+		if (pKeyboard->GetTrigger(DIK_NUMPADENTER) == true)
+		{// 弾発射ボタン押下
+			CreateBullet();
+		}
+	}
+}
 
-		if (pInputKeyboard->GetPress(DIK_W) == true)
+//=============================================================================
+// キーボードの入力移動処理
+//=============================================================================
+bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot, float fAccel, CInputKeyboard *pKeyboard)
+{
+	if (m_nPlayerIdx == 0 || CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{// 0番のプレイヤーならば
+		if (pKeyboard->GetPress(DIK_W) == true)
 		{// 上移動ボタン押下
 			pMove->z = fAccel;
 			*pDiffAngle = (D3DX_PI)-rot.y;
@@ -565,7 +615,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			SetMoveEffect();
 			return true;
 		}
-		else if (pInputKeyboard->GetPress(DIK_S) == true)
+		else if (pKeyboard->GetPress(DIK_S) == true)
 		{// 下移動ボタン押下
 			pMove->z = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0) - rot.y;
@@ -573,7 +623,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			SetMoveEffect();
 			return true;
 		}
-		else if (pInputKeyboard->GetPress(DIK_A) == true)
+		else if (pKeyboard->GetPress(DIK_A) == true)
 		{// 左移動ボタン押下
 			pMove->x = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0.5f) - rot.y;
@@ -581,7 +631,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			SetMoveEffect();
 			return true;
 		}
-		else if (pInputKeyboard->GetPress(DIK_D) == true)
+		else if (pKeyboard->GetPress(DIK_D) == true)
 		{// 右移動ボタン押下
 			pMove->x = fAccel;
 			*pDiffAngle = (D3DX_PI * -0.5f) - rot.y;
@@ -592,13 +642,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 	}
 	else
 	{// 1番のプレイヤーならば
-	 // 弾発射の処理
-		if (pInputKeyboard->GetTrigger(DIK_NUMPADENTER) == true)
-		{// 弾発射ボタン押下
-			CreateBullet();
-		}
-
-		if (pInputKeyboard->GetPress(DIK_UP) == true)
+		if (pKeyboard->GetPress(DIK_UP) == true)
 		{// 上移動ボタン押下
 			pMove->z = fAccel;
 			*pDiffAngle = (D3DX_PI)-rot.y;
@@ -606,7 +650,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			SetMoveEffect();
 			return true;
 		}
-		else if (pInputKeyboard->GetPress(DIK_DOWN) == true)
+		else if (pKeyboard->GetPress(DIK_DOWN) == true)
 		{// 下移動ボタン押下
 			pMove->z = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0) - rot.y;
@@ -614,7 +658,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			SetMoveEffect();
 			return true;
 		}
-		else if (pInputKeyboard->GetPress(DIK_LEFT) == true)
+		else if (pKeyboard->GetPress(DIK_LEFT) == true)
 		{// 左移動ボタン押下
 			pMove->x = -fAccel;
 			*pDiffAngle = (D3DX_PI * 0.5f) - rot.y;
@@ -622,7 +666,7 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 			SetMoveEffect();
 			return true;
 		}
-		else if (pInputKeyboard->GetPress(DIK_RIGHT) == true)
+		else if (pKeyboard->GetPress(DIK_RIGHT) == true)
 		{// 右移動ボタン押下
 			pMove->x = fAccel;
 			*pDiffAngle = (D3DX_PI * -0.5f) - rot.y;
@@ -638,20 +682,8 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 //=============================================================================
 // コントローラーの入力移動処理
 //=============================================================================
-bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot)
+bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot, float fAccel, CXInput *pXInput)
 {
-	// コントローラーの取得
-	CXInput *pXInput = CManager::GetXInput();
-	if (pXInput == NULL) { return false; }
-
-	float fAccel = GetAccel();
-
-	// 弾発射の処理
-	if (pXInput->GetTrigger(m_nPlayerIdx, CXInput::XIJS_BUTTON_11) == true)
-	{// 弾発射ボタン押下
-		CreateBullet();
-	}
-
 	if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_0) == true ||
 		pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_16) == true)
 	{// 上移動ボタン押下
@@ -996,7 +1028,9 @@ void CPlayer::CreateBullet(void)
 		break;
 	}
 
-	if (GetCntBullet() <= m_nMaxBullet)
+
+	int nGetCntBullet = GetCntBullet();
+	if (nGetCntBullet <= m_nMaxBullet)
 	{
 		// 音を鳴らす
 		CManager::GetSound()->PlaySound(PLAYER_SE_BULLET_IDX);
@@ -1042,10 +1076,10 @@ void CPlayer::CreateBullet(void)
 		}
 
 		// 弾を生成
-		CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, BulletMove, type, this);
+		m_pBulletPlayer[nGetCntBullet] = CBulletPlayer::Create(D3DXVECTOR3(pos.x, pos.y, pos.z), INITIALIZE_D3DXVECTOR3, BulletMove, type, this);
 
 		//弾の数設置処理
-		SetCntBullet(GetCntBullet() + 1);
+		SetCntBullet(nGetCntBullet + 1);
 	}
 }
 
@@ -1072,7 +1106,7 @@ void CPlayer::SwitchAbility(void)
 		SetAccel(PLAYER_MOVE_POWERUP);
 		break;
 	case PLAYER_ABILITY_DOUBLEBULLET:
-		m_nMaxBullet = 1;	//最大弾数を２発にする
+		m_nMaxBullet = PLAYER_MAX_BULLET - 1;	//最大弾数を２発にする
 		break;
 	case PLAYER_ABILITY_ALLBLOCKDESTROY:
 		m_bAllBlockDestroy = true;
@@ -1174,6 +1208,7 @@ bool CPlayer::CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR
 	{
 		if (pBoxCollider->Collision(pPos, pPosOld, pMove, colRange) == true)
 		{
+			pBlock->Hit(this);
 			bLand = true;
 		}
 	}

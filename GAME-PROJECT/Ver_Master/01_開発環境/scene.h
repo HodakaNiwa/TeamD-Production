@@ -60,6 +60,7 @@ public:	//誰からもアクセス可能
 		OBJTYPE_PARTICLE,       // パーティクル
 		OBJTYPE_EFFECTMANAGER,  // エフェクトマネージャー
 		OBJTYPE_HINAARARE,      // ひなあられ
+		OBJTYPE_MIST,           // もや
 		OBJTYPE_MAX,
 	} OBJTYPE;
 

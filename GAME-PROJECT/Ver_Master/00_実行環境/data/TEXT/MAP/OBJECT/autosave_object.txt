@@ -177,4 +177,88 @@ EFFECTSET
 	ROT = 0.00 0.00 0.00		# 向き
 END_EFFECTSET
 
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -298.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -298.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -298.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -298.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -298.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 13					# 種類
+	POS = 0.0 160.0 -525.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 13					# 種類
+	POS = -75.0 340.0 -75.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 13					# 種類
+	POS = -525.0 520.0 225.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 13					# 種類
+	POS = 600.0 700.0 450.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -290.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -290.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -290.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -290.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
+EFFECTSET
+	TYPE = 2					# 種類
+	POS = -290.0 0.0 445.0		# 座標
+	ROT = 0.00 0.00 0.00		# 向き
+END_EFFECTSET
+
 END_SCRIPT		# この行は絶対消さないこと！

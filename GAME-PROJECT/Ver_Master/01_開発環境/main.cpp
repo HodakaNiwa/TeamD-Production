@@ -14,8 +14,15 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define CLASS_NAME		"AppClass"			      // ウインドウのクラス名
-#define WINDOW_NAME		"戦えたっぴーver_Master"  // ウインドウのキャプション名
+#define CLASS_NAME		"AppClass"			            // ウインドウのクラス名
+#define WINDOW_NAME		"戦えたっぴーver_Master"        // ウインドウのキャプション名
+#define WINDOW_MODE     (true)                          // ウィンドウのモード(falseにするとフルスクリーン)
+#define WINDOW_ICON     (MAKEINTRESOURCE(IDI_ICON1))    // ウィンドウのアイコン識別子
+#define WINDOW_SM_ICON  (MAKEINTRESOURCE(IDI_ICON1))    // ウィンドウのスモールアイコン識別子
+
+#ifdef _DEBUG
+#define MEMORY_CHECK    (false)                         // メモリリークチェックをするかどうか
+#endif
 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -32,7 +39,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //=============================================================================
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#ifdef _DEBUG
+	if (MEMORY_CHECK)
+	{// メモリリークチェックをするなら
+	 // メモリリークチェックのフラグを立てる
+		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	}
+#endif
 
 	CManager *pManager = NULL;	//マネージャのポインタ
 
@@ -44,12 +57,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		0,
 		0,
 		hInstance,
-		NULL,
+		LoadIcon(hInstance, WINDOW_ICON),
 		LoadCursor(NULL, IDC_ARROW),
 		(HBRUSH)(COLOR_WINDOW + 1),
 		NULL,
 		CLASS_NAME,
-		NULL
+		(HICON)LoadImage(hInstance, WINDOW_SM_ICON,  IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED)
 	};
 	RECT rect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 	HWND hWnd;
@@ -164,6 +177,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// 分解能を戻す
 	timeEndPeriod(1);
+
+#ifdef _DEBUG
+	if (MEMORY_CHECK)
+	{// メモリリークチェックをしていたなら
+	 // この時点で開放されていないメモリの情報の表示
+		_CrtDumpMemoryLeaks();
+	}
+#endif
 
 	return (int)msg.wParam;
 }

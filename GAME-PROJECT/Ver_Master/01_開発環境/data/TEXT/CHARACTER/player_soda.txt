@@ -18,13 +18,13 @@ MODEL_FILENAME = data/MODEL/PLAYER/soda/body00.x			# [0]体00
 MODEL_FILENAME = data/MODEL/PLAYER/soda/body01.x			# [1]体01
 MODEL_FILENAME = data/MODEL/PLAYER/soda/drink00.x			# [2]ドリンク00
 MODEL_FILENAME = data/MODEL/PLAYER/soda/drink01.x			# [3]ドリンク01
-MODEL_FILENAME = data/MODEL/PLAYER/soda/caterpillor_R.x	# [4]キャタピラー右
-MODEL_FILENAME = data/MODEL/PLAYER/soda/caterpillor_L.x	# [5]キャタピラー左
+MODEL_FILENAME = data/MODEL/PLAYER/soda/caterpillor_R.x		# [4]キャタピラー右
+MODEL_FILENAME = data/MODEL/PLAYER/soda/caterpillor_L.x		# [5]キャタピラー左
 MODEL_FILENAME = data/MODEL/PLAYER/soda/tire_R.x			# [6]タイヤ右前
 MODEL_FILENAME = data/MODEL/PLAYER/soda/tire_R.x			# [7]タイヤ右後
 MODEL_FILENAME = data/MODEL/PLAYER/soda/tire_L.x			# [8]タイヤ左前
 MODEL_FILENAME = data/MODEL/PLAYER/soda/tire_L.x			# [9]タイヤ左後
-MODEL_FILENAME = data/MODEL/PLAYER/soda/straw.x			# [10]ストロー
+MODEL_FILENAME = data/MODEL/PLAYER/soda/straw.x				# [10]ストロー
 
 #------------------------------------------------------------------------------
 # キャラクター情報

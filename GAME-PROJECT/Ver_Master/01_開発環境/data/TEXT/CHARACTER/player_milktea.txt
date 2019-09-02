@@ -16,8 +16,8 @@ NUM_MODEL = 11
 #------------------------------------------------------------------------------
 MODEL_FILENAME = data/MODEL/PLAYER/milktea/body00.x			# [0]体00
 MODEL_FILENAME = data/MODEL/PLAYER/milktea/body01.x			# [1]体01
-MODEL_FILENAME = data/MODEL/PLAYER/milktea/drink00.x			# [2]ドリンク00
-MODEL_FILENAME = data/MODEL/PLAYER/milktea/drink01.x			# [3]ドリンク01
+MODEL_FILENAME = data/MODEL/PLAYER/milktea/drink00.x		# [2]ドリンク00
+MODEL_FILENAME = data/MODEL/PLAYER/milktea/drink01.x		# [3]ドリンク01
 MODEL_FILENAME = data/MODEL/PLAYER/milktea/caterpillor_R.x	# [4]キャタピラー右
 MODEL_FILENAME = data/MODEL/PLAYER/milktea/caterpillor_L.x	# [5]キャタピラー左
 MODEL_FILENAME = data/MODEL/PLAYER/milktea/tire_R.x			# [6]タイヤ右前

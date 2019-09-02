@@ -14,7 +14,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-
+#define PLAYER_MAX_BULLET   (2)     // プレイヤーが撃てる最大弾数
 
 //*****************************************************************************
 // 前方宣言
@@ -29,6 +29,9 @@ class CRiver;
 class CIceField;
 class CHeadQuarters;
 class CHinaarare;
+class CBulletPlayer;
+class CInputKeyboard;
+class CXInput;
 
 //*****************************************************************************
 // クラス定義
@@ -79,6 +82,7 @@ public:	//誰からもアクセス可能
 	void SetPlayer(CPlayer *pPlayer);
 	void SetPlayerIdx(int nPlayerIdx);
 	void SetState(STATE state);
+	void SetStateCounter(int nStateCounter);
 	void SetMaxBullet(int nMaxBullet);
 	void SetSplash(bool bSplash);
 	void SetAllBlockDestroy(bool bAllBlockDestroy);
@@ -101,8 +105,9 @@ private:	//自分だけがアクセス可能
 	void InputMove_Game(void);
 	void InputMove_Tutorial(void);
 	void InputMove(void);
-	bool InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot);
-	bool InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot);
+	void InputAction(CInputKeyboard *pKeyboard, CXInput *pXInput);
+	bool InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot, float fAccel, CInputKeyboard *pKeyboard);
+	bool InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot, float fAccel, CXInput *pXInput);
 	void Move(void);
 	void Collision(void);
 	void State(void);
@@ -138,5 +143,6 @@ private:	//自分だけがアクセス可能
 	int							m_nCntBullet;               //弾のカウンター
 	bool						m_bHelmet;					//ヘルメットをしようしているかどうか
 	int							m_nCntHelmet;				//ヘルメットカウンター
+	CBulletPlayer               *m_pBulletPlayer[PLAYER_MAX_BULLET];
 };
 #endif

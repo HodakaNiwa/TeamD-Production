@@ -40,7 +40,7 @@ SOUNDSET		# リザルトのBGM[4]
 END_SOUNDSET
 
 SOUNDSET		# ゲームでステージが始まるときのSE[5]
-	FILENAME = data/SE/Fanfare.wav
+	FILENAME = data/SE/fanfare.wav
 	LOOP = 0
 END_SOUNDSET
 
@@ -164,7 +164,7 @@ SOUNDSET		# アイテム投下イベントの円筒が下りるときのSE[29]
 	LOOP = 0
 END_SOUNDSET
 
-SOUNDSET		# アイテム投下イベントの円筒が下りるときのSE[30]
+SOUNDSET		# アイテム投下イベントのアイテムが下りるときのSE[30]
 	FILENAME = data/SE/mapevent_down_item.wav
 	LOOP = 0
 END_SOUNDSET

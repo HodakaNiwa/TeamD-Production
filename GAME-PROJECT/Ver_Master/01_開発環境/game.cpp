@@ -37,6 +37,7 @@
 #include "playerManager.h"
 #include "blossoms.h"
 #include "hinaarare.h"
+#include "mist.h"
 #include "title.h"
 #include "result.h"
 #include "debugproc.h"
@@ -70,7 +71,6 @@
 #define GAME_ITEM_SCORE                              (500)                        // アイテムのスコアの量
 #define GAME_BONUS_SCORE                             (1000)                       // ボーナススコアの量
 #define GAME_STAGEPOLYGON_PRIORITY                   (8)                          // ステージポリゴンの描画優先順位
-#define GAME_GAMEOVERPOLYGON_PRIORITY                (8)                          // ゲームオーバーポリゴンの描画優先順位
 #define GAME_PLAYER_SPAWN_EFFECT_IDX                 (11)                         // プレイヤーがリスポーンするときのエフェクト
 #define GAME_MAPEVENT_RANDOM                         (600)                        // マップイベントを起こすランダム評価値
 #define GAME_SE_FANFARE_IDX                          (5)                          // ゲームでステージが始まるときの音番号
@@ -115,6 +115,7 @@
 #define GAME_GAMEOVERLOGO_COL_INI                    (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
 #define GAME_GAMEOVERLOGO_WIDTH_INI                  (80.0f)
 #define GAME_GAMEOVERLOGO_HEIGHT_INI                 (80.0f)
+#define GAME_GAMEOVERLOGO_PRIORITY                   (8)
 
 // マップイベント用
 #define GAME_MAPEVENT_MAX                            (3)
@@ -340,6 +341,19 @@
 #define GAME_PAUSE_NOT_BLACKBG_COL_INI               (D3DXCOLOR(0.0f,0.0f,0.0f,0.5f))
 #define GAME_PAUSE_NOT_BLACKBG_PRIORITY              (8)
 
+
+// クリーム靄ポリゴン初期化用
+#define GAME_CREAMMIST_POS_INI                       (D3DXVECTOR3(SCREEN_WIDTH / 2.0f - UI_BG_WIDTH_INI, SCREEN_HEIGHT / 2.0f, 0.0f))
+#define GAME_CREAMMIST_COL_INI                       (D3DXCOLOR(1.0f,1.0f,1.0f,0.3f))
+#define GAME_CREAMMIST_WIDTH_INI                     (SCREEN_WIDTH / 2.0f)
+#define GAME_CREAMMIST_HEIGHT_INI                    (SCREEN_HEIGHT / 2.0f)
+#define GAME_CREAMMIST_ALPHA_UP                      (0.3f)
+#define GAME_CREAMMIST_ALPHA_CUT                     (0.02f)
+#define GAME_CREAMMIST_ALPHA_MAX                     (0.8f)
+#define GAME_CREAMMIST_APPAER_TIME                   (360)
+#define GAME_CREAMMIST_PRIORITY                      (5)
+#define GAME_CREAMMIST_TEXIDX                        (31)
+
 // 値読み込み用のパス
 // テクスチャ用
 #define NUM_TEXTURE "NUM_TEXTURE = "
@@ -563,6 +577,7 @@ void CGame::Uninit(void)
 
 	// BGMを止める
 	CManager::GetSound()->StopSound(GAME_BGM_HINAMAP_IDX);
+	StopBGM();
 }
 
 //=============================================================================
@@ -689,6 +704,7 @@ void CGame::Update(void)
 	strcpy(m_aDeleteBlock, "\0");
 	m_nNumDeleteItem = 0;
 	strcpy(m_aDeleteItem, "\0");
+	m_bHitBulletFlag = false;
 
 	CDebugProc::Print(1, "ゲーム画面\n");
 	if (CManager::GetClient() != NULL)
@@ -789,6 +805,14 @@ void CGame::DeletePlayer(CPlayer *pPlayer, const int nIdx)
 }
 
 //=============================================================================
+// ゲームの相手プレイヤーの弾が当たったかどうか設定する
+//=============================================================================
+void CGame::HitBullet(void)
+{
+	m_bHitBulletFlag = true;
+}
+
+//=============================================================================
 // ゲームのサーバーに送るデータを設定する処理
 //=============================================================================
 void CGame::SetDataToServer(void)
@@ -842,6 +866,9 @@ void CGame::SetDataToServer(void)
 
 	// 倒した敵の数を設定
 	SetDataToServerFromBreakEnemy();
+
+	// 弾に当たったかどうか設定
+	SetDataToServerFromHitBullet();
 }
 
 //=============================================================================
@@ -1287,6 +1314,15 @@ void CGame::SetDataToServerFromMapEvent(void)
 }
 
 //=============================================================================
+// ゲームのサーバーに送る倒した敵の数を設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromHitBullet(void)
+{
+	CManager::GetClient()->Print("%d", (int)m_bHitBulletFlag);
+	CManager::GetClient()->Print(" ");
+}
+
+//=============================================================================
 // ゲームのサーバーから送られたデータを設定する処理
 //=============================================================================
 void CGame::GetDataFromServer(void)
@@ -1352,6 +1388,9 @@ void CGame::GetDataFromServer(void)
 
 	// 敵を倒した数を設定
 	pStr = SetDataToBreakEnemy(pStr);
+
+	// 弾がヒットしたかどうか設定
+	pStr = SetDataToHitBullet(pStr);
 
 	// 死亡フラグチェック
 	CScene::DeathCheck();
@@ -2683,6 +2722,33 @@ char *CGame::SetDataToMapEvent(char *pStr)
 	return pStr;
 }
 
+//=============================================================================
+// ゲームの相手プレイヤーの弾に当たったかどうか取得する
+//=============================================================================
+char *CGame::SetDataToHitBullet(char *pStr)
+{
+	// 当たったかどうか読み取る
+	m_bHitBulletFlag = CFunctionLib::ReadBool(pStr, "");
+	int nWord = 0;
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	int nIdxClient = 0;
+	CClient *pClient = CManager::GetClient();
+	if (pClient != NULL)
+	{
+		nIdxClient = pClient->GetClientId();
+	}
+
+	if (m_bHitBulletFlag == true && m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER] != NULL)
+	{// 弾に当たっていた
+		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetState(CPlayer::STATE_STOP);
+		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetStateCounter(0);
+	}
+
+	return pStr;
+}
+
 
 //*****************************************************************************
 //
@@ -2814,6 +2880,9 @@ void CGame::StageDispUpdate(void)
 //=============================================================================
 void CGame::NormalUpdate(void)
 {
+	// クリーム靄チェック処理
+	MistCheck();
+
 	m_bPauseOpen = false;
 
 	CInputKeyboard *pKey = CManager::GetKeyboard();
@@ -3200,6 +3269,10 @@ void CGame::ResultUpdate(void)
 {
 	CDebugProc::Print(1, "ゲーム内リザルト状態\n");
 	CDebugProc::Print(1, "%d\n", m_nStateCounter);
+
+	// 音を止めておく
+	CManager::GetSound()->StopSound(GAME_BLOSSOMS_BGMIDX);
+	CManager::GetSound()->StopSound(GAME_HINAARARE_BGMIDX);
 
 	// 進行度によって処理わけ
 	switch (m_GameResultAddvance)
@@ -3715,6 +3788,29 @@ void CGame::StopBGM(void)
 	CManager::GetSound()->StopSound(GAME_HINAARARE_BGMIDX);
 }
 
+//=============================================================================
+// ゲームのクリーム靄を消すかどうか判定する処理
+//=============================================================================
+void CGame::MistCheck(void)
+{
+	// クリーム靄が生成されていなければ処理終了
+	if (m_pCreamMist == NULL) { return; }
+
+	// カウンターを減らす
+	m_nMistCounter++;
+	if (m_nMistCounter >= GAME_CREAMMIST_APPAER_TIME)
+	{// クリーム靄が出てから一定時間たった
+		D3DXCOLOR col = m_pCreamMist->GetCol();
+		col.a -= GAME_CREAMMIST_ALPHA_CUT;
+		m_pCreamMist->SetCol(col);
+		m_pCreamMist->SetVtxBuffCol();
+		if (col.a <= 0.0f)
+		{
+			ReleaseCreamMist();
+		}
+	}
+}
+
 
 
 //*****************************************************************************
@@ -3953,6 +4049,9 @@ void CGame::MapEvent_Hinamatsuri_Normal(void)
 		}
 	}
 
+	// 通常時でなければ処理しない
+	if (m_State != STATE_NORMAL) { return; }
+
 	// イベントカウンター加算
 	m_nEventCounter++;
 	m_nNotEventCounter++;
@@ -4078,8 +4177,6 @@ void CGame::MapEvent_Hinamatsuri_Drop_Item(void)
 	{
 		// アイテムを出す種類を設定
 		int nItemType = rand() % CItem::TYPE_MAX;
-
-		nItemType = CItem::TYPE_SCOOP;
 
 		// アイテム生成
 		m_pItem = CreateItem(m_ItemDropPos, INITIALIZE_D3DXVECTOR3, (CItem::TYPE)nItemType);
@@ -4619,6 +4716,7 @@ void CGame::CreateMap(void)
 	CEnemy::ResetSpawnCounter();
 	SetPlayerPosToSpawn();
 	CheckEnemySpawn(m_nGameCounter);
+	ReleaseCreamMist();
 
 	// UIを変更
 	if (m_pUI != NULL)
@@ -4730,7 +4828,7 @@ CItem *CGame::CreateItem(D3DXVECTOR3 pos, D3DXVECTOR3 rot, const int nItemType)
 void CGame::CreateGameOverLogo(void)
 {
 	m_pGameOverLogo = CScene2D::Create(m_GameOverPolyData.pos, m_GameOverPolyData.col,
-		m_GameOverPolyData.fWidth, m_GameOverPolyData.fHeight, GAME_GAMEOVERPOLYGON_PRIORITY);
+		m_GameOverPolyData.fWidth, m_GameOverPolyData.fHeight, GAME_GAMEOVERLOGO_PRIORITY);
 	if (m_pGameOverLogo != NULL, GetTextureManager() != NULL)
 	{
 		m_pGameOverLogo->BindTexture(GetTextureManager()->GetTexture(m_GameOverPolyData.nTexIdx));
@@ -5319,6 +5417,35 @@ void CGame::CreateEventStartLogo(void)
 	}
 }
 
+//=============================================================================
+// ゲームのクリーム靄を生成する
+//=============================================================================
+void CGame::CreateMist(void)
+{
+	if (m_pCreamMist == NULL)
+	{// 生成されていなければ
+		m_pCreamMist = CCreamMist::Create(GAME_CREAMMIST_POS_INI, GAME_CREAMMIST_COL_INI,
+			GAME_CREAMMIST_WIDTH_INI, GAME_CREAMMIST_HEIGHT_INI, GAME_CREAMMIST_PRIORITY);
+		if (m_pCreamMist != NULL)
+		{
+			m_pCreamMist->BindTexture(GetTextureManager()->GetTexture(GAME_CREAMMIST_TEXIDX));
+		}
+	}
+	else
+	{// 生成されていれば
+		D3DXCOLOR col = m_pCreamMist->GetCol();
+		col.a += GAME_CREAMMIST_ALPHA_UP;
+		if (col.a >= GAME_CREAMMIST_ALPHA_MAX)
+		{
+			col.a = GAME_CREAMMIST_ALPHA_MAX;
+		}
+		m_pCreamMist->SetCol(col);
+		m_pCreamMist->SetVtxBuffCol();
+	}
+
+	m_nMistCounter = 0;
+}
+
 
 
 //*****************************************************************************
@@ -5701,6 +5828,18 @@ void CGame::ReleaseEventStartLogo(void)
 	{
 		m_pEventStartLogo->Uninit();
 		m_pEventStartLogo = NULL;
+	}
+}
+
+//=============================================================================
+// ゲームのクリーム靄を開放する
+//=============================================================================
+void CGame::ReleaseCreamMist(void)
+{
+	if (m_pCreamMist != NULL)
+	{
+		m_pCreamMist->Uninit();
+		m_pCreamMist = NULL;
 	}
 }
 
@@ -6410,6 +6549,7 @@ void CGame::ClearVariable(void)
 	m_nNumDeleteEnemy = 0;
 	strcpy(m_aDeleteEnemy, "\0");
 	m_bDeletePlayerFlag = 0;
+	m_bHitBulletFlag = false;
 	m_bEnemyMove = true;
 	m_nEnemyMoveCounter = 0;
 	m_HinaEvent = HINAEVENT_NORMAL;
@@ -6497,6 +6637,10 @@ void CGame::ClearVariable(void)
 	m_pPausePlayerNumber = NULL;
 	m_pNotPause = NULL;
 	m_pNotPauseBlackBg = NULL;
+
+	// クリーム靄用
+	m_pCreamMist = NULL;
+	m_nMistCounter = 0;
 }
 
 //=============================================================================

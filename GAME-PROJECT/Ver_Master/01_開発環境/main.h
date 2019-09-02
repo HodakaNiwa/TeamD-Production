@@ -27,6 +27,7 @@ class CManager;
 #define DIRECTINPUT_VERSION (0x0800)	// 警告対処用
 #include "dinput.h"						//入力処理に必要
 #include <XInput.h>
+#include "resource.h"
 
 //デバッグ処理に必要
 #include <crtdbg.h>

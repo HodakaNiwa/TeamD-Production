@@ -35,6 +35,7 @@ class CCharacterManager;
 class CItem;
 class CItemCylinder;
 class CRiver;
+class CCreamMist;
 
 //*****************************************************************************
 // ポーズクラス定義
@@ -173,7 +174,9 @@ public:	// 誰からもアクセス可能
 	void DeleteBlock(const int nIdx);
 	void DeleteEnemy(const int nIdx);
 	void DeleteItem(const int nIdx);
+	void HitBullet(void);
 	void ReleasePause(void);
+	void CreateMist(void);
 
 	// アイテムの処理実行用関数
 	void ItemEvent_Star(int nPlayerNumber);
@@ -211,6 +214,7 @@ protected: // このクラスと派生クラスだけがアクセス可能
 private:	// 自分だけがアクセス可能
 	void ClearVariable(void);
 	void StopBGM(void);
+	void MistCheck(void);
 
 	// 生成処理用関数
 	void CreateMapFilePointer(void);
@@ -261,6 +265,7 @@ private:	// 自分だけがアクセス可能
 	void ReleaseGameResult_BonusScore(void);
 	void ReleaseNotPause(void);
 	void ReleaseEventStartLogo(void);
+	void ReleaseCreamMist(void);
 
 
 	// サーバーとのメッセージ交換用関数
@@ -278,6 +283,7 @@ private:	// 自分だけがアクセス可能
 	void SetDataToServerFromBreakEnemy(void);
 	void SetDataToServerFromSpawnEnemyCount(void);
 	void SetDataToServerFromMapEvent(void);
+	void SetDataToServerFromHitBullet(void);
 	char *GetDataToEnemy(CEnemy *pEnemy, char *pStr);
 	char *GetDataToEnemyBullet(CBullet *pBullet, char *pStr);
 	char *GetDataToPlayerBullet(CBullet *pBullet, char *pStr);
@@ -315,6 +321,7 @@ private:	// 自分だけがアクセス可能
 	char *SetDataToBreakEnemy(char *pStr);
 	char *SetDataToSpawnEnemyCount(char *pStr);
 	char *SetDataToMapEvent(char *pStr);
+	char *SetDataToHitBullet(char *pStr);
 
 
 	// 状態による更新処理分け用関数
@@ -448,12 +455,19 @@ private:	// 自分だけがアクセス可能
 	int m_nNumDeleteItem;
 	char m_aDeleteItem[2048];
 
+	// プレイヤー同士の弾ヒットの同期に必要
+	bool m_bHitBulletFlag;
+
 	// ポーズ用
 	bool m_bPauseOpen;
 	CPause *m_pPause;
 	CScene2D *m_pPausePlayerNumber;
 	CScene2D *m_pNotPause;
 	CScene2D *m_pNotPauseBlackBg;
+
+	// クリーム靄用
+	CCreamMist *m_pCreamMist;
+	int m_nMistCounter;
 
 	// 各種クラス生成用情報
 	typedef struct

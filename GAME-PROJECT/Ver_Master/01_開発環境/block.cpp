@@ -26,6 +26,9 @@
 #define BLOCK_UNINIT_TIMER				  (1200)   // 終了するまでのカウンター
 #define BLOCK_UNINIT_SIGN				  (1000)   // 終了の点滅サイン
 
+// 飛沫用
+#define BLOCK_SPLASH_PRIORITY             (5)
+
 //*****************************************************************************
 //    静的メンバ変数
 //*****************************************************************************
@@ -589,14 +592,23 @@ void CBlockType1::Hit(CScene *pScene)
 //=============================================================================
 void CBlockType1::CreateSplash(void)
 {
-	CSplash::Create(D3DXVECTOR3(130.0f, 260.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 10.0f, 0,
-		D3DXVECTOR3(1.0f, -1.0f, 0.0f), 0.0f, 0.005f, 250.0f, -1.0f, 180);
-	CSplash::Create(D3DXVECTOR3(350.0f, 490.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 10.0f, 0,
-		D3DXVECTOR3(1.0f, -1.0f, 0.0f), 0.0f, 0.005f, 240.0f, -1.0f, 180);
-	CSplash::Create(D3DXVECTOR3(600.0f, 160.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 10.0f, 0,
-		D3DXVECTOR3(1.0f, -1.0f, 0.0f), 0.0f, 0.005f, 265.0f, -1.0f, 180);
-	CSplash::Create(D3DXVECTOR3(890.0f, 560.0f, 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 10.0f, 0,
-		D3DXVECTOR3(1.0f, -1.0f, 0.0f), 0.0f, 0.005f, 230.0f, -1.0f, 180);
+	// クリーム靄を出す
+	if (CManager::GetMode() == CManager::MODE_GAME)
+	{// ゲーム画面だったら
+		CGame *pGame = CManager::GetGame();
+		if (pGame == NULL) { return; }
+		pGame->CreateMist();
+	}
+
+	// 飛沫ポリゴン出す
+	CSplash::Create(D3DXVECTOR3(30.0f + (float)(rand() % 350), 35.0f + (float)(rand() % 200), 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f), 10.0f, 10.0f, 0,
+		D3DXVECTOR3(0.1f, -1.0f, 0.0f), 0.0f, 0.005f, 125.0f, -1.0f, 360, BLOCK_SPLASH_PRIORITY);
+	CSplash::Create(D3DXVECTOR3(45.0f + (float)(rand() % 350), 495.0f + (float)(rand() % 200), 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f), 10.0f, 10.0f, 0,
+		D3DXVECTOR3(0.1f, -1.0f, 0.0f), 0.0f, 0.005f, 115.0f, -1.0f, 360, BLOCK_SPLASH_PRIORITY);
+	CSplash::Create(D3DXVECTOR3(690.0f + (float)(rand() % 350), 45.0f + (float)(rand() % 200), 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f), 10.0f, 10.0f, 0,
+		D3DXVECTOR3(0.1f, -1.0f, 0.0f), 0.0f, 0.005f, 140.0f, -1.0f, 360, BLOCK_SPLASH_PRIORITY);
+	CSplash::Create(D3DXVECTOR3(810.0f + (float)(rand() % 350), 505.0f + (float)(rand() % 200), 0.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f), 10.0f, 10.0f, 0,
+		D3DXVECTOR3(0.1f, -1.0f, 0.0f), 0.0f, 0.005f, 105.0f, -1.0f, 360, BLOCK_SPLASH_PRIORITY);
 }
 
 //*****************************************************************************
@@ -1069,14 +1081,14 @@ void CBlockScoop::CreateBlock(void)
 	D3DXVECTOR3 BlockPos = GetPos();
 	if (pGame->GetStageIdx() == 0)
 	{//ステージ0の場合
-		CBlockScoop::Create(D3DXVECTOR3(BlockPos.x, 0.0f, BlockPos.z), INITIALIZE_D3DXVECTOR3,
+		CBlockType0::Create(D3DXVECTOR3(BlockPos.x, 0.0f, BlockPos.z), INITIALIZE_D3DXVECTOR3,
 			0, 0, pMap->GetModelCreate()->GetMesh(7), pMap->GetModelCreate()->GetBuffMat(7), pMap->GetModelCreate()->GetNumMat(7), pMap->GetModelCreate()->GetTexture(7)
 			, MASS_SIZE_X_HALF, MASS_SIZE_Z_HALF, MASS_SIZE_Z_HALF);
 	}
 	else if (pGame->GetStageIdx() == 1 ||
 		pGame->GetStageIdx() == 2)
 	{//ステージ1～2の場合
-		CBlockScoop::Create(D3DXVECTOR3(BlockPos.x, 0.0f, BlockPos.z), INITIALIZE_D3DXVECTOR3,
+		CBlockType0::Create(D3DXVECTOR3(BlockPos.x, 0.0f, BlockPos.z), INITIALIZE_D3DXVECTOR3,
 			0, 0, pMap->GetModelCreate()->GetMesh(6), pMap->GetModelCreate()->GetBuffMat(6), pMap->GetModelCreate()->GetNumMat(6), pMap->GetModelCreate()->GetTexture(6)
 			, MASS_SIZE_X_HALF, MASS_SIZE_Z_HALF, MASS_SIZE_Z_HALF);
 	}

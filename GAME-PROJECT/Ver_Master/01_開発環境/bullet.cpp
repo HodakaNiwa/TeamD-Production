@@ -546,6 +546,15 @@ void CBulletPlayer::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DX
 					if (pTutorial != NULL)
 					{
 						pTutorial->CreateAttackPlayerInfo();
+						pTutorial->HitBullet();
+					}
+				}
+				else if (CManager::GetMode() == CManager::MODE_GAME)
+				{// ƒQ[ƒ€‰æ–Ê‚¾‚Á‚½‚ç
+					CGame *pGame = CManager::GetGame();
+					if (pGame != NULL)
+					{
+						pGame->HitBullet();
 					}
 				}
 				pObj->Hit(this);

@@ -314,6 +314,7 @@ void CTutorial::Update(void)
 	strcpy(m_aDeleteEnemy, "\0");
 	m_nNumDeleteBlock = 0;
 	strcpy(m_aDeleteBlock, "\0");
+	m_bHitBulletFlag = false;
 }
 
 //=============================================================================
@@ -378,6 +379,15 @@ void CTutorial::DeletePlayer(CPlayer *pPlayer, const int nIdx)
 }
 
 //=============================================================================
+// ゲームの相手プレイヤーの弾が当たったかどうか設定する
+//=============================================================================
+void CTutorial::HitBullet(void)
+{
+	m_bHitBulletFlag = true;
+}
+
+
+//=============================================================================
 // ゲームのサーバーに送るデータを設定する処理
 //=============================================================================
 void CTutorial::SetDataToServer(void)
@@ -410,6 +420,9 @@ void CTutorial::SetDataToServer(void)
 		// 消す敵のデータを設定
 		SetDataToServerFromDeleteEnemy();
 	}
+
+	// 弾に当たったかどうか設定
+	SetDataToServerFromHitBullet();
 }
 
 //=============================================================================
@@ -720,6 +733,15 @@ void CTutorial::SetDataToServerFromDeleteEnemy(void)
 }
 
 //=============================================================================
+// ゲームのサーバーに送る倒した敵の数を設定する処理
+//=============================================================================
+void CTutorial::SetDataToServerFromHitBullet(void)
+{
+	CManager::GetClient()->Print("%d", (int)m_bHitBulletFlag);
+	CManager::GetClient()->Print(" ");
+}
+
+//=============================================================================
 // ゲームのサーバーから送られたデータを設定する処理
 //=============================================================================
 void CTutorial::GetDataFromServer(void)
@@ -756,6 +778,9 @@ void CTutorial::GetDataFromServer(void)
 		// 消す敵のデータを設定
 		pStr = SetDataToDeleteEnemy(pStr);
 	}
+
+	// 弾がヒットしたかどうか設定
+	pStr = SetDataToHitBullet(pStr);
 
 	// 死亡フラグチェック
 	CScene::DeathCheck();
@@ -1606,6 +1631,32 @@ void CTutorial::ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nN
 	}
 }
 
+//=============================================================================
+// ゲームの相手プレイヤーの弾に当たったかどうか取得する
+//=============================================================================
+char *CTutorial::SetDataToHitBullet(char *pStr)
+{
+	// 当たったかどうか読み取る
+	m_bHitBulletFlag = CFunctionLib::ReadBool(pStr, "");
+	int nWord = 0;
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	int nIdxClient = 0;
+	CClient *pClient = CManager::GetClient();
+	if (pClient != NULL)
+	{
+		nIdxClient = pClient->GetClientId();
+	}
+
+	if (m_bHitBulletFlag == true && m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER] != NULL)
+	{// 弾に当たっていた
+		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetState(CPlayer::STATE_STOP);
+		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetStateCounter(0);
+	}
+
+	return pStr;
+}
 
 
 
@@ -2805,6 +2856,7 @@ void CTutorial::ClearVariable(void)
 	m_pGoalCylinder = NULL;
 	m_pOpeInfo = NULL;
 	m_nGoalPlayIdx = 0;
+	m_bHitBulletFlag = false;
 	for (int nCntPlayer = NULL; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
 	{
 		m_pPlayer[nCntPlayer] = NULL;
