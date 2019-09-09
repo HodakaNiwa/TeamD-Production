@@ -14,7 +14,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-
+#define PLAYER_MAX_BULLET   (2)     // プレイヤーが撃てる最大弾数
 
 //*****************************************************************************
 // 前方宣言
@@ -29,6 +29,9 @@ class CRiver;
 class CIceField;
 class CHeadQuarters;
 class CHinaarare;
+class CBulletPlayer;
+class CInputKeyboard;
+class CXInput;
 
 //*****************************************************************************
 // クラス定義
@@ -58,7 +61,8 @@ public:	//誰からもアクセス可能
 	typedef enum
 	{
 		PLAYER_ABILITY_NOMAL = 0,		//通常
-		PLAYER_ABILITY_SPEEDUP,			//弾のスピードアップ
+		PLAYER_ABILITY_BULLET_SPEEDUP,	//弾スピードアップ
+		PLAYER_ABILITY_MOVE_SPEEDUP,	//移動速度アップ
 		PLAYER_ABILITY_DOUBLEBULLET,	//弾２発撃てる
 		PLAYER_ABILITY_ALLBLOCKDESTROY,	//全てのブロックが壊れる
 		PLAYER_ABILITY_MAX,
@@ -73,10 +77,12 @@ public:	//誰からもアクセス可能
 	void Draw(void);
 	void Hit(CScene *pScene);
 	void SetDeathEffect(void);
+	void SwitchAbility(void);
 
 	void SetPlayer(CPlayer *pPlayer);
 	void SetPlayerIdx(int nPlayerIdx);
 	void SetState(STATE state);
+	void SetStateCounter(int nStateCounter);
 	void SetMaxBullet(int nMaxBullet);
 	void SetSplash(bool bSplash);
 	void SetAllBlockDestroy(bool bAllBlockDestroy);
@@ -99,14 +105,15 @@ private:	//自分だけがアクセス可能
 	void InputMove_Game(void);
 	void InputMove_Tutorial(void);
 	void InputMove(void);
-	bool InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot);
-	bool InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot);
+	void InputAction(CInputKeyboard *pKeyboard, CXInput *pXInput);
+	bool InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot, float fAccel, CInputKeyboard *pKeyboard);
+	bool InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot, float fAccel, CXInput *pXInput);
 	void Move(void);
 	void Collision(void);
 	void State(void);
 	void SetDiffAngle(float fDiffAngle);
 	void CreateBullet(void);
-	void SwitchAbility(void);
+	void SetInvincibleEffect(void);
 	void SetMoveEffect(void);
 	void SwitchItem(CItem *pItem);
 
@@ -131,11 +138,11 @@ private:	//自分だけがアクセス可能
 	bool						m_bAllBlockDestroy;			//全てのブロックを消せるかどうか
 	bool						m_bSplash;					//汚れているかどうか
 	int							m_nCntSplash;				//汚れカウンター
-	MOTION						m_motion;					//モーション情報
+	MOTION						m_motion;                   //モーション情報
 	PLAYER_ABILITY				m_ability;					//プレイヤー能力
-	int							m_nCntBullet;				//弾のカウンター
+	int							m_nCntBullet;               //弾のカウンター
 	bool						m_bHelmet;					//ヘルメットをしようしているかどうか
 	int							m_nCntHelmet;				//ヘルメットカウンター
-
+	CBulletPlayer               *m_pBulletPlayer[PLAYER_MAX_BULLET];
 };
 #endif
