@@ -48,6 +48,7 @@ public:	//誰からもアクセス可能
 
 	D3DXVECTOR3 GetPos(void);
 	D3DXVECTOR3 GetRot(void);
+	D3DXMATRIX GetMtxWorld(void);
 	D3DXVECTOR3 GetColRange(void);
 	CBoxCollider *GetBoxCollider(void);
 	bool GetReturnFlag(void);

@@ -26,7 +26,8 @@
 // マクロ定義
 //*****************************************************************************
 #define BULLET_ENEMY_BREAK_HEADQUARTERS    // 宣言時敵の弾でもゲームオーバーになる
-#define BULLET_EFFECT_IDX (2)              // 弾のエフェクト番号
+#define BULLET_EFFECT_IDX      (2)         // 弾のエフェクト番号
+#define BULLET_MOVE_EFFECT_IDX (17)        // 弾が移動している時のエフェクト番号
 
 //*****************************************************************************
 // 静的メンバ変数
@@ -148,6 +149,9 @@ void CBullet::Update(void)
 		Move();
 	}
 
+	// エフェクトを出す
+	SetMoveEffect();
+
 	// 当たり判定処理
 	Collision();
 }
@@ -198,6 +202,40 @@ void CBullet::Move(void)
 
 	// 座標の設定
 	SetPos(pos);
+}
+
+//=============================================================================
+// 移動している時のエフェクトを出す
+//=============================================================================
+void CBullet::SetMoveEffect(void)
+{
+	D3DXVECTOR3 rot = GetRot();
+	float fAddPosX = 0.0f;
+	float fAddPosZ = 0.0f;
+	if (m_Move.x > 0.0f)
+	{
+		fAddPosX -= 25.0f;
+	}
+	else if(m_Move.x < 0.0f)
+	{
+		fAddPosX += 25.0f;
+	}
+	if (m_Move.z > 0.0f)
+	{
+		fAddPosZ -= 25.0f;
+	}
+	else if(m_Move.z < 0.0f)
+	{
+		fAddPosZ += 25.0f;
+	}
+
+	D3DXVECTOR3 LocalPos = D3DXVECTOR3(fAddPosX, 0.0f, fAddPosZ);
+	LocalPos += GetPos();
+	CEffectManager *pEffectManager = CManager::GetBaseMode()->GetEffectManager();
+	if (pEffectManager != NULL)
+	{
+		pEffectManager->SetEffect(LocalPos, INITIALIZE_D3DXVECTOR3, BULLET_MOVE_EFFECT_IDX);
+	}
 }
 
 //=============================================================================
@@ -448,14 +486,25 @@ void CBulletPlayer::Update(void)
 			// 移動処理
 			Move();
 
+			// エフェクトを出す
+			SetMoveEffect();
+
 			// 当たり判定処理
 			Collision();
+		}
+		else
+		{
+			// エフェクトを出す
+			SetMoveEffect();
 		}
 	}
 	else
 	{// ローカルプレイならば
 		// 移動処理
 		Move();
+
+		// エフェクトを出す
+		SetMoveEffect();
 
 		// 当たり判定処理
 		Collision();
@@ -592,6 +641,14 @@ void CBulletPlayer::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DX
 		{// 当たっている
 			pObj->Hit(this);
 			*pDeath = true;
+			if (CManager::GetMode() == CManager::MODE_GAME)
+			{// ゲーム画面だったら
+				CGame *pGame = CManager::GetGame();
+				if (pGame != NULL)
+				{
+					pGame->HitHeadQuarters();
+				}
+			}
 		}
 	}
 }
@@ -805,6 +862,9 @@ void CBulletEnemy::Update(void)
 			// 移動処理
 			Move();
 
+			// エフェクトを出す
+			SetMoveEffect();
+
 			// 当たり判定処理
 			Collision();
 		}
@@ -813,6 +873,9 @@ void CBulletEnemy::Update(void)
 	{// ローカルプレイならば
 	    // 移動処理
 		Move();
+
+		// エフェクトを出す
+		SetMoveEffect();
 
 		// 当たり判定処理
 		Collision();

@@ -1249,6 +1249,7 @@ void CTitle::WaitInputToNormal(void)
 		m_nStateCounter = 0;
 		CreateFadePolygon();
 		m_State = STATE_FADEOUT;
+		CManager::GetSound()->StopSound(TITLE_SE_TEAMLOGO_IDX);
 	}
 	else
 	{// キーボードが押されていない
@@ -1259,6 +1260,7 @@ void CTitle::WaitInputToNormal(void)
 				m_nStateCounter = 0;
 				CreateFadePolygon();
 				m_State = STATE_FADEOUT;
+				CManager::GetSound()->StopSound(TITLE_SE_TEAMLOGO_IDX);
 			}
 		}
 	}

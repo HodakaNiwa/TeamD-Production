@@ -65,6 +65,7 @@ public:    // 誰でもアクセス可能
 
 protected: // このクラスと派生クラスだけがアクセス可能
 	void Move(void);
+	void SetMoveEffect(void);
 	void SetBoxColliderPos(void);
 	virtual void Collision(void) = 0;
 	virtual void Destroy(void) = 0;

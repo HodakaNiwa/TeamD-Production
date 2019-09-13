@@ -38,6 +38,7 @@
 #include "blossoms.h"
 #include "hinaarare.h"
 #include "mist.h"
+#include "power_map.h"
 #include "title.h"
 #include "result.h"
 #include "debugproc.h"
@@ -57,7 +58,7 @@
 
 #define GAME_SYSTEM_FILENAME                         "data/TEXT/MODE/game.ini"    // 初期化に使用するシステムファイル名
 #define GAME_STAGEDISP_TIME                          (120)                        // ステージ番号表示状態になってから通常状態に切り替わるまでの時間
-#define GAME_RESULT_TIMING                           (60)                         // 終了状態になってからリザルト状態に切り替わるまでの時間
+#define GAME_RESULT_TIMING                           (180)                        // 終了状態になってからリザルト状態に切り替わるまでの時間
 #define GAME_NEXTMODE_TIMING                         (180)                        // リザルト状態になってから次のモードに切り替わるまでの時間
 #define GAME_NEXTSCORE_TIMING                        (30)                         // ゲーム内リザルトで次のスコアを出すまでの時間
 #define GAME_SCOREUP_TIMING                          (10)                         // ゲーム内リザルトでスコアアップさせるまでの時間
@@ -515,6 +516,9 @@ HRESULT CGame::Init(void)
 	// マップの生成
 	CreateMap();
 
+	// 勢力図の生成
+	CreatePowerMap();
+
 	// ファンファーレを再生
 	CManager::GetSound()->PlaySound(GAME_SE_FANFARE_IDX);
 
@@ -548,6 +552,8 @@ void CGame::Uninit(void)
 	ReleaseGameResult();
 	ReleasePause();
 	ReleaseNotPause();
+	ReleaseCreamMist();
+	ReleasePowerMap();
 
 	// 読み込むマップのファイル名のポインタを開放
 	ReleaseMapFilePointer();
@@ -705,6 +711,7 @@ void CGame::Update(void)
 	m_nNumDeleteItem = 0;
 	strcpy(m_aDeleteItem, "\0");
 	m_bHitBulletFlag = false;
+	m_bHitHeadQuarters = false;
 
 	CDebugProc::Print(1, "ゲーム画面\n");
 	if (CManager::GetClient() != NULL)
@@ -813,6 +820,14 @@ void CGame::HitBullet(void)
 }
 
 //=============================================================================
+// ゲームの司令部に弾が当たったかどうか設定する
+//=============================================================================
+void CGame::HitHeadQuarters(void)
+{
+	m_bHitHeadQuarters = true;
+}
+
+//=============================================================================
 // ゲームのサーバーに送るデータを設定する処理
 //=============================================================================
 void CGame::SetDataToServer(void)
@@ -862,6 +877,9 @@ void CGame::SetDataToServer(void)
 
 		// 消すアイテムのデータを設定
 		SetDataToServerFromDeleteItem();
+
+		// 司令部破壊のデータを設定
+		SetDataToServerFromHitHeadQuarters();
 	}
 
 	// 倒した敵の数を設定
@@ -906,6 +924,11 @@ void CGame::SetDataToServerFromPlayer(void)
 		// プレイヤーの状態を設定
 		int nPlayerState = m_pPlayer[CManager::GetClient()->GetClientId()]->GetState();
 		CManager::GetClient()->Print("%d", nPlayerState);
+		CManager::GetClient()->Print(" ");
+
+		// プレイヤーが無敵状態かどうかを設定
+		int nPlayerHelmet = m_pPlayer[CManager::GetClient()->GetClientId()]->GetHelmet();
+		CManager::GetClient()->Print("%d", nPlayerHelmet);
 		CManager::GetClient()->Print(" ");
 	}
 
@@ -1314,11 +1337,20 @@ void CGame::SetDataToServerFromMapEvent(void)
 }
 
 //=============================================================================
-// ゲームのサーバーに送る倒した敵の数を設定する処理
+// ゲームのサーバーに送る弾に当たったかどうかを設定する処理
 //=============================================================================
 void CGame::SetDataToServerFromHitBullet(void)
 {
 	CManager::GetClient()->Print("%d", (int)m_bHitBulletFlag);
+	CManager::GetClient()->Print(" ");
+}
+
+//=============================================================================
+// ゲームのサーバーに送る司令部に弾が当たったかどうかを設定する処理
+//=============================================================================
+void CGame::SetDataToServerFromHitHeadQuarters(void)
+{
+	CManager::GetClient()->Print("%d", (int)m_bHitHeadQuarters);
 	CManager::GetClient()->Print(" ");
 }
 
@@ -1384,6 +1416,9 @@ void CGame::GetDataFromServer(void)
 
 		// 消すアイテムのデータを設定
 		pStr = SetDataToDeleteItem(pStr);
+
+		// 司令部に弾が当たったかどうか設定
+		pStr = SetDataToHitHeadQuarters(pStr);
 	}
 
 	// 敵を倒した数を設定
@@ -1461,6 +1496,11 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 			nWord = CFunctionLib::PopString(pStr, "");
 			pStr += nWord;
 
+			// プレイヤーが無敵状態かどうかを読み取る
+			bool bPlayerHelmet = CFunctionLib::ReadBool(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+
 			// プレイヤーに値を設定
 			if (m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] != NULL)
 			{
@@ -1470,6 +1510,7 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 				{
 					m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetState((CPlayer::STATE)nGetPlayerState);
 				}
+				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetHelmet(bPlayerHelmet);
 			}
 
 			// プレイヤーが生成されたばっかりならエフェクトを出す
@@ -1823,8 +1864,13 @@ void CGame::ReleaseEnemy(int nNumEnemy)
 void CGame::ReleaseCheckEnemy(CEnemy *pEnemy, int *pNumEnemy)
 {
 	pEnemy->Uninit();
+	pEnemy->SetDeathEffect();
 	pEnemy = NULL;
 	*pNumEnemy = *pNumEnemy - 1;
+	if (m_pPowerMap != NULL)
+	{
+		m_pPowerMap->AddGauge();
+	}
 }
 
 //=============================================================================
@@ -2498,6 +2544,10 @@ void CGame::ReleaseCheckDeleteEnemy(CEnemy *pEnemy, int *pDeleteIdx, int *nNumDe
 			pEnemy->SetDeathEffect();
 			pEnemy->Uninit();
 			pEnemy = NULL;
+			if (m_pPowerMap != NULL)
+			{
+				m_pPowerMap->AddGauge();
+			}
 		}
 	}
 }
@@ -2740,10 +2790,32 @@ char *CGame::SetDataToHitBullet(char *pStr)
 		nIdxClient = pClient->GetClientId();
 	}
 
-	if (m_bHitBulletFlag == true && m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER] != NULL)
+	if (m_bHitBulletFlag == true && m_pPlayer[nIdxClient] != NULL)
 	{// 弾に当たっていた
-		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetState(CPlayer::STATE_STOP);
-		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetStateCounter(0);
+		if (m_pPlayer[nIdxClient]->GetState() != CPlayer::STATE_STOP)
+		{// ストップ状態ではない
+			m_pPlayer[nIdxClient]->SetState(CPlayer::STATE_STOP);
+			m_pPlayer[nIdxClient]->SetStateCounter(0);
+		}
+	}
+
+	return pStr;
+}
+
+//=============================================================================
+// ゲームの司令部に弾に当たったかどうか取得する
+//=============================================================================
+char *CGame::SetDataToHitHeadQuarters(char *pStr)
+{
+	// 当たったかどうか読み取る
+	m_bHitHeadQuarters = CFunctionLib::ReadBool(pStr, "");
+	int nWord = 0;
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	if (m_bHitHeadQuarters == true)
+	{// 弾に当たっていた
+		m_State = STATE_GAMEOVER;
 	}
 
 	return pStr;
@@ -3811,6 +3883,14 @@ void CGame::MistCheck(void)
 	}
 }
 
+//=============================================================================
+// ゲームの勢力図を増やす処理
+//=============================================================================
+void CGame::AddPowerMap(void)
+{
+	if (m_pPowerMap == NULL) { return; }
+	m_pPowerMap->AddGauge();
+}
 
 
 //*****************************************************************************
@@ -3856,6 +3936,7 @@ void CGame::ItemEvent_Grenade(int nPlayerNumber)
 				((CEnemy*)pScene)->SetDeathEffect();
 				pScene->Uninit();
 				pScene = NULL;
+				AddPowerMap();
 			}
 			pScene = pSceneNext;
 		}
@@ -4546,6 +4627,12 @@ void CGame::ResetCounter(void)
 		{
 			m_nNumBreakEnemy[nCntPlayer][nCntEnemy] = 0;
 		}
+	}
+
+	// ゲージをリセット
+	if (m_pPowerMap != NULL)
+	{
+		m_pPowerMap->ResetGauge();
 	}
 }
 
@@ -5446,6 +5533,15 @@ void CGame::CreateMist(void)
 	m_nMistCounter = 0;
 }
 
+//=============================================================================
+// ゲームの勢力図を生成する
+//=============================================================================
+void CGame::CreatePowerMap(void)
+{
+	if (m_pPowerMap != NULL) { return; }
+	m_pPowerMap = CPowerMap::Create(GetTextureManager());
+}
+
 
 
 //*****************************************************************************
@@ -5840,6 +5936,18 @@ void CGame::ReleaseCreamMist(void)
 	{
 		m_pCreamMist->Uninit();
 		m_pCreamMist = NULL;
+	}
+}
+
+//=============================================================================
+// ゲームの勢力図を開放する
+//=============================================================================
+void CGame::ReleasePowerMap(void)
+{
+	if (m_pPowerMap != NULL)
+	{
+		m_pPowerMap->Uninit();
+		m_pPowerMap = NULL;
 	}
 }
 
@@ -6641,6 +6749,9 @@ void CGame::ClearVariable(void)
 	// クリーム靄用
 	m_pCreamMist = NULL;
 	m_nMistCounter = 0;
+
+	// 勢力図用
+	m_pPowerMap = NULL;
 }
 
 //=============================================================================

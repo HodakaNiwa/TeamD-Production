@@ -278,6 +278,9 @@ HRESULT CSound::PlaySound(int nIdx, bool bPause)
 			buffer.PlayBegin = m_apSoundParam[nIdx].nPlayPositioned;
 		}
 
+		// 再生位置を戻す
+		m_apSoundParam[nIdx].nPlayPositioned = 0;
+
 		// オーディオバッファの登録
 		m_apSourceVoice[nIdx]->SubmitSourceBuffer(&buffer);
 

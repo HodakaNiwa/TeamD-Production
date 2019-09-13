@@ -952,7 +952,7 @@ char *CTutorial::SetDataToEnemyFromServer(char *pStr)
 
 	// 数合わせ
 	ReleaseEnemy(nNumEnemy);
-	if (nNumEnemy == 0) return pStr;
+	if (nNumEnemy <= 0) return pStr;
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
@@ -1154,7 +1154,7 @@ char *CTutorial::SetDataToPlayerBulletFromServer(char *pStr)
 
 	// 数合わせ
 	ReleasePlayerBullet(nNumBullet);
-	if (nNumBullet == 0) return pStr;
+	if (nNumBullet <= 0) return pStr;
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
@@ -1334,7 +1334,7 @@ char *CTutorial::SetDataToEnemyBulletFromServer(char *pStr)
 
 	// 数合わせ
 	ReleaseEnemyBullet(nNumBullet);
-	if (nNumBullet == 0) return pStr;
+	if (nNumBullet <= 0) return pStr;
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
@@ -1503,7 +1503,7 @@ char *CTutorial::SetDataToDeleteBlock(char *pStr)
 	nNumDeleteBlock = CFunctionLib::ReadInt(pStr, "");
 	nWord = CFunctionLib::PopString(pStr, "");
 	pStr += nWord;
-	if (nNumDeleteBlock == 0) return pStr;
+	if (nNumDeleteBlock <= 0) return pStr;
 
 	// 消す分だけメモリを確保
 	pDeleteIdx = new int[nNumDeleteBlock];
@@ -1574,7 +1574,7 @@ char *CTutorial::SetDataToDeleteEnemy(char *pStr)
 	nNumDeleteEnemy = CFunctionLib::ReadInt(pStr, "");
 	nWord = CFunctionLib::PopString(pStr, "");
 	pStr += nWord;
-	if (nNumDeleteEnemy == 0) return pStr;
+	if (nNumDeleteEnemy <= 0) return pStr;
 
 	// 消す分だけメモリを確保
 	pDeleteIdx = new int[nNumDeleteEnemy];
@@ -1649,10 +1649,13 @@ char *CTutorial::SetDataToHitBullet(char *pStr)
 		nIdxClient = pClient->GetClientId();
 	}
 
-	if (m_bHitBulletFlag == true && m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER] != NULL)
+	if (m_bHitBulletFlag == true && m_pPlayer[nIdxClient] != NULL)
 	{// 弾に当たっていた
-		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetState(CPlayer::STATE_STOP);
-		m_pPlayer[(nIdxClient + 1) % MAX_NUM_PLAYER]->SetStateCounter(0);
+		if (m_pPlayer[nIdxClient]->GetState() != CPlayer::STATE_STOP)
+		{// ストップ状態ではない
+			m_pPlayer[nIdxClient]->SetState(CPlayer::STATE_STOP);
+			m_pPlayer[nIdxClient]->SetStateCounter(0);
+		}
 	}
 
 	return pStr;

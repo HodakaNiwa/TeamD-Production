@@ -139,7 +139,7 @@ void CModel::Draw(void)
 	D3DMATERIAL9 matDef;   // 現在のマテリアル保存用
 	D3DXMATERIAL *pMat;    // マテリアルデータへのポインタ
 
-						   // レンダリングクラスの取得
+	// レンダリングクラスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
 	if (pRenderer != NULL)
 	{// レンダリングクラスが取得できた

@@ -93,7 +93,7 @@ CPlayer *CPlayer::Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nPlayerIdx, CMode
 			pPlayer->SetModel(apModel);									//モデルの設置処理
 			pPlayer->SetMotionManager(pMotionManager);					//モーションマネージャーの設置処理
 			pPlayer->SetNumPart(nNumParts);								//パーツ総数の設置処理
-			pPlayer->SetColRange(D3DXVECTOR3(70.0f, 70.0f, 70.0f));		//当たり判定の設置処理
+			pPlayer->SetColRange(D3DXVECTOR3(60.0f, 60.0f, 60.0f));		//当たり判定の設置処理
 			pPlayer->SetPlayerIdx(nPlayerIdx);							//プレイヤー番号の設置処理
 			pPlayer->Init();											//初期化処理
 			pPlayer->SetPlayer(pPlayer);								//プレイヤーポインタの設置処理
@@ -122,15 +122,6 @@ HRESULT CPlayer::Init(void)
 //=============================================================================
 void CPlayer::Uninit(void)
 {
-	// 弾を打っていれば自身が消えることをお知らせ
-	for (int nCntBullet = 0; nCntBullet < PLAYER_MAX_BULLET; nCntBullet++)
-	{
-		if (m_pBulletPlayer[nCntBullet] != NULL)
-		{
-			m_pBulletPlayer[nCntBullet]->SetParent(NULL);
-		}
-	}
-
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
 		if (CManager::GetGame() != NULL)
@@ -207,12 +198,31 @@ void CPlayer::Draw(void)
 	//レンダリングの取得
 	CRenderer *pRenderer;
 	pRenderer = CManager::GetRenderer();
+	if (pRenderer == NULL) { return; }
 
 	//デバイスの取得
 	LPDIRECT3DDEVICE9 pDevice;
 	pDevice = pRenderer->GetDevice();
+	if (pDevice == NULL) { return; }
 
+	// ワールドマトリックスの設定
 	SetMtxWorld(pDevice);
+
+	// ライトを明るくする
+	D3DLIGHT9 Light;
+	Light.Position = D3DXVECTOR3(GetPos().x, GetPos().y + 70.0f, GetPos().z);
+	Light.Direction = D3DXVECTOR3(0.0f, -1.0f, 0.0f);
+	Light.Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	Light.Attenuation0 = 0.2f;
+	Light.Attenuation1 = 0.03f;
+	Light.Attenuation2 = 0.0f;
+	Light.Range = 500.0f;
+	Light.Falloff = 1.0f;
+	Light.Theta = D3DX_PI * 0.5f;
+	Light.Phi = D3DX_PI * 2.0f;
+	Light.Type = D3DLIGHT_SPOT;
+	pDevice->SetLight(10, &Light);
+	pDevice->LightEnable(10, true);
 
 	if (m_state == STATE_RESPAWN || m_state == STATE_STOP)
 	{//リスポーン状態または停止状態の場合
@@ -227,6 +237,8 @@ void CPlayer::Draw(void)
 		//キャラクターの描画処理
 		CCharacter::Draw();
 	}
+
+	pDevice->LightEnable(10, false);
 
 #ifdef _DEBUG
 	//オブジェクト3Dの描画処理
@@ -583,17 +595,18 @@ void CPlayer::InputMove(void)
 void CPlayer::InputAction(CInputKeyboard *pKeyboard, CXInput *pXInput)
 {
 	// 弾発射の処理
-	if (m_nPlayerIdx == 0 || CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
 	{// 0番のプレイヤーならば
 		if (pKeyboard->GetTrigger(DIK_RETURN) == true ||
-			pXInput->GetTrigger(m_nPlayerIdx, CXInput::XIJS_BUTTON_11) == true)
+			pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
 		{// 弾発射ボタン押下
 			CreateBullet();
 		}
 	}
 	else
 	{// 1番のプレイヤーならば
-		if (pKeyboard->GetTrigger(DIK_NUMPADENTER) == true)
+		if (pKeyboard->GetTrigger(DIK_NUMPADENTER) == true ||
+			pXInput->GetTrigger(m_nPlayerIdx, CXInput::XIJS_BUTTON_11) == true)
 		{// 弾発射ボタン押下
 			CreateBullet();
 		}
@@ -684,8 +697,14 @@ bool CPlayer::InputMove_Keyboard(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECT
 //=============================================================================
 bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVECTOR3 rot, float fAccel, CXInput *pXInput)
 {
-	if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_0) == true ||
-		pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_16) == true)
+	int nPlayerController = m_nPlayerIdx;
+	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{
+		nPlayerController = 0;
+	}
+
+	if (pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_0) == true ||
+		pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_16) == true)
 	{// 上移動ボタン押下
 		pMove->z = fAccel;
 		*pDiffAngle = (D3DX_PI)-rot.y;
@@ -693,8 +712,8 @@ bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVE
 		SetMoveEffect();
 		return true;
 	}
-	else if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_1) == true ||
-		pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_17) == true)
+	else if (pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_1) == true ||
+		pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_17) == true)
 	{// 下移動ボタン押下
 		pMove->z = -fAccel;
 		*pDiffAngle = (D3DX_PI * 0) - rot.y;
@@ -702,8 +721,8 @@ bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVE
 		SetMoveEffect();
 		return true;
 	}
-	else if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_2) == true ||
-		pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_18) == true)
+	else if (pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_2) == true ||
+		pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_18) == true)
 	{// 左移動ボタン押下
 		pMove->x = -fAccel;
 		*pDiffAngle = (D3DX_PI * 0.5f) - rot.y;
@@ -711,8 +730,8 @@ bool CPlayer::InputMove_Controller(D3DXVECTOR3 *pMove, float *pDiffAngle, D3DXVE
 		SetMoveEffect();
 		return true;
 	}
-	else if (pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_3) == true ||
-		pXInput->GetPress(m_nPlayerIdx, CXInput::XIJS_BUTTON_19) == true)
+	else if (pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_3) == true ||
+		pXInput->GetPress(nPlayerController, CXInput::XIJS_BUTTON_19) == true)
 	{// 右移動ボタン押下
 		pMove->x = fAccel;
 		*pDiffAngle = (D3DX_PI * -0.5f) - rot.y;

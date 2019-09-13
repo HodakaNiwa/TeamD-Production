@@ -61,6 +61,7 @@ public:	//誰からもアクセス可能
 		OBJTYPE_EFFECTMANAGER,  // エフェクトマネージャー
 		OBJTYPE_HINAARARE,      // ひなあられ
 		OBJTYPE_MIST,           // もや
+		OBJTYPE_POWERMAP,       // パワーマップ
 		OBJTYPE_MAX,
 	} OBJTYPE;
 

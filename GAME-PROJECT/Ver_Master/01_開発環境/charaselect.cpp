@@ -1119,11 +1119,13 @@ void CCharaSelect::EndTitleUpdate(void)
 void CCharaSelect::WaitInputToChangeChara(int nIdx)
 {
 	// オンラインプレイの場合自分が割り振られた番号じゃないなら処理しない
+	int nControllerIdx = nIdx;
 	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
 	{
 		CClient *pClient = CManager::GetClient();
 		if (pClient == NULL) { return; }
 		if (pClient->GetClientId() != nIdx) { return; }
+		nControllerIdx = 0;
 	}
 
 	CInputKeyboard *pKey = CManager::GetKeyboard();
@@ -1132,23 +1134,23 @@ void CCharaSelect::WaitInputToChangeChara(int nIdx)
 	if (pFade->GetFade() != CFade::FADE_NONE) { return; }
 
 	if (pKey->GetTrigger(DIK_A) == true ||
-		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_2) == true ||
-		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_18) == true)
+		CManager::GetXInput()->GetPress(nControllerIdx, CXInput::XIJS_BUTTON_2) == true ||
+		CManager::GetXInput()->GetPress(nControllerIdx, CXInput::XIJS_BUTTON_18) == true)
 	{// 左方向の入力がされた
 		m_nSelectPlayer[nIdx] = (m_nSelectPlayer[nIdx] + (m_nNumPlayerData - 1)) % m_nNumPlayerData;
 		m_State[nIdx] = STATE_CHARACHANGE_TO_RIGHT;
 		CManager::GetSound()->PlaySound(CHARASELECT_SE_SELECT_IDX);
 	}
 	else if (pKey->GetTrigger(DIK_D) == true ||
-		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_3) == true ||
-		CManager::GetXInput()->GetPress(nIdx, CXInput::XIJS_BUTTON_19) == true)
+		CManager::GetXInput()->GetPress(nControllerIdx, CXInput::XIJS_BUTTON_3) == true ||
+		CManager::GetXInput()->GetPress(nControllerIdx, CXInput::XIJS_BUTTON_19) == true)
 	{// 右方向の入力がされた
 		m_nSelectPlayer[nIdx] = (m_nSelectPlayer[nIdx] + 1) % m_nNumPlayerData;
 		m_State[nIdx] = STATE_CHARACHANGE_TO_LEFT;
 		CManager::GetSound()->PlaySound(CHARASELECT_SE_SELECT_IDX);
 	}
 	else if (pKey->GetTrigger(DIK_RETURN) == true ||
-		CManager::GetXInput()->GetTrigger(nIdx, CXInput::XIJS_BUTTON_11) == true)
+		CManager::GetXInput()->GetTrigger(nControllerIdx, CXInput::XIJS_BUTTON_11) == true)
 	{// 決定ボタンが押された
 		if (m_State[(nIdx + 1) % MAX_NUM_PLAYER] != STATE_WAIT_PARTNER)
 		{// まだ相手がプレイヤーの種類を決定していない

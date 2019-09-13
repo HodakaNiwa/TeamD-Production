@@ -754,7 +754,7 @@ void CEnemy::CollisionCheck(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3
 	}
 	else if (pObj->GetObjType() == OBJTYPE_BLOCK)
 	{// ƒuƒƒbƒN‚¾‚Á‚½‚ç
-		if (CollisionBlock(pPos, pPosOld, pMove, colRange, (CBlock*)pScene) == true)
+		if (CollisionBlock(pPos, pPosOld, pMove, colRange / 2, (CBlock*)pScene) == true)
 		{// “–‚½‚Á‚Ä‚¢‚é
 			pObj->Hit(this);
 			ResetAIState();
@@ -893,18 +893,21 @@ void CEnemy::Destroy(void)
 		if (pClient == NULL)
 		{
 			SetDeathEffect();
+			pGame->AddPowerMap();
 			Uninit();
 			return;
 		}
 		else if (pClient != NULL && pClient->GetConnected() == false)
 		{
 			SetDeathEffect();
+			pGame->AddPowerMap();
 			Uninit();
 			return;
 		}
 		else if (pClient != NULL && pClient->GetClientId() == 0)
 		{
 			SetDeathEffect();
+			pGame->AddPowerMap();
 			Uninit();
 			return;
 		}
@@ -912,6 +915,7 @@ void CEnemy::Destroy(void)
 		{
 			SetDeathEffect();
 			pGame->DeleteEnemy(m_nIdx);
+			pGame->AddPowerMap();
 		}
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)

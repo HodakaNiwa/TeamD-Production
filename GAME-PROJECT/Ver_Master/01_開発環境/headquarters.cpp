@@ -152,7 +152,9 @@ void CHeadQuarters::Hit(CScene *pScene)
 	// ゲームオーバー状態にさせる
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
-		CManager::GetGame()->SetState(CGame::STATE_GAMEOVER);
+		CGame *pGame = CManager::GetGame();
+		if (pGame == NULL) { return; }
+		pGame->SetState(CGame::STATE_GAMEOVER);
 	}
 }
 
