@@ -158,8 +158,6 @@ HRESULT CResult::Init(void)
 
 	// BGM‚ÌÄ¶
 	CManager::GetSound()->PlaySound(RESULT_BGM_IDX);
-
-	m_bHighScore = true;
 	return S_OK;
 }
 
