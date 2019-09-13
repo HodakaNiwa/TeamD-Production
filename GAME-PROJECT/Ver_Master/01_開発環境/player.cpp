@@ -271,6 +271,7 @@ void CPlayer::Hit(CScene *pScene)
 				CGame *pGame = CManager::GetGame();
 				if (pGame == NULL) { return; }
 				pGame->HitBullet();
+				pGame->AddJammer((int)pBullet->GetType());
 			}
 			else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
 			{// チュートリアル画面だったら
@@ -596,6 +597,14 @@ void CPlayer::InputAction(CInputKeyboard *pKeyboard, CXInput *pXInput)
 {
 	// 弾発射の処理
 	if (CTitle::GetGameMode() == CTitle::GAMEMODE_ONLINE2P)
+	{// オンラインプレイならば
+		if (pKeyboard->GetTrigger(DIK_RETURN) == true ||
+			pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
+		{// 弾発射ボタン押下
+			CreateBullet();
+		}
+	}
+	else if (CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL2P && m_nPlayerIdx == 0)
 	{// 0番のプレイヤーならば
 		if (pKeyboard->GetTrigger(DIK_RETURN) == true ||
 			pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
@@ -895,6 +904,9 @@ void CPlayer::Collision(void)
 
 					//アイテム取得時の処理
 					SwitchItem(pItem);
+
+					//コレクターの加算
+					CManager::GetGame()->AddCollecter(m_nPlayerIdx);
 				}
 			}
 			else if (pScene->GetObjType() == OBJTYPE_GOALCYLINDER)

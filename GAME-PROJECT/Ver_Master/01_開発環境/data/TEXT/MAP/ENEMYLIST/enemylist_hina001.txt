@@ -29,6 +29,9 @@ ENEMYLISTSET
 	RESPAWN = 1			# リスポーン位置の番号
 	TYPE = 2			# 種類
 	TIME = 150			# 出現させる時間
+	ITEM
+		TYPE = 0		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -62,6 +65,9 @@ ENEMYLISTSET
 	RESPAWN = 1			# リスポーン位置の番号
 	TYPE = 0			# 種類
 	TIME = 850			# 出現させる時間
+	ITEM
+		TYPE = 0		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -73,6 +79,9 @@ ENEMYLISTSET
 	RESPAWN = 2			# リスポーン位置の番号
 	TYPE = 0			# 種類
 	TIME = 950			# 出現させる時間
+	ITEM
+		TYPE = 0		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -106,6 +115,9 @@ ENEMYLISTSET
 	RESPAWN = 1			# リスポーン位置の番号
 	TYPE = 1			# 種類
 	TIME = 1650			# 出現させる時間
+	ITEM
+		TYPE = 0		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -139,6 +151,9 @@ ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 1			# 種類
 	TIME = 2150			# 出現させる時間
+	ITEM
+		TYPE = 0		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -161,6 +176,9 @@ ENEMYLISTSET
 	RESPAWN = 2			# リスポーン位置の番号
 	TYPE = 3			# 種類
 	TIME = 2350			# 出現させる時間
+	ITEM
+		TYPE = 2		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -183,6 +201,9 @@ ENEMYLISTSET
 	RESPAWN = 1			# リスポーン位置の番号
 	TYPE = 3			# 種類
 	TIME = 2750			# 出現させる時間
+	ITEM
+		TYPE = 0		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 7		# 向きを変えさせるランダム評価値
@@ -194,6 +215,9 @@ ENEMYLISTSET
 	RESPAWN = 2			# リスポーン位置の番号
 	TYPE = 0			# 種類
 	TIME = 2850			# 出現させる時間
+	ITEM
+		TYPE = 2		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -205,6 +229,9 @@ ENEMYLISTSET
 	RESPAWN = 0			# リスポーン位置の番号
 	TYPE = 1			# 種類
 	TIME = 3150			# 出現させる時間
+	ITEM
+		TYPE = 1		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 5		# 向きを変えさせるランダム評価値
@@ -216,6 +243,9 @@ ENEMYLISTSET
 	RESPAWN = 1			# リスポーン位置の番号
 	TYPE = 2			# 種類
 	TIME = 3250			# 出現させる時間
+	ITEM
+		TYPE = 0		# 出現させるアイテムの種類
+	END_ITEM
 	AISET
 		BULLET = 90		# 弾を打つ際のランダム評価値
 		MASS = 7		# 向きを変えさせるランダム評価値

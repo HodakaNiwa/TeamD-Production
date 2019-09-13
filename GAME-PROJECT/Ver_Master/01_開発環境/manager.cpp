@@ -35,7 +35,7 @@
 //=============================================================================
 // 静的メンバ変数宣言
 //=============================================================================
-CManager::MODE	CManager::m_mode = MODE::MODE_TITLE;  		// モードの情報
+CManager::MODE	CManager::m_mode = MODE::MODE_RESULT;  		// モードの情報
 CRenderer		*CManager::m_pRenderer = NULL;				// レンダリングのポインタ
 CInputKeyboard	*CManager::m_pInputKeyboard = NULL;			// キーボードのポインタ
 CInputMouse     *CManager::m_pMouse = NULL;                 // マウスのポインタ

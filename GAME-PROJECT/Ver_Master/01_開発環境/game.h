@@ -203,6 +203,10 @@ public:	// 誰からもアクセス可能
 	void SetPlayer(CPlayer *pPlayer, const int nIdx);
 	void SetNumEnemy(const int nNumEnemy);
 
+	void AddJammer(int nIdx);
+	void AddCream(int nIdx);
+	void AddCollecter(int nIdx);
+
 	STATE GetState(void);
 	CPlayer *GetPlayer(const int nIdx);
 	int GetNumEnemy(void);
@@ -597,5 +601,11 @@ private:	// 自分だけがアクセス可能
 	CNumber *m_pBonus;
 	CScene2D *m_pBonusPointLogo;
 	CScene2D *m_pBonusScoreLogo;
+
+	// MVPで必要な情報
+	int m_nJammer[MAX_NUM_PLAYER];
+	int m_nCream[MAX_NUM_PLAYER];
+	int m_nCollector[MAX_NUM_PLAYER];
+
 };
 #endif

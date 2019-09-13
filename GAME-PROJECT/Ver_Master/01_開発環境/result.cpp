@@ -28,9 +28,9 @@
 //=============================================================================
 #define RESULT_HIGHSCORE_FILENAME            "data/TEXT/highscore.txt"      // ハイスコアを保存するファイル名
 #define RESULT_SYSTEM_FILENAME               "data/TEXT/MODE/result.ini"    // 初期化に使用するシステムファイル名
-#define RESULT_WAITSTATE_TIME                (60)                           // 待機状態から通常状態に変わるまでの時間
-#define RESULT_NEXTHIGHSCORE_TIME            (240)                          // 通常状態からハイスコアを表示する状態に変わるまでの時間
-#define RESULT_CHANGEMODE_TIME               (600)                          // 通常状態から終了状態に変わるまでの時間
+#define RESULT_WAITSTATE_TIME                (200)                           // 待機状態から通常状態に変わるまでの時間
+#define RESULT_NEXTHIGHSCORE_TIME            (235)                          // 通常状態からハイスコアを表示する状態に変わるまでの時間
+#define RESULT_CHANGEMODE_TIME               (400)                          // 通常状態から終了状態に変わるまでの時間
 #define RESULT_HIGHSCORE_FALSH_TIME          (2)                            // ハイスコアロゴを点滅させるタイミング
 #define RESULT_BGM_IDX                       (4)                            // リザルトで再生するBGMの番号
 
@@ -55,6 +55,34 @@
 #define RESULT_HIGHSCORENUMBER_HEIGHT_INI    (40.0f)
 #define RESULT_HIGHSCORENUMBER_INTERVAL_INI  (D3DXVECTOR3(-90.0f, 0.0f, 0.0f))
 
+// スコアロゴの初期化用
+#define RESULT_SCORE_POS_INI       (D3DXVECTOR3(330.0f, 190.0f, 0.0f))
+#define RESULT_SCORE_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define RESULT_SCORE_WIDTH_INI     (240.0f)
+#define RESULT_SCORE_HEIGHT_INI    (160.0f)
+#define RESULT_SCORE_INTERVAL_INI  (D3DXVECTOR3(-90.0f, 0.0f, 0.0f))
+
+// ジャマーロゴの初期化用
+#define RESULT_JAMMER_POS_INI       (D3DXVECTOR3(950.0f, 190.0f, 0.0f))
+#define RESULT_JAMMER_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define RESULT_JAMMER_WIDTH_INI     (240.0f)
+#define RESULT_JAMMER_HEIGHT_INI    (160.0f)
+#define RESULT_JAMMER_INTERVAL_INI  (D3DXVECTOR3(-90.0f, 0.0f, 0.0f))
+
+// クリームロゴの初期化用
+#define RESULT_CREAM_POS_INI       (D3DXVECTOR3(330.0f, 530.0f, 0.0f))
+#define RESULT_CREAM_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define RESULT_CREAM_WIDTH_INI     (240.0f)
+#define RESULT_CREAM_HEIGHT_INI    (160.0f)
+#define RESULT_CREAM_INTERVAL_INI  (D3DXVECTOR3(-90.0f, 0.0f, 0.0f))
+
+// コレクターロゴの初期化用
+#define RESULT_COLLECTOR_POS_INI       (D3DXVECTOR3(950.0f, 530.0f, 0.0f))
+#define RESULT_COLLECTOR_COL_INI       (D3DXCOLOR(1.0f,1.0f,1.0f,1.0f))
+#define RESULT_COLLECTOR_WIDTH_INI     (240.0f)
+#define RESULT_COLLECTOR_HEIGHT_INI    (160.0f)
+#define RESULT_COLLECTOR_INTERVAL_INI  (D3DXVECTOR3(-90.0f, 0.0f, 0.0f))
+
 // 値読み込み用のパス
 // ハイスコア用
 #define HIGHSCORE "HIGHSCORE = "
@@ -76,6 +104,10 @@
 // 静的メンバ変数宣言
 //=============================================================================
 bool CResult::m_bHighScore = false;   // ハイスコアを表示するかどうか
+int CResult::m_nScore[MAX_NUM_PLAYER] = {};		// スコアの情報
+int CResult::m_nJammer[MAX_NUM_PLAYER] = {};	// ジャマーの情報
+int CResult::m_nCream[MAX_NUM_PLAYER] = {};		// クリームの情報
+int CResult::m_nCollector[MAX_NUM_PLAYER] = {};	// コレクターの情報
 
 //=============================================================================
 // リザルトのコンストラクタ
@@ -127,6 +159,7 @@ HRESULT CResult::Init(void)
 	// BGMの再生
 	CManager::GetSound()->PlaySound(RESULT_BGM_IDX);
 
+	m_bHighScore = true;
 	return S_OK;
 }
 
@@ -141,6 +174,7 @@ void CResult::Uninit(void)
 	// 各種クラスの開放
 	ReleaseLogo();
 	ReleaseHighScore();
+	ReleaseMVP();
 
 	// 全てのオブジェクト開放
 	CScene::ReleaseAll();
@@ -164,6 +198,9 @@ void CResult::Update(void)
 	{
 	case STATE_WAIT:
 		WaitUpdate();
+		break;
+	case STATE_MVP:
+		MVPUpdate();
 		break;
 	case STATE_NORMAL:
 		NormalUpdate();
@@ -264,6 +301,400 @@ void CResult::CreateHighScore(void)
 }
 
 //=============================================================================
+// MVPで必要なロゴ生成処理
+//=============================================================================
+void CResult::CreateMVP(void)
+{
+	// MVPスコアの生成
+	CreateMVPScore();
+
+	// MVPジャマーの生成
+	CreateMVPJammer();
+
+	// MVPクリームの生成
+	CreateMVPCream();
+
+	// MVPコレクターの生成
+	CreateMVPCollector();
+}
+
+
+//=============================================================================
+// MVPスコアの生成処理
+//=============================================================================
+void CResult::CreateMVPScore(void)
+{
+	// 数字ポリゴン生成
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (GetTextureManager() != NULL)
+	{
+		pTexture = GetTextureManager()->GetTexture(1);
+	}
+
+	// MVPスコアロゴの生成
+	if (m_pMVPScoreLogo == NULL)
+	{
+		m_pMVPScoreLogo = CScene2D::Create(RESULT_SCORE_POS_INI, RESULT_SCORE_COL_INI,
+			RESULT_SCORE_WIDTH_INI, RESULT_SCORE_HEIGHT_INI);
+		if (m_pMVPScoreLogo != NULL && GetTextureManager() != NULL)
+		{
+			m_pMVPScoreLogo->BindTexture(GetTextureManager()->GetTexture(3));
+		}
+	}
+
+	bool bPlayer1Win = false;	//プレイヤー１が勝っているかどうか
+
+	if (m_nScore[0] >= m_nScore[1])
+	{//１Pのほうが高い場合
+		bPlayer1Win = true;
+	}
+	else
+	{//それ以外の場合
+		bPlayer1Win = false;
+	}
+
+	switch (bPlayer1Win)
+	{
+	case true:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//スコアの生成
+			if (m_pScoreNumber[nCntPlayer] == NULL)
+			{
+				m_pScoreNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(445.0f, 205.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f - (5.0f * nCntPlayer),
+					25.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nScore[nCntPlayer]);
+			}
+
+			//スコアランクの生成
+			if (m_pScoreRank[nCntPlayer] == NULL)
+			{
+				m_pScoreRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(130.0f + (50.0f * nCntPlayer), 190.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 1 + nCntPlayer);
+			}
+		}
+		break;
+	case false:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//スコアの生成
+			if (m_pScoreNumber[nCntPlayer] == NULL)
+			{
+				m_pScoreNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(445.0f, 302.0f - (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f + (5.0f * nCntPlayer),
+					25.0f + (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f - (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nScore[nCntPlayer]);
+			}
+
+			//スコアランクの生成
+			if (m_pScoreRank[nCntPlayer] == NULL)
+			{
+				m_pScoreRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(130.0f + (50.0f * nCntPlayer), 190.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 2 - nCntPlayer);
+			}
+		}
+
+		break;
+	}
+
+}
+
+//=============================================================================
+// MVPジャマーの生成処理
+//=============================================================================
+void CResult::CreateMVPJammer(void)
+{
+	// 数字ポリゴン生成
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (GetTextureManager() != NULL)
+	{
+		pTexture = GetTextureManager()->GetTexture(1);
+	}
+
+	// MVPジャマーロゴの生成
+	if (m_pMVPJammerLogo == NULL)
+	{
+		m_pMVPJammerLogo = CScene2D::Create(RESULT_JAMMER_POS_INI, RESULT_JAMMER_COL_INI,
+			RESULT_JAMMER_WIDTH_INI, RESULT_JAMMER_HEIGHT_INI);
+
+		if (m_pMVPJammerLogo != NULL && GetTextureManager() != NULL)
+		{
+			m_pMVPJammerLogo->BindTexture(GetTextureManager()->GetTexture(4));
+		}
+	}
+
+	bool bPlayer1Win = false;	//プレイヤー１が勝っているかどうか
+
+	if (m_nJammer[0] >= m_nJammer[1])
+	{//１Pのほうが高い場合
+		bPlayer1Win = true;
+	}
+	else
+	{//それ以外の場合
+		bPlayer1Win = false;
+	}
+
+	switch (bPlayer1Win)
+	{
+	case true:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//ジャマーの生成
+			if (m_pJammerNumber[nCntPlayer] == NULL)
+			{
+				m_pJammerNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(1070.0f, 205.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f - (5.0f * nCntPlayer),
+					25.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nJammer[nCntPlayer]);
+			}
+
+			//ジャマーランクの生成
+			if (m_pJammerRank[nCntPlayer] == NULL)
+			{
+				m_pJammerRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(750.0f + (50.0f * nCntPlayer), 190.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 1 + nCntPlayer);
+			}
+		}
+		break;
+	case false:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//ジャマーの生成
+			if (m_pJammerNumber[nCntPlayer] == NULL)
+			{
+				m_pJammerNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(1070.0f, 302.0f - (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f + (5.0f * nCntPlayer),
+					25.0f + (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f - (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nJammer[nCntPlayer]);
+			}
+
+			//ジャマーランクの生成
+			if (m_pJammerRank[nCntPlayer] == NULL)
+			{
+				m_pJammerRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(750.0f + (50.0f * nCntPlayer), 190.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 2 - nCntPlayer);
+			}
+		}
+
+		break;
+	}
+
+}
+
+//=============================================================================
+// MVPクリームの生成処理
+//=============================================================================
+void CResult::CreateMVPCream(void)
+{
+	// 数字ポリゴン生成
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (GetTextureManager() != NULL)
+	{
+		pTexture = GetTextureManager()->GetTexture(1);
+	}
+
+	// MVPクリームロゴの生成
+	if (m_pMVPCreamLogo == NULL)
+	{
+		m_pMVPCreamLogo = CScene2D::Create(RESULT_CREAM_POS_INI, RESULT_CREAM_COL_INI,
+			RESULT_CREAM_WIDTH_INI, RESULT_CREAM_HEIGHT_INI);
+
+		if (m_pMVPCreamLogo != NULL && GetTextureManager() != NULL)
+		{
+			m_pMVPCreamLogo->BindTexture(GetTextureManager()->GetTexture(5));
+		}
+	}
+
+	bool bPlayer1Win = false;	//プレイヤー１が勝っているかどうか
+
+	if (m_nCream[0] >= m_nCream[1])
+	{//１Pのほうが高い場合
+		bPlayer1Win = true;
+	}
+	else
+	{//それ以外の場合
+		bPlayer1Win = false;
+	}
+
+	switch (bPlayer1Win)
+	{
+	case true:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//クリームの生成
+			if (m_pCreamNumber[nCntPlayer] == NULL)
+			{
+				m_pCreamNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(445.0f, 545.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f - (5.0f * nCntPlayer),
+					25.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nCream[nCntPlayer]);
+			}
+
+			//クリームランクの生成
+			if (m_pCreamRank[nCntPlayer] == NULL)
+			{
+				m_pCreamRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(130.0f + (50.0f * nCntPlayer), 530.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 1 + nCntPlayer);
+			}
+		}
+		break;
+	case false:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//クリームの生成
+			if (m_pCreamNumber[nCntPlayer] == NULL)
+			{
+				m_pCreamNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(445.0f, 642.0f - (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f + (5.0f * nCntPlayer),
+					25.0f + (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f - (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nCream[nCntPlayer]);
+			}
+
+			//クリームランクの生成
+			if (m_pCreamRank[nCntPlayer] == NULL)
+			{
+				m_pCreamRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(130.0f + (50.0f * nCntPlayer), 530.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 2 - nCntPlayer);
+			}
+		}
+
+		break;
+	}
+
+}
+
+//=============================================================================
+// MVPコレクターの生成処理
+//=============================================================================
+void CResult::CreateMVPCollector(void)
+{
+	// 数字ポリゴン生成
+	LPDIRECT3DTEXTURE9 pTexture = NULL;
+	if (GetTextureManager() != NULL)
+	{
+		pTexture = GetTextureManager()->GetTexture(1);
+	}
+
+	// MVPコレクターロゴの生成
+	if (m_pMVPCollectorLogo == NULL)
+	{
+		m_pMVPCollectorLogo = CScene2D::Create(RESULT_COLLECTOR_POS_INI, RESULT_COLLECTOR_COL_INI,
+			RESULT_COLLECTOR_WIDTH_INI, RESULT_COLLECTOR_HEIGHT_INI);
+
+		if (m_pMVPCollectorLogo != NULL && GetTextureManager() != NULL)
+		{
+			m_pMVPCollectorLogo->BindTexture(GetTextureManager()->GetTexture(6));
+		}
+	}
+
+	bool bPlayer1Win = false;	//プレイヤー１が勝っているかどうか
+
+	if (m_nCollector[0] >= m_nCollector[1])
+	{//１Pのほうが高い場合
+		bPlayer1Win = true;
+	}
+	else
+	{//それ以外の場合
+		bPlayer1Win = false;
+	}
+
+	switch (bPlayer1Win)
+	{
+	case true:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//コレクターの生成
+			if (m_pCollectorNumber[nCntPlayer] == NULL)
+			{
+				m_pCollectorNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(1070.0f, 545.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f - (5.0f * nCntPlayer),
+					25.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nCollector[nCntPlayer]);
+			}
+
+			//コレクターランクの生成
+			if (m_pCollectorRank[nCntPlayer] == NULL)
+			{
+				m_pCollectorRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(750.0f + (50.0f * nCntPlayer), 530.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 1 + nCntPlayer);
+			}
+		}
+		break;
+	case false:
+		for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+		{
+			//コレクターの生成
+			if (m_pCollectorNumber[nCntPlayer] == NULL)
+			{
+				m_pCollectorNumber[nCntPlayer] = CNumber::Create(D3DXVECTOR3(1070.0f, 642.0f - (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					25.0f + (5.0f * nCntPlayer),
+					25.0f + (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f - (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, m_nCollector[nCntPlayer]);
+			}
+
+			//コレクターランクの生成
+			if (m_pCollectorRank[nCntPlayer] == NULL)
+			{
+				m_pCollectorRank[nCntPlayer] = CNumber::Create(D3DXVECTOR3(750.0f + (50.0f * nCntPlayer), 530.0f + (97.0f * nCntPlayer), 0.0f),
+					RESULT_SCORE_COL_INI,
+					30.0f - (5.0f * nCntPlayer),
+					30.0f - (5.0f * nCntPlayer),
+					D3DXVECTOR3(-50.0f + (5.0f * nCntPlayer), 0.0f, 0.0f),
+					pTexture, 2 - nCntPlayer);
+			}
+		}
+
+		break;
+	}
+
+}
+
+//=============================================================================
 // リザルトのロゴ開放処理
 //=============================================================================
 void CResult::ReleaseLogo(void)
@@ -296,6 +727,100 @@ void CResult::ReleaseHighScore(void)
 }
 
 //=============================================================================
+// リザルトのMVP関連の開放処理
+//=============================================================================
+void CResult::ReleaseMVP(void)
+{
+	// スコアロゴの開放
+	if (m_pMVPScoreLogo != NULL)
+	{
+		m_pMVPScoreLogo->Uninit();
+		m_pMVPScoreLogo = NULL;
+	}
+
+	// ジャマーロゴ開放
+	if (m_pMVPJammerLogo != NULL)
+	{
+		m_pMVPJammerLogo->Uninit();
+		m_pMVPJammerLogo = NULL;
+	}
+
+	// クリームロゴの開放
+	if (m_pMVPCreamLogo != NULL)
+	{
+		m_pMVPCreamLogo->Uninit();
+		m_pMVPCreamLogo = NULL;
+	}
+
+	// コレクターロゴ開放
+	if (m_pMVPCollectorLogo != NULL)
+	{
+		m_pMVPCollectorLogo->Uninit();
+		m_pMVPCollectorLogo = NULL;
+	}
+
+
+	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	{
+		// スコア開放
+		if (m_pScoreNumber[nCntPlayer] != NULL)
+		{
+			m_pScoreNumber[nCntPlayer]->Uninit();
+			m_pScoreNumber[nCntPlayer] = NULL;
+		}
+
+		// ジャマー開放
+		if (m_pJammerNumber[nCntPlayer] != NULL)
+		{
+			m_pJammerNumber[nCntPlayer]->Uninit();
+			m_pJammerNumber[nCntPlayer] = NULL;
+		}
+
+		// クリーム開放
+		if (m_pCreamNumber[nCntPlayer] != NULL)
+		{
+			m_pCreamNumber[nCntPlayer]->Uninit();
+			m_pCreamNumber[nCntPlayer] = NULL;
+		}
+
+		// コレクター開放
+		if (m_pCollectorNumber[nCntPlayer] != NULL)
+		{
+			m_pCollectorNumber[nCntPlayer]->Uninit();
+			m_pCollectorNumber[nCntPlayer] = NULL;
+		}
+
+		// スコアランク開放
+		if (m_pScoreRank[nCntPlayer] != NULL)
+		{
+			m_pScoreRank[nCntPlayer]->Uninit();
+			m_pScoreRank[nCntPlayer] = NULL;
+		}
+
+		// ジャマーランク開放
+		if (m_pJammerRank[nCntPlayer] != NULL)
+		{
+			m_pJammerRank[nCntPlayer]->Uninit();
+			m_pJammerRank[nCntPlayer] = NULL;
+		}
+
+		// クリームランク開放
+		if (m_pCreamRank[nCntPlayer] != NULL)
+		{
+			m_pCreamRank[nCntPlayer]->Uninit();
+			m_pCreamRank[nCntPlayer] = NULL;
+		}
+
+		// コレクターランク開放
+		if (m_pCollectorRank[nCntPlayer] != NULL)
+		{
+			m_pCollectorRank[nCntPlayer]->Uninit();
+			m_pCollectorRank[nCntPlayer] = NULL;
+		}
+	}
+}
+
+//=============================================================================
 // リザルトの待機状態の更新処理
 //=============================================================================
 void CResult::WaitUpdate(void)
@@ -305,8 +830,31 @@ void CResult::WaitUpdate(void)
 	m_nStateCounter++;
 	if (m_nStateCounter % RESULT_WAITSTATE_TIME == 0)
 	{// カウンターが一定値に達した
+		SetState(STATE_MVP);
+		m_nStateCounter = 0;
+	}
+
+	CDebugProc::Print(1, "%d\n", m_nStateCounter);
+}
+
+//=============================================================================
+// リザルトのMVP状態の更新処理
+//=============================================================================
+void CResult::MVPUpdate(void)
+{
+	CDebugProc::Print(1, "MVP状態\n");
+
+	if (m_nStateCounter % RESULT_NEXTHIGHSCORE_TIME == 0)
+	{// カウンターが一定値に達した
+	 // ハイスコアを表示する状態に
 		SetState(STATE_NORMAL);
 		m_nStateCounter = 0;
+
+		// リザルトロゴを開放
+		ReleaseLogo();
+
+		// MVP表示に必要なものを生成
+		CreateMVP();
 	}
 
 	CDebugProc::Print(1, "%d\n", m_nStateCounter);
@@ -330,8 +878,8 @@ void CResult::NormalUpdate(void)
 			SetState(STATE_HIGHSCORE);
 			m_nStateCounter = 0;
 
-			// リザルトロゴを開放
-			ReleaseLogo();
+			// MVPを開放
+			ReleaseMVP();
 
 			// ハイスコア表示に必要なものを生成
 			CreateHighScore();
@@ -665,6 +1213,24 @@ void CResult::ClearVariable(void)
 	m_pLogo = NULL;
 	m_pHighScore = NULL;
 	m_pHighScoreLogo = NULL;
+
+	m_pMVPScoreLogo = NULL;
+	m_pMVPJammerLogo = NULL;
+	m_pMVPCreamLogo = NULL;
+	m_pMVPCollectorLogo = NULL;
+
+	// MVPの情報を初期化
+	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	{
+		m_pScoreNumber[nCntPlayer] = NULL;
+		m_pJammerNumber[nCntPlayer] = NULL;
+		m_pCreamNumber[nCntPlayer] = NULL;
+		m_pCollectorNumber[nCntPlayer] = NULL;
+		m_pScoreRank[nCntPlayer] = NULL;
+		m_pJammerRank[nCntPlayer] = NULL;
+		m_pCreamRank[nCntPlayer] = NULL;
+		m_pCollectorRank[nCntPlayer] = NULL;
+	}
 }
 
 //=============================================================================
@@ -690,4 +1256,36 @@ void CResult::SetHighScore(void)
 CResult::STATE CResult::GetState(void)
 {
 	return m_State;
+}
+
+//=============================================================================
+// スコアの設置処理
+//=============================================================================
+void CResult::SetScore(int nScore, int nIdx)
+{
+	m_nScore[nIdx] = nScore;
+}
+
+//=============================================================================
+// ジャマーの設置処理
+//=============================================================================
+void CResult::SetJammer(int nJammer, int nIdx)
+{
+	m_nJammer[nIdx] = nJammer;
+}
+
+//=============================================================================
+// クリームの設置処理
+//=============================================================================
+void CResult::SetCream(int nCream, int nIdx)
+{
+	m_nCream[nIdx] = nCream;
+}
+
+//=============================================================================
+// コレクターの設置処理
+//=============================================================================
+void CResult::SetCollector(int nCollector, int nIdx)
+{
+	m_nCollector[nIdx] = nCollector;
 }

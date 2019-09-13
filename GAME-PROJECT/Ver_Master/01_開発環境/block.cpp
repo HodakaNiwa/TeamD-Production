@@ -575,6 +575,11 @@ void CBlockType1::Hit(CScene *pScene)
 		// 飛沫ポリゴン生成
 		CreateSplash();
 
+		CPlayer *pPlayer = (CPlayer*)pScene;
+
+		//クリームの加算
+		CManager::GetGame()->AddCream(pPlayer->GetPlayerIdx());
+
 		// 終了処理
 		Uninit();
 	}

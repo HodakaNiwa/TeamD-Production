@@ -1224,6 +1224,7 @@ void CTitle::GameModeUpdate(void)
 	else if (pKey->GetTrigger(DIK_BACKSPACE) == true ||
 		pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_10) == true)
 	{// –ß‚éƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½
+		m_nGameMode = CTitle::GAMEMODE_LOCAL1P;
 		SetState(STATE_NORMAL);
 		ReleaseGameModeBg();
 		ReleaseGameModeLogo();

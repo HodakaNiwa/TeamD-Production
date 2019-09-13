@@ -532,6 +532,14 @@ HRESULT CGame::Init(void)
 		}
 	}
 
+	// MVPで必要な情報
+	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	{
+		m_nJammer[nCntPlayer] = 0;
+		m_nCream[nCntPlayer] = 0;
+		m_nCollector[nCntPlayer] = 0;
+	}
+
 	return S_OK;
 }
 
@@ -568,6 +576,18 @@ void CGame::Uninit(void)
 	{// やり直しの終了状態でない
 		// クライアントを開放する
 		CManager::ReleaseClient();
+	}
+
+	// リザルトの取得
+	CResult *pResult = CManager::GetResult();
+
+	// MVPの情報をリザルトに代入
+	for (int nCntPlayer = 0; nCntPlayer < MAX_NUM_PLAYER; nCntPlayer++)
+	{
+		pResult->SetScore(m_nScore[nCntPlayer], nCntPlayer);
+		pResult->SetJammer(m_nJammer[nCntPlayer], nCntPlayer);
+		pResult->SetCream(m_nCream[nCntPlayer], nCntPlayer);
+		pResult->SetCollector(m_nCollector[nCntPlayer], nCntPlayer);
 	}
 
 	// ハイスコアを更新したかどうかチェック
@@ -6787,6 +6807,30 @@ void CGame::SetPlayer(CPlayer *pPlayer, const int nIdx)
 void CGame::SetNumEnemy(const int nNumEnemy)
 {
 	m_nNumEnemy = nNumEnemy;
+}
+
+//=============================================================================
+// ジャマーの加算処理
+//=============================================================================
+void CGame::AddJammer(int nIdx)
+{
+	m_nJammer[nIdx]++;
+}
+
+//=============================================================================
+// クリームの加算処理
+//=============================================================================
+void CGame::AddCream(int nIdx)
+{
+	m_nCream[nIdx]++;
+}
+
+//=============================================================================
+// コレクターの加算処理
+//=============================================================================
+void CGame::AddCollecter(int nIdx)
+{
+	m_nCollector[nIdx]++;
 }
 
 //=============================================================================
