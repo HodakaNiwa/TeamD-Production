@@ -15,7 +15,7 @@
 // マクロ定義
 //*****************************************************************************
 #define CLASS_NAME		"AppClass"			            // ウインドウのクラス名
-#define WINDOW_NAME		"戦えたっぴーver_Master"        // ウインドウのキャプション名
+#define WINDOW_NAME		"たたかえたっぴー!!"            // ウインドウのキャプション名
 #define WINDOW_MODE     (true)                          // ウィンドウのモード(falseにするとフルスクリーン)
 #define WINDOW_ICON     (MAKEINTRESOURCE(IDI_ICON1))    // ウィンドウのアイコン識別子
 #define WINDOW_SM_ICON  (MAKEINTRESOURCE(IDI_ICON1))    // ウィンドウのスモールアイコン識別子
@@ -100,7 +100,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (pManager != NULL)
 	{
 		// マネージャの初期化処理
-		if (FAILED(pManager->Init(hInstance, hWnd, TRUE)))
+		if (FAILED(pManager->Init(hInstance, hWnd, WINDOW_MODE)))
 		{
 			return -1;
 		}

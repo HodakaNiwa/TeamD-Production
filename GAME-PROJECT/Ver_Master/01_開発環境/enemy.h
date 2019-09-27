@@ -102,6 +102,7 @@ public:	// 誰からもアクセス可能
 
 	// 静的メンバ関数
 	static CEnemy *Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, int nType, int nPriority = 3);
+	static void SetNumAll(const int nNumAll);
 	static int GetNumAll(void);
 	static int GetSpawnCounter(void);
 	static void ResetSpawnCounter(void);

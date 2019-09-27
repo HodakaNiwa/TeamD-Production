@@ -14,6 +14,11 @@
 #include "object3D.h"
 
 //*****************************************************************************
+//    マクロ定義
+//*****************************************************************************
+#define BULLET_PRIORITY (4)
+
+//*****************************************************************************
 //    前方宣言
 //*****************************************************************************
 class CModel;
@@ -145,31 +150,6 @@ private:   // このクラスだけがアクセス可能
 	bool CollisionBullet(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBullet *pBullet);
 	bool CollisionBlock(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CBlock *pBlock);
 	bool CollisionHeadQuarters(D3DXVECTOR3 *pPos, D3DXVECTOR3 *pPosOld, D3DXVECTOR3 *pMove, D3DXVECTOR3 colRange, CHeadQuarters *pHead);
-};
-
-
-//*****************************************************************************
-//    弾のエフェクトクラスの定義
-//*****************************************************************************
-class CBulletEffect : public CBullet
-{
-public:    // 誰でもアクセス可能
-	CBulletEffect(int nPriority = 3, OBJTYPE objType = OBJTYPE_BULLETEFFECT);
-	~CBulletEffect();
-
-	static CBulletEffect *Create(D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DXVECTOR3 move, CScene *pParent = NULL,
-		LPD3DXMESH pMesh = NULL, LPD3DXBUFFER pBuffMat = NULL, DWORD nNumMat = 0, LPDIRECT3DTEXTURE9 *pTexture = NULL, int nPriority = 3);
-
-	HRESULT Init(void);
-	void Uninit(void);
-	void Update(void);
-	void Draw(void);
-
-protected: // このクラスと派生クラスだけがアクセス可能
-	void Collision(void);
-	void Destroy(void);
-
-private:   // このクラスだけがアクセス可能
 };
 
 #endif

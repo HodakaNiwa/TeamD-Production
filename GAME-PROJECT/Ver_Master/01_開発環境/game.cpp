@@ -917,8 +917,14 @@ void CGame::SetDataToServerFromPlayer(void)
 	// プレイヤーの人数を設定
 	if (m_pPlayer[CManager::GetClient()->GetClientId()] == NULL)
 	{
+		// プレイヤーがいないことを設定
 		CManager::GetClient()->Print("0");
 		CManager::GetClient()->Print(" ");
+
+		// プレイヤーの残機数を設定
+		CManager::GetClient()->Print("%d", m_nPlayerStock[CManager::GetClient()->GetClientId()]);
+		CManager::GetClient()->Print(" ");
+
 		if (CManager::GetClient()->GetClientId() == 0)
 		{
 			CManager::GetClient()->Print("%d", (int)m_bDeletePlayerFlag);
@@ -928,7 +934,12 @@ void CGame::SetDataToServerFromPlayer(void)
 	}
 	else if(m_pPlayer[CManager::GetClient()->GetClientId()] != NULL)
 	{
+		// プレイヤーがいることを設定
 		CManager::GetClient()->Print("1");
+		CManager::GetClient()->Print(" ");
+
+		// プレイヤーの残機数を設定
+		CManager::GetClient()->Print("%d", m_nPlayerStock[CManager::GetClient()->GetClientId()]);
 		CManager::GetClient()->Print(" ");
 
 		// プレイヤーの座標を設定
@@ -1334,13 +1345,27 @@ void CGame::SetDataToServerFromBreakEnemy(void)
 		nIdxClient = pClient->GetClientId();
 	}
 
+	// 敵の倒した数を設定
 	for (int nCntType = 0; nCntType < CEnemy::TYPE_MAX; nCntType++)
 	{
 		CManager::GetClient()->Print("%d", m_nNumBreakEnemy[nIdxClient][nCntType]);
 		CManager::GetClient()->Print(" ");
 	}
 
+	// スコアを設定
 	CManager::GetClient()->Print("%d", m_nScore[nIdxClient]);
+	CManager::GetClient()->Print(" ");
+
+	// 邪魔した回数を設定
+	CManager::GetClient()->Print("%d", m_nJammer[nIdxClient]);
+	CManager::GetClient()->Print(" ");
+
+	// クリーム靄に当たった回数を設定
+	CManager::GetClient()->Print("%d", m_nCream[nIdxClient]);
+	CManager::GetClient()->Print(" ");
+
+	// アイテムを取得した回数を設定
+	CManager::GetClient()->Print("%d", m_nCollector[nIdxClient]);
 	CManager::GetClient()->Print(" ");
 }
 
@@ -1388,7 +1413,6 @@ void CGame::GetDataFromServer(void)
 		{// プレイヤーが生きている
 			m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->Uninit();
 			m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] = NULL;
-			m_nPlayerStock[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]--;
 		}
 		return;
 	}
@@ -1458,19 +1482,35 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 {
 	int nWord = 0;
 	int nNumPlayer = 0;
+	int nNumStock = 0;
+	int nNumber = (CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER;
 
 	// プレイヤーの人数を読み取る
 	nNumPlayer = CFunctionLib::ReadInt(pStr, "");
 	nWord = CFunctionLib::PopString(pStr, "");
 	pStr += nWord;
+
+	// プレイヤーの残機数を読み取る
+	nNumStock = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	if (m_nPlayerStock[nNumber] != nNumStock)
+	{// 残機数が変わっている
+		m_nPlayerStock[nNumber] = nNumStock;
+		if (m_pUI != NULL)
+		{
+			m_pUI->ReCreatePlayerStock(&m_nPlayerStock[0]);
+		}
+	}
+
 	if (nNumPlayer == 0)
 	{// プレイヤーが存在しない
-		if (m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] != NULL && m_State == STATE_NORMAL)
+		if (m_pPlayer[nNumber] != NULL && m_State == STATE_NORMAL)
 		{// プレイヤーが生きている
-			m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetDeathEffect();
-			m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->Uninit();
-			m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] = NULL;
-			m_nPlayerStock[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]--;
+			m_pPlayer[nNumber]->SetDeathEffect();
+			m_pPlayer[nNumber]->Uninit();
+			m_pPlayer[nNumber] = NULL;
 			if (m_pUI != NULL)
 			{
 				m_pUI->ReCreatePlayerStock(&m_nPlayerStock[0]);
@@ -1481,13 +1521,44 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 	{// プレイヤーが存在する
 		CMap *pMap = GetMap();
 		bool bPlayerSpawn = false;
-		if (m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] == NULL && pMap != NULL)
+		if (m_pPlayer[nNumber] == NULL && pMap != NULL)
 		{// メモリが確保されていない
-			int nNumber = (CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER;
-			m_pPlayer[nNumber] = m_pPlayerManager[nNumber]->SetPlayer(INITIALIZE_D3DXVECTOR3, INITIALIZE_D3DXVECTOR3, nNumber);
+			// プレイヤーの座標を読み取る
+			float fGetPlayerPosX = CFunctionLib::ReadFloat(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			float fGetPlayerPosY = CFunctionLib::ReadFloat(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			float fGetPlayerPosZ = CFunctionLib::ReadFloat(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+
+			// プレイヤーの向きを読み取る
+			float fGetPlayerRotX = CFunctionLib::ReadFloat(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			float fGetPlayerRotY = CFunctionLib::ReadFloat(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+			float fGetPlayerRotZ = CFunctionLib::ReadFloat(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+
+			// プレイヤーの状態を読み取る
+			int nGetPlayerState = CFunctionLib::ReadInt(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+
+			// プレイヤーが無敵状態かどうかを読み取る
+			bool bPlayerHelmet = CFunctionLib::ReadBool(pStr, "");
+			nWord = CFunctionLib::PopString(pStr, "");
+			pStr += nWord;
+
+			m_pPlayer[nNumber] = m_pPlayerManager[nNumber]->SetPlayer(D3DXVECTOR3(fGetPlayerPosX, fGetPlayerPosY, fGetPlayerPosZ), D3DXVECTOR3(fGetPlayerRotX, fGetPlayerRotY, fGetPlayerRotZ), nNumber);
 			bPlayerSpawn = true;
 		}
-		if (m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] != NULL)
+		else if (m_pPlayer[nNumber] != NULL)
 		{// メモリが確保できている
 			// プレイヤーの座標を読み取る
 			float fGetPlayerPosX = CFunctionLib::ReadFloat(pStr, "");
@@ -1522,15 +1593,15 @@ char *CGame::SetDataToPlayerFromServer(char *pStr)
 			pStr += nWord;
 
 			// プレイヤーに値を設定
-			if (m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER] != NULL)
+			if (m_pPlayer[nNumber] != NULL)
 			{
-				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetPos(D3DXVECTOR3(fGetPlayerPosX, fGetPlayerPosY, fGetPlayerPosZ));
-				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetRot(D3DXVECTOR3(fGetPlayerRotX, fGetPlayerRotY, fGetPlayerRotZ));
-				if (m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->GetState() != nGetPlayerState)
+				m_pPlayer[nNumber]->SetPos(D3DXVECTOR3(fGetPlayerPosX, fGetPlayerPosY, fGetPlayerPosZ));
+				m_pPlayer[nNumber]->SetRot(D3DXVECTOR3(fGetPlayerRotX, fGetPlayerRotY, fGetPlayerRotZ));
+				if (m_pPlayer[nNumber]->GetState() != nGetPlayerState)
 				{
-					m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetState((CPlayer::STATE)nGetPlayerState);
+					m_pPlayer[nNumber]->SetState((CPlayer::STATE)nGetPlayerState);
 				}
-				m_pPlayer[(CManager::GetClient()->GetClientId() + 1) % MAX_NUM_PLAYER]->SetHelmet(bPlayerHelmet);
+				m_pPlayer[nNumber]->SetHelmet(bPlayerHelmet);
 			}
 
 			// プレイヤーが生成されたばっかりならエフェクトを出す
@@ -1680,7 +1751,7 @@ char *CGame::SetDataToEnemyFromServer(char *pStr)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < (ENEMY_PRIORITY + 1); nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -1700,6 +1771,7 @@ char *CGame::SetDataToEnemyFromServer(char *pStr)
 	{
 		pStr = SetDataToCreateEnemy(pStr);
 	}
+	CEnemy::SetNumAll(m_nNumEnemy);
 
 	return pStr;
 }
@@ -1758,7 +1830,7 @@ char *CGame::SetDataToEnemy(CEnemy *pEnemy, char *pStr)
 		// 破棄する
 		pEnemy->Uninit();
 		pEnemy = NULL;
-		CScene::DeathCheck();
+		CScene::DeathCheck(ENEMY_PRIORITY);
 
 		// 生成しなおす
 		CEnemy_ListData *pEnemyData = GetMap()->GetEnemyListData(nEnemyIdx);
@@ -1860,7 +1932,7 @@ void CGame::ReleaseEnemy(int nNumEnemy)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < (ENEMY_PRIORITY + 1); nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -1873,9 +1945,6 @@ void CGame::ReleaseEnemy(int nNumEnemy)
 			pScene = pSceneNext;
 		}
 	}
-
-	// 死亡フラグチェック
-	CScene::DeathCheck();
 }
 
 //=============================================================================
@@ -1883,14 +1952,17 @@ void CGame::ReleaseEnemy(int nNumEnemy)
 //=============================================================================
 void CGame::ReleaseCheckEnemy(CEnemy *pEnemy, int *pNumEnemy)
 {
-	pEnemy->Uninit();
 	pEnemy->SetDeathEffect();
+	pEnemy->Uninit();
 	pEnemy = NULL;
 	*pNumEnemy = *pNumEnemy - 1;
 	if (m_pPowerMap != NULL)
 	{
 		m_pPowerMap->AddGauge();
 	}
+
+	// 死亡フラグチェック
+	CScene::DeathCheck(ENEMY_PRIORITY);
 }
 
 //=============================================================================
@@ -1912,7 +1984,7 @@ char *CGame::SetDataToPlayerBulletFromServer(char *pStr)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < BULLET_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -1954,7 +2026,7 @@ void CGame::ReleasePlayerBullet(int nNumBullet)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < BULLET_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -1969,7 +2041,7 @@ void CGame::ReleasePlayerBullet(int nNumBullet)
 	}
 
 	// 死亡フラグチェック
-	CScene::DeathCheck();
+	CScene::DeathCheck(BULLET_PRIORITY - 1);
 }
 
 //=============================================================================
@@ -2092,7 +2164,7 @@ char *CGame::SetDataToEnemyBulletFromServer(char *pStr)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < BULLET_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -2127,7 +2199,7 @@ void CGame::ReleaseEnemyBullet(int nNumBullet)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < BULLET_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -2142,7 +2214,7 @@ void CGame::ReleaseEnemyBullet(int nNumBullet)
 	}
 
 	// 死亡フラグチェック
-	CScene::DeathCheck();
+	CScene::DeathCheck(BULLET_PRIORITY - 1);
 }
 
 //=============================================================================
@@ -2263,7 +2335,7 @@ char *CGame::SetDataToItemFromServer(char *pStr)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < ITEM_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -2326,7 +2398,7 @@ char *CGame::SetDataToItem(CItem *pItem, char *pStr, int *pNumItem)
 		// 破棄する
 		pItem->Uninit();
 		pItem = NULL;
-		CScene::DeathCheck();
+		CScene::DeathCheck(ITEM_PRIORITY - 1);
 
 		// 生成しなおす
 		pItem = CreateItem(D3DXVECTOR3(fItemPosX, fItemPosY, fItemPosZ), INITIALIZE_D3DXVECTOR3, nItemType);
@@ -2398,7 +2470,7 @@ void CGame::ReleaseItem(int nNumItem)
 
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < ITEM_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -2413,7 +2485,7 @@ void CGame::ReleaseItem(int nNumItem)
 	}
 
 	// 死亡フラグチェック
-	CScene::DeathCheck();
+	CScene::DeathCheck(ITEM_PRIORITY - 1);
 }
 
 //=============================================================================
@@ -2453,7 +2525,7 @@ char *CGame::SetDataToDeleteBlock(char *pStr)
 	// 消す数だけブロックを開放する
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < BLOCK_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -2468,7 +2540,7 @@ char *CGame::SetDataToDeleteBlock(char *pStr)
 	}
 
 	// 死亡フラグチェック
-	CScene::DeathCheck();
+	CScene::DeathCheck(BLOCK_PRIORITY - 1);
 
 	// メモリの開放
 	if (pDeleteIdx != NULL)
@@ -2524,7 +2596,7 @@ char *CGame::SetDataToDeleteEnemy(char *pStr)
 	// 消す数だけ敵を開放する
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < (ENEMY_PRIORITY + 1); nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -2539,7 +2611,7 @@ char *CGame::SetDataToDeleteEnemy(char *pStr)
 	}
 
 	// 死亡フラグチェック
-	CScene::DeathCheck();
+	CScene::DeathCheck(ENEMY_PRIORITY);
 
 	// メモリの開放
 	if (pDeleteIdx != NULL)
@@ -2600,7 +2672,7 @@ char *CGame::SetDataToDeleteItem(char *pStr)
 	// 消す数だけ敵を開放する
 	CScene *pScene = NULL;
 	CScene *pSceneNext = NULL;
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
+	for (int nCntPriority = 0; nCntPriority < ITEM_PRIORITY; nCntPriority++)
 	{// 処理優先順位の数だけ繰り返し
 		pScene = CScene::GetTop(nCntPriority);
 		while (pScene != NULL)
@@ -2615,7 +2687,7 @@ char *CGame::SetDataToDeleteItem(char *pStr)
 	}
 
 	// 死亡フラグチェック
-	CScene::DeathCheck();
+	CScene::DeathCheck(ITEM_PRIORITY - 1);
 
 	// メモリの開放
 	if (pDeleteIdx != NULL)
@@ -2715,6 +2787,21 @@ char *CGame::SetDataToBreakEnemy(char *pStr)
 
 	// スコアを取得
 	m_nScore[(nIdxClient + 1) % MAX_NUM_PLAYER] = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// 邪魔した回数を取得
+	m_nJammer[(nIdxClient + 1) % MAX_NUM_PLAYER] = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// クリーム靄に当たった回数を取得
+	m_nCream[(nIdxClient + 1) % MAX_NUM_PLAYER] = CFunctionLib::ReadInt(pStr, "");
+	nWord = CFunctionLib::PopString(pStr, "");
+	pStr += nWord;
+
+	// アイテムを取得した回数を取得
+	m_nCollector[(nIdxClient + 1) % MAX_NUM_PLAYER] = CFunctionLib::ReadInt(pStr, "");
 	nWord = CFunctionLib::PopString(pStr, "");
 	pStr += nWord;
 

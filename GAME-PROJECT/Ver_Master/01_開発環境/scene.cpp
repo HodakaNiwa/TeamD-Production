@@ -153,6 +153,25 @@ void CScene::DeathCheck(void)
 }
 
 //=============================================================================
+// 指定された優先順位のオブジェクトの開放チェック処理
+//=============================================================================
+void CScene::DeathCheck(int nPriority)
+{
+	CScene *pSceneTop;				//今実行する変数
+	CScene *pSceneNext;					//次の変数
+	pSceneTop = m_apTop[nPriority];						//次の実行変数に初期位置を代入
+	while (pSceneTop != NULL)
+	{//NULLになるまで繰り返し
+		pSceneNext = pSceneTop->m_pNext;	//次の変数に今の次のアドレスを代入
+		if (pSceneTop->m_bDeath == true)
+		{//死亡フラグが立っていたら消去処理へ
+			pSceneTop->Death();
+		}
+		pSceneTop = pSceneNext;				//次に実行するものを今の変数に代入する
+	}
+}
+
+//=============================================================================
 // オブジェクトの先頭取得処理
 //=============================================================================
 CScene * CScene::GetTop(int nPriority)

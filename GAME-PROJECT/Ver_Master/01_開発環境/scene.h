@@ -85,6 +85,7 @@ public:	//誰からもアクセス可能
 	static void UpdateAll(void);
 	static void DrawAll(void);
 	static void DeathCheck(void);
+	static void DeathCheck(int nPriority);
 	static CScene *GetTop(int nPriority);
 
 private:	//自分だけがアクセス可能

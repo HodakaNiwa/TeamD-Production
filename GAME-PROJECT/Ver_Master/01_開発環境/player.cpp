@@ -612,10 +612,18 @@ void CPlayer::InputAction(CInputKeyboard *pKeyboard, CXInput *pXInput)
 			CreateBullet();
 		}
 	}
-	else
+	else if(CTitle::GetGameMode() == CTitle::GAMEMODE_LOCAL2P && m_nPlayerIdx != 0)
 	{// 1番のプレイヤーならば
 		if (pKeyboard->GetTrigger(DIK_NUMPADENTER) == true ||
 			pXInput->GetTrigger(m_nPlayerIdx, CXInput::XIJS_BUTTON_11) == true)
+		{// 弾発射ボタン押下
+			CreateBullet();
+		}
+	}
+	else
+	{// 1人プレイなら
+		if (pKeyboard->GetTrigger(DIK_RETURN) == true ||
+			pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_11) == true)
 		{// 弾発射ボタン押下
 			CreateBullet();
 		}
